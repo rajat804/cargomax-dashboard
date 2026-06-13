@@ -205,6 +205,7 @@ interface BookingRecord {
   damageType?: ("damaged" | "missing" | "both")[];
   damageReason?: string;
   damageOtherRemark?: string;
+  damagePackageCount?: number;
   damagePhotos?: string[];
   voiceNoteUrl?: string;
   voiceNoteDuration?: number;
@@ -289,214 +290,8 @@ const destinationOptions = [
   { value: "AGARTALA", label: "AGARTALA" },
   { value: "AKBERPUR/AMBEDKAR NAGAR", label: "AKBERPUR/AMBEDKAR NAGAR" },
   { value: "ALIPURDUAR", label: "ALIPURDUAR" },
-  { value: "ALLAHABAD", label: "ALLAHABAD" },
-  { value: "ALZALGARH", label: "ALZALGARH" },
-  { value: "AMRITSAR", label: "AMRITSAR" },
-  { value: "ANANTAPUR", label: "ANANTAPUR" },
-  { value: "ANOOPSHER", label: "ANOOPSHER" },
-  { value: "ARARIA COURT", label: "ARARIA COURT" },
-  { value: "ARRAH", label: "ARRAH" },
-  { value: "ASANSOL", label: "ASANSOL" },
-  { value: "AURANGABAD B.R", label: "AURANGABAD B.R" },
-  { value: "AURANGABAD U.P", label: "AURANGABAD U.P" },
-  { value: "AZAMGARH", label: "AZAMGARH" },
-  { value: "BABRALA", label: "BABRALA" },
-  { value: "BAHERI", label: "BAHERI" },
-  { value: "BAHJOI", label: "BAHJOI" },
-  { value: "BALLIA", label: "BALLIA" },
-  { value: "BANKURA", label: "BANKURA" },
-  { value: "BAREILLY", label: "BAREILLY" },
-  { value: "BARHALGANJ", label: "BARHALGANJ" },
-  { value: "BARHI", label: "BARHI" },
-  { value: "BARPETA ROAD", label: "BARPETA ROAD" },
-  { value: "BASTI", label: "BASTI" },
-  { value: "BEGUSARAI", label: "BEGUSARAI" },
-  { value: "BELTHARA ROAD", label: "BELTHARA ROAD" },
-  { value: "BERHAMPORE W.B", label: "BERHAMPORE W.B" },
-  { value: "BETTIAH", label: "BETTIAH" },
-  { value: "BHABHUA", label: "BHABHUA" },
-  { value: "BHADOHI", label: "BHADOHI" },
-  { value: "BHAGALPUR", label: "BHAGALPUR" },
-  { value: "BHULANDSHAHAR", label: "BHULANDSHAHAR" },
-  { value: "BIHARIGANJ", label: "BIHARIGANJ" },
-  { value: "BIHARSHARIF", label: "BIHARSHARIF" },
-  { value: "BIHIYA", label: "BIHIYA" },
-  { value: "BIHTA", label: "BIHTA" },
-  { value: "BIJNOR", label: "BIJNOR" },
-  { value: "BILASIPARA", label: "BILASIPARA" },
-  { value: "BONGAIGOAN", label: "BONGAIGOAN" },
-  { value: "BRAHMAPUR", label: "BRAHMAPUR" },
-  { value: "BURDWAN", label: "BURDWAN" },
-  { value: "BUXAR", label: "BUXAR" },
-  { value: "CHANCHAL", label: "CHANCHAL" },
-  { value: "CHANDAUSI", label: "CHANDAUSI" },
-  { value: "CHANDPUR", label: "CHANDPUR" },
-  { value: "CHAS", label: "CHAS" },
-  { value: "CHHAPRA", label: "CHHAPRA" },
-  { value: "COOCHBEHAR", label: "COOCHBEHAR" },
-  { value: "DALKOLA", label: "DALKOLA" },
-  { value: "DALTONGANJ", label: "DALTONGANJ" },
-  { value: "DARBHANGA", label: "DARBHANGA" },
-  { value: "DAUDNAGAR", label: "DAUDNAGAR" },
-  { value: "DEHRI ON SON", label: "DEHRI ON SON" },
-  { value: "DEOGHAR", label: "DEOGHAR" },
-  { value: "DEORIA", label: "DEORIA" },
-  { value: "DHAMPUR", label: "DHAMPUR" },
-  { value: "DHANAURA", label: "DHANAURA" },
-  { value: "DHANBAD", label: "DHANBAD" },
-  { value: "DHUBRI", label: "DHUBRI" },
-  { value: "DHUPGURI", label: "DHUPGURI" },
-  { value: "DIBAI", label: "DIBAI" },
-  { value: "DINHATA", label: "DINHATA" },
-  { value: "DUMKA", label: "DUMKA" },
-  { value: "DUMROAN", label: "DUMROAN" },
-  { value: "DURGAPUR", label: "DURGAPUR" },
-  { value: "FAIZABAD", label: "FAIZABAD" },
-  { value: "FALAKATA", label: "FALAKATA" },
-  { value: "FORBISGANJ", label: "FORBISGANJ" },
-  { value: "GANGARAMPUR", label: "GANGARAMPUR" },
-  { value: "GARWA", label: "GARWA" },
-  { value: "GAYA", label: "GAYA" },
-  { value: "GHAZIPUR", label: "GHAZIPUR" },
-  { value: "GHOSI", label: "GHOSI" },
-  { value: "GIRIDIH", label: "GIRIDIH" },
-  { value: "GOALPARA", label: "GOALPARA" },
-  { value: "GODDA", label: "GODDA" },
-  { value: "GOPALGANJ", label: "GOPALGANJ" },
-  { value: "GORAKHPUR", label: "GORAKHPUR" },
-  { value: "GOSAINGANJ", label: "GOSAINGANJ" },
-  { value: "GULABBAGH", label: "GULABBAGH" },
-  { value: "GULAOTHI", label: "GULAOTHI" },
-  { value: "GUMLA", label: "GUMLA" },
-  { value: "HAJIPUR", label: "HAJIPUR" },
-  { value: "HARRAIYA", label: "HARRAIYA" },
-  { value: "HATA", label: "HATA" },
-  { value: "HAZARIBAGH", label: "HAZARIBAGH" },
-  { value: "HEAD OFFICE", label: "HEAD OFFICE" },
-  { value: "HINDUPUR", label: "HINDUPUR" },
-  { value: "HYDERABAD", label: "HYDERABAD" },
-  { value: "ISLAMPUR", label: "ISLAMPUR" },
-  { value: "JAGITAL", label: "JAGITAL" },
-  { value: "JAHANGIRABAD", label: "JAHANGIRABAD" },
-  { value: "JAINAGAR", label: "JAINAGAR" },
-  { value: "JALALPUR", label: "JALALPUR" },
-  { value: "JALPAIGURI", label: "JALPAIGURI" },
-  { value: "JAMSHEDPUR", label: "JAMSHEDPUR" },
-  { value: "JAMUI", label: "JAMUI" },
-  { value: "JAUNPUR", label: "JAUNPUR" },
-  { value: "JHANJHARPUR", label: "JHANJHARPUR" },
-  { value: "JHARIYA", label: "JHARIYA" },
-  { value: "JHUMRITALIYA", label: "JHUMRITALIYA" },
-  { value: "KADAPA", label: "KADAPA" },
-  { value: "KALIACHAK", label: "KALIACHAK" },
-  { value: "KALIYAGANJ", label: "KALIYAGANJ" },
-  { value: "KANPUR", label: "KANPUR" },
-  { value: "KAPTANGANJ", label: "KAPTANGANJ" },
-  { value: "KARIM NAGAR", label: "KARIM NAGAR" },
-  { value: "KASIA", label: "KASIA" },
-  { value: "KATIHAR", label: "KATIHAR" },
-  { value: "KHAGARIA", label: "KHAGARIA" },
-  { value: "KHALILABAD", label: "KHALILABAD" },
-  { value: "KIRATPUR", label: "KIRATPUR" },
-  { value: "KISHANGANJ", label: "KISHANGANJ" },
-  { value: "KOCHAS", label: "KOCHAS" },
-  { value: "KOKRAJHAR", label: "KOKRAJHAR" },
-  { value: "KRISHNAI", label: "KRISHNAI" },
-  { value: "KUNDA", label: "KUNDA" },
-  { value: "KURNOOL", label: "KURNOOL" },
-  { value: "KUSHINAGAR", label: "KUSHINAGAR" },
-  { value: "LAKHISARAI", label: "LAKHISARAI" },
-  { value: "LALGANJ", label: "LALGANJ" },
-  { value: "LOHARDGA", label: "LOHARDGA" },
-  { value: "LUCKNOW", label: "LUCKNOW" },
-  { value: "MACHHALISHAR", label: "MACHHALISHAR" },
-  { value: "MADHEPURA", label: "MADHEPURA" },
-  { value: "MADHUBANI", label: "MADHUBANI" },
-  { value: "MADHUPUR", label: "MADHUPUR" },
-  { value: "MAHARAJGANJ", label: "MAHARAJGANJ" },
-  { value: "MAIRWA", label: "MAIRWA" },
-  { value: "MALDA", label: "MALDA" },
-  { value: "MATHABHANGA", label: "MATHABHANGA" },
-  { value: "MAU", label: "MAU" },
-  { value: "MAYNAGURI", label: "MAYNAGURI" },
-  { value: "MIRZAPUR", label: "MIRZAPUR" },
-  { value: "MOHAMMDABAD GOHNA", label: "MOHAMMDABAD GOHNA" },
-  { value: "MOHANIYA", label: "MOHANIYA" },
-  { value: "MORADABAD", label: "MORADABAD" },
-  { value: "MOTIHARI", label: "MOTIHARI" },
-  { value: "MUBARAKPUR", label: "MUBARAKPUR" },
-  { value: "MUGHALSARAI", label: "MUGHALSARAI" },
-  { value: "MUNGRA BADSHAHPUR", label: "MUNGRA BADSHAHPUR" },
-  { value: "MURLIGANJ", label: "MURLIGANJ" },
-  { value: "MURSHIDABAD", label: "MURSHIDABAD" },
-  { value: "MUZAFFARPUR", label: "MUZAFFARPUR" },
-  { value: "NAGINA", label: "NAGINA" },
-  { value: "NALBARI", label: "NALBARI" },
-  { value: "NANDYAL", label: "NANDYAL" },
-  { value: "NARKATIYA GANJ", label: "NARKATIYA GANJ" },
-  { value: "NAWABGANJ", label: "NAWABGANJ" },
-  { value: "NAWADA", label: "NAWADA" },
-  { value: "NETHAUR", label: "NETHAUR" },
-  { value: "NOJIBABAD", label: "NOJIBABAD" },
-  { value: "NOORPUR", label: "NOORPUR" },
-  { value: "PADRAUNA", label: "PADRAUNA" },
-  { value: "PATNA", label: "PATNA" },
-  { value: "PHUSRO", label: "PHUSRO" },
-  { value: "PILIBHIT", label: "PILIBHIT" },
-  { value: "PODDATUR", label: "PODDATUR" },
-  { value: "PRATAPGARH", label: "PRATAPGARH" },
-  { value: "PURANPUR", label: "PURANPUR" },
-  { value: "PURNIA", label: "PURNIA" },
-  { value: "PURULIA", label: "PURULIA" },
-  { value: "RAFIGANJ", label: "RAFIGANJ" },
-  { value: "RAGHUNATHGANJ", label: "RAGHUNATHGANJ" },
-  { value: "RAIGANJ", label: "RAIGANJ" },
-  { value: "RAJAHMUNDRY", label: "RAJAHMUNDRY" },
-  { value: "RAMGARH", label: "RAMGARH" },
-  { value: "RANCHI", label: "RANCHI" },
-  { value: "RANGIA", label: "RANGIA" },
-  { value: "RANIGANJ", label: "RANIGANJ" },
-  { value: "RASARA", label: "RASARA" },
-  { value: "RAXAUL", label: "RAXAUL" },
-  { value: "SAHARSA", label: "SAHARSA" },
-  { value: "SAHASWAN", label: "SAHASWAN" },
-  { value: "SALEMPUR", label: "SALEMPUR" },
-  { value: "SAMASTIPUR", label: "SAMASTIPUR" },
-  { value: "SAMBAL", label: "SAMBAL" },
-  { value: "SAMSI", label: "SAMSI" },
-  { value: "SASARAM", label: "SASARAM" },
-  { value: "SECUNDERABAD", label: "SECUNDERABAD" },
-  { value: "SEOHARA", label: "SEOHARA" },
-  { value: "SHAHGANJ", label: "SHAHGANJ" },
-  { value: "SHERGHATI", label: "SHERGHATI" },
-  { value: "SHIKARPUR", label: "SHIKARPUR" },
-  { value: "SIDDHARTHNAGAR", label: "SIDDHARTHNAGAR" },
-  { value: "SIDDIPET", label: "SIDDIPET" },
-  { value: "SILLIGURI", label: "SILLIGURI" },
-  { value: "SIMDEGA", label: "SIMDEGA" },
-  { value: "SISWABAZAR", label: "SISWABAZAR" },
-  { value: "SITAMARHI", label: "SITAMARHI" },
-  { value: "SIWAN", label: "SIWAN" },
-  { value: "SIYANA", label: "SIYANA" },
-  { value: "SRIKAKULAM", label: "SRIKAKULAM" },
-  { value: "SULTANPUR", label: "SULTANPUR" },
-  { value: "SUPAUL", label: "SUPAUL" },
-  { value: "TAMKUHI", label: "TAMKUHI" },
-  { value: "TANDA", label: "TANDA" },
-  { value: "THAKURDWARA", label: "THAKURDWARA" },
-  { value: "TRONICA CITY", label: "TRONICA CITY" },
-  { value: "TUFANGANJ", label: "TUFANGANJ" },
-  { value: "U P BORDER A JH UP", label: "U P BORDER A JH UP" },
-  { value: "U P BORDER B BR", label: "U P BORDER B BR" },
-  { value: "U P BORDER C ASM WB", label: "U P BORDER C ASM WB" },
-  { value: "U P BORDER D BR GP", label: "U P BORDER D BR GP" },
-  { value: "VARANASI", label: "VARANASI" },
-  { value: "VIJAYWADA", label: "VIJAYWADA" },
-  { value: "VIKRAMGANJ", label: "VIKRAMGANJ" },
-  { value: "VISAKHAPATNAM", label: "VISAKHAPATNAM" },
-  { value: "VIZIANAGARAM", label: "VIZIANAGARAM" },
-  { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
+
 export default function BookingComputerizedGRL() {
   const [mainTab, setMainTab] = useState<"active" | "cancelled">("active");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -520,7 +315,7 @@ export default function BookingComputerizedGRL() {
   const [gstPaidBy, setGstPaidBy] = useState<string>("CONSIGNEE");
   const [gstRate, setGstRate] = useState<number>(0);
   const [advanceAmount, setAdvanceAmount] = useState<number>(0);
-  
+
   const [subTotal, setSubTotal] = useState<number>(0);
   const [gstAmount, setGstAmount] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
@@ -530,7 +325,7 @@ export default function BookingComputerizedGRL() {
   const [packingTypes, setPackingTypes] = useState<any[]>([]);
   const [branchOptions, setBranchOptions] = useState<Branch[]>([]);
   const [clients, setClients] = useState<ClientData[]>([]);
-  
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>("");
 
@@ -633,15 +428,20 @@ export default function BookingComputerizedGRL() {
   const [damageType, setDamageType] = useState<("damaged" | "missing" | "both")[]>([]);
   const [damageReason, setDamageReason] = useState<string>("");
   const [damageOtherRemark, setDamageOtherRemark] = useState<string>("");
+  const [damagePackageCount, setDamagePackageCount] = useState<number>(0);
   const [damagePhotos, setDamagePhotos] = useState<string[]>([]);
-  
+  const [damagePackageError, setDamagePackageError] = useState<string>("");
+
   // Voice Recording States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingDuration, setRecordingDuration] = useState<number>(0);
   const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | null>(null);
   const [voiceNoteDuration, setVoiceNoteDuration] = useState<number | null>(null);
   const [voiceNoteBase64, setVoiceNoteBase64] = useState<string | null>(null);
-  
+
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
+
   // Refs for recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -659,10 +459,10 @@ export default function BookingComputerizedGRL() {
     } else if (freightOn === "PER PACKAGE") {
       freight = totalPckgs * freightRate;
     }
-    
+
     setCalculatedFreight(freight);
     setTotalFreight(freight);
-    
+
     const extraChargesTotal = extraCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
     const subtotal = freight + extraChargesTotal;
     setSubTotal(subtotal);
@@ -675,8 +475,8 @@ export default function BookingComputerizedGRL() {
   };
 
   const updateExtraCharge = (id: number, rate: number) => {
-    setExtraCharges(prev => 
-      prev.map(charge => 
+    setExtraCharges(prev =>
+      prev.map(charge =>
         charge.id === id ? { ...charge, rate, amount: rate } : charge
       )
     );
@@ -726,10 +526,34 @@ export default function BookingComputerizedGRL() {
     };
   }, [voiceNoteUrl]);
 
-  // ========== FIXED VOICE RECORDING FUNCTIONS ==========
+  // Validate damage package count
+  const validateDamagePackageCount = (count: number) => {
+    if (damageType.length > 0) {
+      if (count < 1) {
+        setDamagePackageError("Number of damaged/missing packages must be at least 1");
+        return false;
+      }
+      if (count > totalPckgs) {
+        setDamagePackageError(`Cannot exceed total packages (${totalPckgs})`);
+        return false;
+      }
+      setDamagePackageError("");
+      return true;
+    }
+    setDamagePackageError("");
+    return true;
+  };
+
+  const handleDamagePackageCountChange = (value: string) => {
+    const count = parseInt(value) || 0;
+    setDamagePackageCount(count);
+    validateDamagePackageCount(count);
+  };
+
+  // ========== VOICE RECORDING FUNCTIONS ==========
   const startRecording = async () => {
     try {
-      // First, delete any existing voice note
+      // Clear existing voice note first
       if (voiceNoteUrl) {
         if (voiceNoteUrl.startsWith('blob:')) {
           URL.revokeObjectURL(voiceNoteUrl);
@@ -738,38 +562,36 @@ export default function BookingComputerizedGRL() {
         setVoiceNoteDuration(null);
         setVoiceNoteBase64(null);
       }
-      
-      // Reset all recording states
+
       audioChunksRef.current = [];
       finalDurationRef.current = 0;
       setRecordingDuration(0);
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
         if (audioChunksRef.current.length > 0) {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           const audioUrl = URL.createObjectURL(audioBlob);
-          
-          // Convert to base64 for permanent storage
+
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64Audio = reader.result as string;
             setVoiceNoteBase64(base64Audio);
-            console.log("Voice note converted to base64, length:", base64Audio.length);
+            console.log("Voice note converted to base64");
           };
           reader.readAsDataURL(audioBlob);
-          
+
           setVoiceNoteUrl(audioUrl);
           const savedDuration = finalDurationRef.current;
           setVoiceNoteDuration(savedDuration);
@@ -777,20 +599,20 @@ export default function BookingComputerizedGRL() {
         } else {
           toast.error("No audio captured. Please try again.");
         }
-        
+
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
           streamRef.current = null;
         }
       };
-      
+
       mediaRecorder.start(100);
       setIsRecording(true);
-      
+
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
-      
+
       timerRef.current = setInterval(() => {
         setRecordingDuration(prev => {
           const newDuration = prev + 1;
@@ -802,25 +624,25 @@ export default function BookingComputerizedGRL() {
           return newDuration;
         });
       }, 1000);
-      
+
       toast.success("Recording started... Speak now!");
     } catch (error) {
       console.error("Microphone error:", error);
       toast.error("Unable to access microphone. Please check permissions.");
     }
   };
-  
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       try {
         mediaRecorderRef.current.stop();
         setIsRecording(false);
-        
+
         if (timerRef.current) {
           clearInterval(timerRef.current);
           timerRef.current = null;
         }
-        
+
         toast.success("Recording stopped!");
       } catch (error) {
         console.error("Stop recording error:", error);
@@ -828,43 +650,45 @@ export default function BookingComputerizedGRL() {
       }
     }
   };
-  
+
   const deleteVoiceNote = () => {
-    // Revoke blob URL if exists
+    // Clear all voice note states
     if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
       URL.revokeObjectURL(voiceNoteUrl);
     }
-    // Clear all voice note states
     setVoiceNoteUrl(null);
     setVoiceNoteDuration(null);
     setVoiceNoteBase64(null);
-    // Reset recording states
     setIsRecording(false);
     setRecordingDuration(0);
     audioChunksRef.current = [];
     finalDurationRef.current = 0;
+
     // Clear media recorder if active
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current) {
       try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {
-        console.log("Recorder already stopped");
-      }
+        if (isRecording) {
+          mediaRecorderRef.current.stop();
+        }
+      } catch (e) { }
       mediaRecorderRef.current = null;
     }
+
     // Stop stream tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+
     // Clear timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+
     toast.success("Voice note deleted");
   };
-  
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -896,7 +720,7 @@ export default function BookingComputerizedGRL() {
       };
       reader.readAsDataURL(file);
     });
-    
+
     e.target.value = '';
   };
 
@@ -909,7 +733,7 @@ export default function BookingComputerizedGRL() {
       const userStr = localStorage.getItem('user');
       const selectedBranchStr = localStorage.getItem('selectedBranch');
       const branchCode = localStorage.getItem('branchCode');
-      
+
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -918,7 +742,7 @@ export default function BookingComputerizedGRL() {
           console.error('Error parsing user:', e);
         }
       }
-      
+
       if (selectedBranchStr) {
         setSelectedBranch(selectedBranchStr);
         setBookingFrom(selectedBranchStr);
@@ -996,9 +820,9 @@ export default function BookingComputerizedGRL() {
     if (packingType && item.chargeWeight > 0 && item.noOfPckgs > 0) {
       const perPackageWeight = item.chargeWeight / item.noOfPckgs;
       if (perPackageWeight > packingType.maxWeight) {
-        return { 
-          isValid: false, 
-          error: `Per package weight (${perPackageWeight.toFixed(2)} kg) exceeds limit for ${packingType.name} (Max: ${packingType.maxWeight} kg/package)` 
+        return {
+          isValid: false,
+          error: `Per package weight (${perPackageWeight.toFixed(2)} kg) exceeds limit for ${packingType.name} (Max: ${packingType.maxWeight} kg/package)`
         };
       }
     }
@@ -1009,13 +833,13 @@ export default function BookingComputerizedGRL() {
     let pckgs = 0;
     let actWeight = 0;
     let chgWeight = 0;
-    
+
     goodsItems.forEach(item => {
       pckgs += Number(item.noOfPckgs) || 0;
       actWeight += Number(item.actualWeight) || 0;
       chgWeight += Number(item.chargeWeight) || 0;
     });
-    
+
     setTotalPckgs(pckgs);
     setTotalActualWeight(actWeight);
     setTotalChargeWeight(chgWeight);
@@ -1025,11 +849,11 @@ export default function BookingComputerizedGRL() {
     setGoodsItems(goodsItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
-        
+
         if (field === "actualWeight") {
           updated.chargeWeight = Number(value);
         }
-        
+
         if (field === "contentCategory") {
           updated.contentSubCategory = "";
           updated.content = "";
@@ -1039,11 +863,11 @@ export default function BookingComputerizedGRL() {
           const subCategory = category?.subCategories?.find((s: any) => s.id === Number(value));
           updated.content = subCategory?.name || "";
         }
-        
+
         const validation = validatePackageWeight(updated);
         updated.isWeightValid = validation.isValid;
         updated.weightError = validation.error;
-        
+
         return updated;
       }
       return item;
@@ -1051,9 +875,9 @@ export default function BookingComputerizedGRL() {
   };
 
   const addGoodsRow = () => {
-    setGoodsItems([...goodsItems, { 
-      id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", 
-      content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true 
+    setGoodsItems([...goodsItems, {
+      id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "",
+      content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true
     }]);
     toast.success("New goods row added");
   };
@@ -1109,7 +933,7 @@ export default function BookingComputerizedGRL() {
       toast.error("Please enter ID value");
       return;
     }
-    
+
     try {
       const response = await searchClient(consignorIdType, consignorIdValue);
       if (response.data) {
@@ -1169,7 +993,7 @@ export default function BookingComputerizedGRL() {
       toast.error("Please enter ID value");
       return;
     }
-    
+
     try {
       const response = await searchClient(consigneeIdType, consigneeIdValue);
       if (response.data) {
@@ -1207,7 +1031,7 @@ export default function BookingComputerizedGRL() {
       toast.error("Please enter client name");
       return;
     }
-    
+
     try {
       const response = await createClient({
         name: newClientData.name,
@@ -1223,10 +1047,10 @@ export default function BookingComputerizedGRL() {
         iecCode: newClientData.iecCode || "",
         bankAdNo: newClientData.bankAdNo || "",
       });
-      
+
       const newClient = response.data;
       await loadClients();
-      
+
       if (type === "consignor") {
         setConsignorId(newClient._id || "");
         setConsignorName(newClient.name);
@@ -1297,7 +1121,7 @@ export default function BookingComputerizedGRL() {
     setNcv(false);
     setPrintAfterSave(false);
     setCcAttached(false);
-    
+
     setFreightRate(0);
     setCalculatedFreight(0);
     setGstRate(0);
@@ -1312,7 +1136,7 @@ export default function BookingComputerizedGRL() {
     setGstAmount(0);
     setTotalAmount(0);
     setBalanceAmount(0);
-    
+
     setConsignorIdType("");
     setConsignorIdValue("");
     setConsignorId("");
@@ -1328,7 +1152,7 @@ export default function BookingComputerizedGRL() {
     setConsignorEmail("");
     setConsignorIec("");
     setConsignorBankAd("");
-    
+
     setConsigneeIdType("");
     setConsigneeIdValue("");
     setConsigneeId("");
@@ -1344,7 +1168,7 @@ export default function BookingComputerizedGRL() {
     setConsigneeEmail("");
     setConsigneeIec("");
     setConsigneeEximCode("");
-    
+
     setGoodsItems([{ id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true }]);
     setInvoices([{ id: Date.now(), invoiceNo: "", date: new Date(), value: "0", ewayBillNo: "", ewayBillDate: new Date(), validUpto: "" }]);
     setRemarks("");
@@ -1363,14 +1187,16 @@ export default function BookingComputerizedGRL() {
     setCurrentEditId(null);
     setIsConsignorAddressOpen(false);
     setIsConsigneeAddressOpen(false);
-    
-    // Reset damage states
+
+    // ========== CRITICAL: Reset all damage states ==========
     setDamageType([]);
     setDamageReason("");
     setDamageOtherRemark("");
+    setDamagePackageCount(0);
+    setDamagePackageError("");
     setDamagePhotos([]);
-    
-    // FIXED: Properly reset voice note states
+
+    // ========== CRITICAL: Reset voice note states completely ==========
     if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
       URL.revokeObjectURL(voiceNoteUrl);
     }
@@ -1381,6 +1207,7 @@ export default function BookingComputerizedGRL() {
     setRecordingDuration(0);
     finalDurationRef.current = 0;
     audioChunksRef.current = [];
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -1390,14 +1217,27 @@ export default function BookingComputerizedGRL() {
       timerRef.current = null;
     }
     if (mediaRecorderRef.current) {
+      try {
+        if (isRecording) {
+          mediaRecorderRef.current.stop();
+        }
+      } catch (e) { }
       mediaRecorderRef.current = null;
     }
+
+    // Clear validation errors
+    setValidationErrors({});
   };
 
   const handleDamageTypeChange = (type: "damaged" | "missing" | "both") => {
     setDamageType(prev => {
       if (prev.includes(type)) {
-        return prev.filter(t => t !== type);
+        const newType = prev.filter(t => t !== type);
+        if (newType.length === 0) {
+          setDamagePackageCount(0);
+          setDamagePackageError("");
+        }
+        return newType;
       } else {
         return [...prev, type];
       }
@@ -1411,90 +1251,71 @@ export default function BookingComputerizedGRL() {
     }
   };
 
-  const handleSave = async () => {
-    console.log("=== COMPUTERIZED BOOKING SAVE BUTTON CLICKED ===");
-    
-    if (!bookingFrom) { 
-      toast.error("Please enter Booking From"); 
-      return; 
-    }
-    if (!destination) { 
-      toast.error("Please select Destination"); 
-      return; 
-    }
-    if (!consignorName) { 
-      toast.error("Please select Consignor"); 
-      return; 
-    }
-    if (!consigneeName) { 
-      toast.error("Please select Consignee"); 
-      return; 
-    }
-    if (!bookingType) { 
-      toast.error("Please select Booking Type"); 
-      return; 
-    }
-    if (!collectionAt) { 
-      toast.error("Please enter Collection At"); 
-      return; 
-    }
-    if (!serviceProduct) { 
-      toast.error("Please select Service/Product"); 
-      return; 
-    }
-    if (!deliveryType) { 
-      toast.error("Please select Delivery Type"); 
-      return; 
-    }
-    if (!loadType) { 
-      toast.error("Please select Load Type"); 
-      return; 
-    }
-    
+  // Validate all required fields before save
+  const validateRequiredFields = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!bookingFrom) errors.bookingFrom = "Booking From is required";
+    if (!destination) errors.destination = "Destination is required";
+    if (!consignorName) errors.consignorName = "Consignor Name is required";
+    if (!consigneeName) errors.consigneeName = "Consignee Name is required";
+    if (!bookingType) errors.bookingType = "Booking Type is required";
+    if (!collectionAt) errors.collectionAt = "Collection At is required";
+    if (!serviceProduct) errors.serviceProduct = "Service/Product is required";
+    if (!deliveryType) errors.deliveryType = "Delivery Type is required";
+    if (!loadType) errors.loadType = "Load Type is required";
+
     const hasWeightError = goodsItems.some(item => !item.isWeightValid);
     if (hasWeightError) {
-      toast.error("Please fix weight validation errors before saving");
+      errors.weightError = "Please fix weight validation errors";
+    }
+
+    // Damage validation
+    if (damageType.length > 0) {
+      if (!damageReason) errors.damageReason = "Please select a damage/missing reason";
+      if (damageReason === "Other (specify)" && !damageOtherRemark.trim()) {
+        errors.damageOtherRemark = "Please specify the reason";
+      }
+      if (!remarks.trim()) errors.remarks = "Please add remarks about the damage/missing condition";
+      if (damagePackageCount < 1) errors.damagePackageCount = "Number of damaged/missing packages must be at least 1";
+      if (damagePackageCount > totalPckgs) {
+        errors.damagePackageCount = `Cannot exceed total packages (${totalPckgs})`;
+      }
+      if (damagePhotos.length === 0) errors.damagePhotos = "Please upload at least 1 damage photo";
+      if (!voiceNoteBase64 && !voiceNoteUrl) errors.voiceNote = "Please record a voice note describing the damage";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSave = async () => {
+    console.log("=== COMPUTERIZED BOOKING SAVE BUTTON CLICKED ===");
+
+    // Validate all required fields
+    if (!validateRequiredFields()) {
+      // Show first error
+      const firstError = Object.values(validationErrors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      }
       return;
     }
 
-    if (damageType.length > 0) {
-      if (!damageReason) {
-        toast.error("Please select a damage/missing reason");
-        return;
-      }
-      if (damageReason === "Other (specify)" && !damageOtherRemark.trim()) {
-        toast.error("Please specify the reason in the remark field");
-        return;
-      }
-      if (!remarks.trim()) {
-        toast.error("Please add remarks about the damage/missing condition");
-        return;
-      }
-      if (damagePhotos.length === 0) {
-        toast.error("Please upload at least 1 damage photo");
-        return;
-      }
-      if (!voiceNoteBase64 && !voiceNoteUrl) {
-        toast.error("Please record a voice note describing the damage");
-        return;
-      }
-    }
-
     setLoading(true);
-    
-    // Use base64 version of voice note if available, otherwise use URL
+
     const finalVoiceNoteUrl = voiceNoteBase64 || voiceNoteUrl || "";
-    
+
     const bookingData = {
-      bookingFrom, 
-      bookingDate, 
-      destination, 
+      bookingFrom,
+      bookingDate,
+      destination,
       pickupFrom: pickupFrom || "",
       deliveryPoint: deliveryPoint || "",
-      bookingType, 
+      bookingType,
       collectionAt,
       consignorId: consignorId === "self" ? "" : consignorId,
-      consignorName, 
+      consignorName,
       consignorMobile: consignorMobile || "",
       consignorGst: consignorGst || "",
       consignorAdhaar: consignorAdhaar || "",
@@ -1507,7 +1328,7 @@ export default function BookingComputerizedGRL() {
       consignorIec: consignorIec || "",
       consignorBankAd: consignorBankAd || "",
       consigneeId: consigneeId === "self" ? "" : consigneeId,
-      consigneeName, 
+      consigneeName,
       consigneeMobile: consigneeMobile || "",
       consigneeGst: consigneeGst || "",
       consigneeAdhaar: consigneeAdhaar || "",
@@ -1520,18 +1341,18 @@ export default function BookingComputerizedGRL() {
       consigneeIec: consigneeIec || "",
       consigneeEximCode: consigneeEximCode || "",
       pvtMarkaSealNo: pvtMarkaSealNo || "",
-      serviceProduct, 
-      deliveryType, 
-      loadType, 
+      serviceProduct,
+      deliveryType,
+      loadType,
       mkExecutive: mkExecutive || "",
       freightOn,
-      manualRates, 
-      ncv, 
-      printAfterSave, 
+      manualRates,
+      ncv,
+      printAfterSave,
       ccAttached,
-      totalPckgs, 
-      totalActualWeight, 
-      totalChargeWeight, 
+      totalPckgs,
+      totalActualWeight,
+      totalChargeWeight,
       totalFreight: manualRates ? calculatedFreight : totalChargeWeight * 5,
       remarks: remarks || "",
       roRemarks: roRemarks || "",
@@ -1539,13 +1360,13 @@ export default function BookingComputerizedGRL() {
       supplementaryBillNo: supplementaryBillNo || "",
       insuranceCoveredBy: insuranceCoveredBy || "",
       insuranceNo: insuranceNo || "",
-      insuranceDate, 
+      insuranceDate,
       insuranceCompany: insuranceCompany || "",
       goodsItems: goodsItems.map(({ id, ...rest }) => rest),
-      invoices: invoices.map(({ id, ...rest }) => ({ 
-        ...rest, 
-        date: rest.date, 
-        ewayBillDate: rest.ewayBillDate 
+      invoices: invoices.map(({ id, ...rest }) => ({
+        ...rest,
+        date: rest.date,
+        ewayBillDate: rest.ewayBillDate
       })),
       ...(manualRates && {
         freightRate,
@@ -1561,6 +1382,7 @@ export default function BookingComputerizedGRL() {
       damageType: damageType.length > 0 ? damageType : undefined,
       damageReason: damageReason || undefined,
       damageOtherRemark: damageOtherRemark || undefined,
+      damagePackageCount: damagePackageCount || 0,
       damagePhotos: damagePhotos.length > 0 ? damagePhotos : undefined,
       voiceNoteUrl: finalVoiceNoteUrl,
       voiceNoteDuration: voiceNoteDuration || undefined,
@@ -1575,10 +1397,10 @@ export default function BookingComputerizedGRL() {
         response = await createBooking(bookingData);
         toast.success(`Booking created successfully! GR No: ${response.data.grNo}`);
       }
-      
+
       await loadBookings();
       await loadStats();
-      
+
       if (printAfterSave) handlePrint();
       resetForm();
       setIsBookingModalOpen(false);
@@ -1597,9 +1419,9 @@ export default function BookingComputerizedGRL() {
   };
 
   const handleCancelBooking = async () => {
-    if (!cancelledReason) { 
-      toast.error("Please select cancellation reason"); 
-      return; 
+    if (!cancelledReason) {
+      toast.error("Please select cancellation reason");
+      return;
     }
     if (cancellingBooking) {
       setLoading(true);
@@ -1661,23 +1483,23 @@ export default function BookingComputerizedGRL() {
     setLoading(true);
     try {
       const filters: any = { status: 'active', limit: 100 };
-      
+
       if (searchGrNo && searchGrNo.trim() !== '') {
         filters.grNo = searchGrNo.trim();
       }
-      
+
       if (searchFromDate) {
         filters.fromDate = searchFromDate.toISOString();
       }
-      
+
       if (searchToDate) {
         filters.toDate = searchToDate.toISOString();
       }
-      
+
       if (searchBranch !== "all") {
         filters.branch = searchBranch;
       }
-      
+
       const response = await getBookings(filters);
       setSearchResults(response.data || []);
       setTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
@@ -1699,7 +1521,7 @@ export default function BookingComputerizedGRL() {
       if (searchFromDate) filters.fromDate = searchFromDate.toISOString();
       if (searchToDate) filters.toDate = searchToDate.toISOString();
       if (searchBranch !== "all") filters.branch = searchBranch;
-      
+
       const response = await getBookings(filters);
       setCancelledSearchResults(response.data || []);
       setCancelledTotalPages(Math.ceil((response.pagination?.total || 0) / itemsPerPage));
@@ -1722,8 +1544,9 @@ export default function BookingComputerizedGRL() {
     loadCancelledBookings();
     toast.success("Search filters cleared");
   };
-
   const handleEdit = (record: BookingRecord) => {
+    resetForm();  // CRITICAL: Reset form before loading edit data
+
     setEditMode(true);
     setCurrentEditId(record._id!);
     setGrNo(record.grNo);
@@ -1744,7 +1567,7 @@ export default function BookingComputerizedGRL() {
     setNcv(record.ncv);
     setPrintAfterSave(record.printAfterSave);
     setCcAttached(record.ccAttached);
-    
+
     setConsignorId(String(record.consignorId));
     setConsignorName(record.consignorName);
     setConsignorMobile(record.consignorMobile || "");
@@ -1758,7 +1581,7 @@ export default function BookingComputerizedGRL() {
     setConsignorEmail(record.consignorEmail);
     setConsignorIec(record.consignorIec);
     setConsignorBankAd(record.consignorBankAd);
-    
+
     setConsigneeId(String(record.consigneeId));
     setConsigneeName(record.consigneeName);
     setConsigneeMobile(record.consigneeMobile || "");
@@ -1772,7 +1595,7 @@ export default function BookingComputerizedGRL() {
     setConsigneeEmail(record.consigneeEmail);
     setConsigneeIec(record.consigneeIec);
     setConsigneeEximCode(record.consigneeEximCode);
-    
+
     setGoodsItems(record.goodsItems.map((item, idx) => ({ ...item, id: Date.now() + idx })));
     setInvoices(record.invoices.map((inv, idx) => ({ ...inv, id: Date.now() + idx })));
     setRemarks(record.remarks);
@@ -1787,18 +1610,54 @@ export default function BookingComputerizedGRL() {
     setTotalActualWeight(record.totalActualWeight);
     setTotalChargeWeight(record.totalChargeWeight);
     setTotalFreight(record.totalFreight);
-    
-    // Load damage data
-    if (record.damageType) setDamageType(record.damageType);
-    if (record.damageReason) setDamageReason(record.damageReason);
-    if (record.damageOtherRemark) setDamageOtherRemark(record.damageOtherRemark);
-    if (record.damagePhotos) setDamagePhotos(record.damagePhotos);
-    if (record.voiceNoteUrl) {
+
+    // Load damage data - ONLY if exists in record
+    if (record.damageType && record.damageType.length > 0) {
+      setDamageType(record.damageType);
+    } else {
+      setDamageType([]);
+    }
+
+    if (record.damageReason) {
+      setDamageReason(record.damageReason);
+    } else {
+      setDamageReason("");
+    }
+
+    if (record.damageOtherRemark) {
+      setDamageOtherRemark(record.damageOtherRemark);
+    } else {
+      setDamageOtherRemark("");
+    }
+
+    if (record.damagePackageCount && record.damagePackageCount > 0) {
+      setDamagePackageCount(record.damagePackageCount);
+    } else {
+      setDamagePackageCount(0);
+    }
+
+    if (record.damagePhotos && record.damagePhotos.length > 0) {
+      setDamagePhotos(record.damagePhotos);
+    } else {
+      setDamagePhotos([]);
+    }
+
+    // CRITICAL: Voice note - ONLY if exists in record
+    if (record.voiceNoteUrl && record.voiceNoteUrl.trim() !== "") {
       setVoiceNoteUrl(record.voiceNoteUrl);
       setVoiceNoteBase64(record.voiceNoteUrl);
+      setVoiceNoteDuration(record.voiceNoteDuration || 0);
+    } else {
+      setVoiceNoteUrl(null);
+      setVoiceNoteBase64(null);
+      setVoiceNoteDuration(null);
     }
-    if (record.voiceNoteDuration) setVoiceNoteDuration(record.voiceNoteDuration);
-    
+
+    setIsRecording(false);
+    setRecordingDuration(0);
+    setDamagePackageError("");
+    setValidationErrors({});
+
     setIsBookingModalOpen(true);
   };
 
@@ -1848,16 +1707,16 @@ export default function BookingComputerizedGRL() {
 
       {/* Main Tabs */}
       <div className="flex border-b bg-white rounded-t-lg">
-        <button 
-          onClick={() => { setMainTab("active"); loadBookings(); }} 
-          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors", 
+        <button
+          onClick={() => { setMainTab("active"); loadBookings(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors",
             mainTab === "active" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100")}
         >
           Active Bookings
         </button>
-        <button 
-          onClick={() => { setMainTab("cancelled"); loadCancelledBookings(); }} 
-          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors", 
+        <button
+          onClick={() => { setMainTab("cancelled"); loadCancelledBookings(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors",
             mainTab === "cancelled" ? "bg-red-600 text-white" : "text-gray-600 hover:bg-gray-100")}
         >
           Cancelled Bookings
@@ -1930,11 +1789,11 @@ export default function BookingComputerizedGRL() {
                 </div>
                 <div>
                   <Label className="text-sm">GR No.</Label>
-                  <Input 
-                    value={searchGrNo} 
-                    onChange={(e) => setSearchGrNo(e.target.value)} 
-                    placeholder="Enter GR Number" 
-                    className="h-9 text-sm" 
+                  <Input
+                    value={searchGrNo}
+                    onChange={(e) => setSearchGrNo(e.target.value)}
+                    placeholder="Enter GR Number"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div>
@@ -2003,7 +1862,7 @@ export default function BookingComputerizedGRL() {
                     <TableBody>
                       {paginatedResults.map((r, idx) => (
                         <TableRow key={r._id} className="hover:bg-gray-50">
-                          <TableCell className="text-sm p-3">{(currentPage-1)*itemsPerPage+idx+1}</TableCell>
+                          <TableCell className="text-sm p-3">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>
                           <TableCell className="text-sm p-3 font-mono font-bold">
                             <Badge variant="secondary" className="bg-blue-100 text-blue-700">{r.grNo}</Badge>
                           </TableCell>
@@ -2019,26 +1878,26 @@ export default function BookingComputerizedGRL() {
                           <TableCell className="text-sm p-3 text-right font-semibold">₹{r.totalFreight.toLocaleString()}</TableCell>
                           <TableCell className="text-sm p-3 text-center">
                             <div className="flex gap-1 justify-center">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleEdit(r)} 
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(r)}
                                 className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => openCancelDialog(r)} 
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openCancelDialog(r)}
                                 className="h-8 w-8 p-0 text-orange-500 hover:text-orange-700 hover:bg-orange-50"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => handleDelete(r._id!)} 
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(r._id!)}
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -2074,7 +1933,7 @@ export default function BookingComputerizedGRL() {
         </>
       )}
 
-      {/* Cancelled Tab Content */}
+      {/* Cancelled Tab Content - Simplified */}
       {mainTab === "cancelled" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2178,7 +2037,7 @@ export default function BookingComputerizedGRL() {
                 <p className="text-gray-500 mt-2">Loading cancelled bookings...</p>
               </CardContent>
             </Card>
-          ) : viewMode === "report" && cancelledSearchResults.length > 0 ? (
+          ) : cancelledSearchResults.length > 0 ? (
             <Card>
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
@@ -2201,7 +2060,7 @@ export default function BookingComputerizedGRL() {
                     <TableBody>
                       {paginatedCancelledResults.map((r, idx) => (
                         <TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50">
-                          <TableCell className="text-sm p-3">{(cancelledCurrentPage-1)*itemsPerPage+idx+1}</TableCell>
+                          <TableCell className="text-sm p-3">{(cancelledCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell>
                           <TableCell className="text-sm p-3">
                             <Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge>
                           </TableCell>
@@ -2216,10 +2075,10 @@ export default function BookingComputerizedGRL() {
                             {r.cancelledReason}
                           </TableCell>
                           <TableCell className="text-sm p-3 text-center">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => handleRestoreBooking(r)} 
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRestoreBooking(r)}
                               className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
                               title="Restore Booking"
                             >
@@ -2244,14 +2103,14 @@ export default function BookingComputerizedGRL() {
                 )}
               </CardContent>
             </Card>
-          ) : cancelledSearchResults.length === 0 ? (
+          ) : (
             <Card>
               <CardContent className="py-12 text-center">
                 <X className="h-12 w-12 mx-auto text-gray-400" />
                 <p className="text-gray-500 mt-2">No cancelled bookings found</p>
               </CardContent>
             </Card>
-          ) : null}
+          )}
         </>
       )}
 
@@ -2295,18 +2154,18 @@ export default function BookingComputerizedGRL() {
             <DialogDescription>Enter consignor details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
-            <div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({...newClientData, name: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({...newClientData, mobile: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({...newClientData, gstNumber: e.target.value})} className="h-9 text-sm uppercase" /></div>
-            <div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({...newClientData, adhaarNumber: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({...newClientData, panNumber: e.target.value})} className="h-9 text-sm uppercase" /></div>
-            <div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({...newClientData, email: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({...newClientData, address: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({...newClientData, city: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({...newClientData, state: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({...newClientData, dealerCode: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({...newClientData, iecCode: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Bank AD No.</Label><Input value={newClientData.bankAdNo || ""} onChange={(e) => setNewClientData({...newClientData, bankAdNo: e.target.value})} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({ ...newClientData, mobile: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, gstNumber: e.target.value })} className="h-9 text-sm uppercase" /></div>
+            <div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, adhaarNumber: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, panNumber: e.target.value })} className="h-9 text-sm uppercase" /></div>
+            <div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({ ...newClientData, city: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({ ...newClientData, state: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({ ...newClientData, dealerCode: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({ ...newClientData, iecCode: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Bank AD No.</Label><Input value={newClientData.bankAdNo || ""} onChange={(e) => setNewClientData({ ...newClientData, bankAdNo: e.target.value })} className="h-9 text-sm" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsNewConsignorDialogOpen(false)}>Cancel</Button>
@@ -2326,17 +2185,17 @@ export default function BookingComputerizedGRL() {
             <DialogDescription>Enter consignee details below</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
-            <div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({...newClientData, name: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({...newClientData, mobile: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({...newClientData, gstNumber: e.target.value})} className="h-9 text-sm uppercase" /></div>
-            <div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({...newClientData, adhaarNumber: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({...newClientData, panNumber: e.target.value})} className="h-9 text-sm uppercase" /></div>
-            <div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({...newClientData, email: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({...newClientData, address: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({...newClientData, city: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({...newClientData, state: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({...newClientData, dealerCode: e.target.value})} className="h-9 text-sm" /></div>
-            <div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({...newClientData, iecCode: e.target.value})} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({ ...newClientData, mobile: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, gstNumber: e.target.value })} className="h-9 text-sm uppercase" /></div>
+            <div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, adhaarNumber: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, panNumber: e.target.value })} className="h-9 text-sm uppercase" /></div>
+            <div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({ ...newClientData, city: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({ ...newClientData, state: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({ ...newClientData, dealerCode: e.target.value })} className="h-9 text-sm" /></div>
+            <div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({ ...newClientData, iecCode: e.target.value })} className="h-9 text-sm" /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsNewConsigneeDialogOpen(false)}>Cancel</Button>
@@ -2348,8 +2207,13 @@ export default function BookingComputerizedGRL() {
         </DialogContent>
       </Dialog>
 
-      {/* Main Booking Modal - Keeping all sections */}
-      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+      {/* Main Booking Modal */}
+      <Dialog open={isBookingModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          resetForm();
+        }
+        setIsBookingModalOpen(open);
+      }}>
         <DialogContent className="w-[95vw] max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pb-3 border-b shrink-0">
             <DialogTitle className="text-xl">{editMode ? "Edit Booking" : "Create New Booking"}</DialogTitle>
@@ -2357,135 +2221,596 @@ export default function BookingComputerizedGRL() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {/* Basic Information Section - Keeping same */}
+            {/* Basic Information */}
             <div className="border rounded-lg p-4">
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-600">
                 <FileText className="h-5 w-5" /> Basic Information
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div><Label className="text-sm">GR #</Label><Input value={grNo} readOnly className="h-9 text-sm bg-gray-50" placeholder="Auto-generated" /></div>
-                <div><Label className="text-sm">Booking From <span className="text-red-500">*</span></Label><Input value={bookingFrom} readOnly disabled className="h-9 text-sm bg-gray-100" /></div>
-                <div><Label className="text-sm">Booking Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(bookingDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="z-[10000]"><Calendar mode="single" selected={bookingDate} onSelect={(d) => d && setBookingDate(d)} /></PopoverContent></Popover></div>
-                <div><Label className="text-sm">Destination <span className="text-red-500">*</span></Label><Select value={destination} onValueChange={setDestination}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Destination" /></SelectTrigger><SelectContent>{destinationOptions.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}</SelectContent></Select></div>
-                <div><Label className="text-sm">Pickup From</Label><Input value={pickupFrom} onChange={(e) => setPickupFrom(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Delivery Point</Label><Input value={deliveryPoint} onChange={(e) => setDeliveryPoint(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Booking Type <span className="text-red-500">*</span></Label><Select value={bookingType} onValueChange={setBookingType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{bookingTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm">Collection At <span className="text-red-500">*</span></Label><Input value={collectionAt} onChange={(e) => setCollectionAt(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Pvt Marka/Seal No</Label><Input value={pvtMarkaSealNo} onChange={(e) => setPvtMarkaSealNo(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Service/Product <span className="text-red-500">*</span></Label><Select value={serviceProduct} onValueChange={setServiceProduct}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{serviceProductOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm">Delivery Type <span className="text-red-500">*</span></Label><Select value={deliveryType} onValueChange={setDeliveryType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{deliveryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm">Load Type <span className="text-red-500">*</span></Label><Select value={loadType} onValueChange={setLoadType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{loadTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm">MKT. Executive</Label><Input value={mkExecutive} onChange={(e) => setMkExecutive(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Freight On</Label><Select value={freightOn} onValueChange={setFreightOn}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{freightOnOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
+                <div>
+                  <Label className="text-sm">GR #</Label>
+                  <Input value={grNo} readOnly className="h-9 text-sm bg-gray-50" placeholder="Auto-generated" />
+                </div>
+                <div>
+                  <Label className="text-sm">Booking From <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={bookingFrom}
+                    onChange={(e) => setBookingFrom(e.target.value)}
+                    className="h-9 text-sm bg-gray-100"
+                    placeholder="Enter source branch"
+                    readOnly
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Booking Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(bookingDate, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="z-[10000]">
+                      <Calendar mode="single" selected={bookingDate} onSelect={(d) => d && setBookingDate(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className="text-sm">Destination <span className="text-red-500">*</span></Label>
+                  <Select value={destination} onValueChange={setDestination}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select Destination" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {destinationOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {validationErrors.destination && <p className="text-red-500 text-xs mt-1">{validationErrors.destination}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">Pickup From</Label>
+                  <Input value={pickupFrom} onChange={(e) => setPickupFrom(e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-sm">Delivery Point</Label>
+                  <Input value={deliveryPoint} onChange={(e) => setDeliveryPoint(e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-sm">Booking Type <span className="text-red-500">*</span></Label>
+                  <Select value={bookingType} onValueChange={setBookingType}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{bookingTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {validationErrors.bookingType && <p className="text-red-500 text-xs mt-1">{validationErrors.bookingType}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">Collection At <span className="text-red-500">*</span></Label>
+                  <Input value={collectionAt} onChange={(e) => setCollectionAt(e.target.value)} className="h-9 text-sm" />
+                  {validationErrors.collectionAt && <p className="text-red-500 text-xs mt-1">{validationErrors.collectionAt}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">Pvt Marka/Seal No</Label>
+                  <Input value={pvtMarkaSealNo} onChange={(e) => setPvtMarkaSealNo(e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-sm">Service/Product <span className="text-red-500">*</span></Label>
+                  <Select value={serviceProduct} onValueChange={setServiceProduct}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{serviceProductOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {validationErrors.serviceProduct && <p className="text-red-500 text-xs mt-1">{validationErrors.serviceProduct}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">Delivery Type <span className="text-red-500">*</span></Label>
+                  <Select value={deliveryType} onValueChange={setDeliveryType}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{deliveryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {validationErrors.deliveryType && <p className="text-red-500 text-xs mt-1">{validationErrors.deliveryType}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">Load Type <span className="text-red-500">*</span></Label>
+                  <Select value={loadType} onValueChange={setLoadType}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{loadTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  {validationErrors.loadType && <p className="text-red-500 text-xs mt-1">{validationErrors.loadType}</p>}
+                </div>
+                <div>
+                  <Label className="text-sm">MKT. Executive</Label>
+                  <Input value={mkExecutive} onChange={(e) => setMkExecutive(e.target.value)} className="h-9 text-sm" />
+                </div>
+                <div>
+                  <Label className="text-sm">Freight On</Label>
+                  <Select value={freightOn} onValueChange={setFreightOn}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{freightOnOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
             {/* Consignor Details Section */}
             <div className="border rounded-lg p-4 bg-blue-50/30">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-700"><Building className="h-5 w-5" /> Consignor Details</h3>
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-700">
+                <Building className="h-5 w-5" /> Consignor Details
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <div><Label className="text-sm">Select ID Type</Label><Select value={consignorIdType} onValueChange={setConsignorIdType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent></Select></div>
-                {consignorIdType !== "Self" && consignorIdType !== "" && (<div><Label className="text-sm">Enter ID Value</Label><Input value={consignorIdValue} onChange={(e) => setConsignorIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" /></div>)}
-                <div className="flex gap-2 items-end"><Button onClick={handleConsignorSearch} className="h-9 text-sm bg-blue-600"><Search className="h-4 w-4 mr-1" />Search</Button><Button onClick={handleConsignorAdd} variant="outline" className="h-9 text-sm"><Plus className="h-4 w-4 mr-1" />Add</Button></div>
+                <div>
+                  <Label className="text-sm">Select ID Type</Label>
+                  <Select value={consignorIdType} onValueChange={setConsignorIdType}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
+                  </Select>
+                </div>
+                {consignorIdType !== "Self" && consignorIdType !== "" && (
+                  <div>
+                    <Label className="text-sm">Enter ID Value</Label>
+                    <Input value={consignorIdValue} onChange={(e) => setConsignorIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" />
+                  </div>
+                )}
+                <div className="flex gap-2 items-end">
+                  <Button onClick={handleConsignorSearch} className="h-9 text-sm bg-blue-600">
+                    <Search className="h-4 w-4 mr-1" />Search
+                  </Button>
+                  <Button onClick={handleConsignorAdd} variant="outline" className="h-9 text-sm">
+                    <Plus className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
-                <div><Label className="text-sm">Name</Label><Input value={consignorName} onChange={(e) => setConsignorName(e.target.value)} className="h-9 text-sm" /></div>
-                {consignorIdType !== "Self" && (<div><Label className="text-sm">Mobile No.</Label><Input value={consignorMobile} onChange={(e) => setConsignorMobile(e.target.value)} className="h-9 text-sm" /></div>)}
+                <div>
+                  <Label className="text-sm">Name</Label>
+                  <Input value={consignorName} onChange={(e) => setConsignorName(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} />
+                  {validationErrors.consignorName && <p className="text-red-500 text-xs mt-1">{validationErrors.consignorName}</p>}
+                </div>
+                {consignorIdType !== "Self" && (
+                  <div>
+                    <Label className="text-sm">Mobile No.</Label>
+                    <Input value={consignorMobile} onChange={(e) => setConsignorMobile(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} />
+                  </div>
+                )}
               </div>
-              {consignorName === "Self" && (<div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>)}
-              <button onClick={() => setIsConsignorAddressOpen(!isConsignorAddressOpen)} className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">{isConsignorAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}{isConsignorAddressOpen ? "Hide Address Details" : "Show Address Details"}</button>
-              {isConsignorAddressOpen && (<div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
-                <div><Label className="text-sm">Address</Label><Input value={consignorAddress} onChange={(e) => setConsignorAddress(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">City</Label><Input value={consignorCity} onChange={(e) => setConsignorCity(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">State</Label><Input value={consignorState} onChange={(e) => setConsignorState(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Dealer Code</Label><Input value={consignorDealerCode} onChange={(e) => setConsignorDealerCode(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">IEC Code</Label><Input value={consignorIec} onChange={(e) => setConsignorIec(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Bank AD No.</Label><Input value={consignorBankAd} onChange={(e) => setConsignorBankAd(e.target.value)} className="h-9 text-sm" /></div>
-              </div>)}
+
+              {consignorName === "Self" && (
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>
+              )}
+
+              <button
+                onClick={() => setIsConsignorAddressOpen(!isConsignorAddressOpen)}
+                className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                {isConsignorAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
+                {isConsignorAddressOpen ? "Hide Address Details" : "Show Address Details"}
+              </button>
+              {isConsignorAddressOpen && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
+                  <div><Label className="text-sm">Address</Label><Input value={consignorAddress} onChange={(e) => setConsignorAddress(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">City</Label><Input value={consignorCity} onChange={(e) => setConsignorCity(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">State</Label><Input value={consignorState} onChange={(e) => setConsignorState(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Dealer Code</Label><Input value={consignorDealerCode} onChange={(e) => setConsignorDealerCode(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">IEC Code</Label><Input value={consignorIec} onChange={(e) => setConsignorIec(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Bank AD No.</Label><Input value={consignorBankAd} onChange={(e) => setConsignorBankAd(e.target.value)} className="h-9 text-sm" /></div>
+                </div>
+              )}
             </div>
 
             {/* Consignee Details Section */}
             <div className="border rounded-lg p-4 bg-green-50/30">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-green-700"><Users className="h-5 w-5" /> Consignee Details</h3>
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-green-700">
+                <Users className="h-5 w-5" /> Consignee Details
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <div><Label className="text-sm">Select ID Type</Label><Select value={consigneeIdType} onValueChange={setConsigneeIdType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent></Select></div>
-                {consigneeIdType !== "Self" && consigneeIdType !== "" && (<div><Label className="text-sm">Enter ID Value</Label><Input value={consigneeIdValue} onChange={(e) => setConsigneeIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" /></div>)}
-                <div className="flex gap-2 items-end"><Button onClick={handleConsigneeSearch} className="h-9 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" />Search</Button><Button onClick={handleConsigneeAdd} variant="outline" className="h-9 text-sm"><Plus className="h-4 w-4 mr-1" />Add</Button></div>
+                <div>
+                  <Label className="text-sm">Select ID Type</Label>
+                  <Select value={consigneeIdType} onValueChange={setConsigneeIdType}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
+                  </Select>
+                </div>
+                {consigneeIdType !== "Self" && consigneeIdType !== "" && (
+                  <div>
+                    <Label className="text-sm">Enter ID Value</Label>
+                    <Input value={consigneeIdValue} onChange={(e) => setConsigneeIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" />
+                  </div>
+                )}
+                <div className="flex gap-2 items-end">
+                  <Button onClick={handleConsigneeSearch} className="h-9 text-sm bg-green-600">
+                    <Search className="h-4 w-4 mr-1" />Search
+                  </Button>
+                  <Button onClick={handleConsigneeAdd} variant="outline" className="h-9 text-sm">
+                    <Plus className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
               </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
-                <div><Label className="text-sm">Name</Label><Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} className="h-9 text-sm" /></div>
-                {consigneeIdType !== "Self" && (<div><Label className="text-sm">Mobile No.</Label><Input value={consigneeMobile} onChange={(e) => setConsigneeMobile(e.target.value)} className="h-9 text-sm" /></div>)}
+                <div>
+                  <Label className="text-sm">Name</Label>
+                  <Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} />
+                  {validationErrors.consigneeName && <p className="text-red-500 text-xs mt-1">{validationErrors.consigneeName}</p>}
+                </div>
+                {consigneeIdType !== "Self" && (
+                  <div>
+                    <Label className="text-sm">Mobile No.</Label>
+                    <Input value={consigneeMobile} onChange={(e) => setConsigneeMobile(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} />
+                  </div>
+                )}
               </div>
-              {consigneeName === "Self" && (<div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>)}
-              <button onClick={() => setIsConsigneeAddressOpen(!isConsigneeAddressOpen)} className="mt-3 flex items-center gap-1 text-sm text-green-600 hover:text-green-800">{isConsigneeAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}{isConsigneeAddressOpen ? "Hide Address Details" : "Show Address Details"}</button>
-              {isConsigneeAddressOpen && (<div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
-                <div><Label className="text-sm">Address</Label><Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">City</Label><Input value={consigneeCity} onChange={(e) => setConsigneeCity(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">State</Label><Input value={consigneeState} onChange={(e) => setConsigneeState(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Dealer Code</Label><Input value={consigneeDealerCode} onChange={(e) => setConsigneeDealerCode(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">IEC Code</Label><Input value={consigneeIec} onChange={(e) => setConsigneeIec(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Exim Code</Label><Input value={consigneeEximCode} onChange={(e) => setConsigneeEximCode(e.target.value)} className="h-9 text-sm" /></div>
-              </div>)}
+
+              {consigneeName === "Self" && (
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>
+              )}
+
+              <button
+                onClick={() => setIsConsigneeAddressOpen(!isConsigneeAddressOpen)}
+                className="mt-3 flex items-center gap-1 text-sm text-green-600 hover:text-green-800"
+              >
+                {isConsigneeAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
+                {isConsigneeAddressOpen ? "Hide Address Details" : "Show Address Details"}
+              </button>
+              {isConsigneeAddressOpen && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
+                  <div><Label className="text-sm">Address</Label><Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">City</Label><Input value={consigneeCity} onChange={(e) => setConsigneeCity(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">State</Label><Input value={consigneeState} onChange={(e) => setConsigneeState(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Dealer Code</Label><Input value={consigneeDealerCode} onChange={(e) => setConsigneeDealerCode(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">IEC Code</Label><Input value={consigneeIec} onChange={(e) => setConsigneeIec(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Exim Code</Label><Input value={consigneeEximCode} onChange={(e) => setConsigneeEximCode(e.target.value)} className="h-9 text-sm" /></div>
+                </div>
+              )}
             </div>
 
             {/* Goods Details Section */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="text-base font-semibold flex items-center gap-2"><Package className="h-5 w-5" /> GOODS DETAILS</h3><Button onClick={addGoodsRow} variant="ghost" size="sm" className="h-8 text-sm"><Plus className="mr-1 h-4 w-4" />ADD GOODS</Button></div>
+              <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <Package className="h-5 w-5" /> GOODS DETAILS
+                </h3>
+                <Button onClick={addGoodsRow} variant="ghost" size="sm" className="h-8 text-sm">
+                  <Plus className="mr-1 h-4 w-4" />ADD GOODS
+                </Button>
+              </div>
               <div className="overflow-x-auto p-4">
                 <Table>
-                  <TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">#</TableHead><TableHead className="text-sm">No Of Pckgs</TableHead><TableHead className="text-sm">Content Category</TableHead><TableHead className="text-sm">Content (Sub)</TableHead><TableHead className="text-sm">Packing</TableHead><TableHead className="text-sm">Actual Weight</TableHead><TableHead className="text-sm">Charge Weight</TableHead><TableHead className="text-sm">Status</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-sm w-12">#</TableHead>
+                      <TableHead className="text-sm">No Of Pckgs</TableHead>
+                      <TableHead className="text-sm">Content Category</TableHead>
+                      <TableHead className="text-sm">Content (Sub)</TableHead>
+                      <TableHead className="text-sm">Packing</TableHead>
+                      <TableHead className="text-sm">Actual Weight</TableHead>
+                      <TableHead className="text-sm">Charge Weight</TableHead>
+                      <TableHead className="text-sm">Status</TableHead>
+                      <TableHead className="text-sm w-12">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {goodsItems.map((item, idx) => {
                       const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory));
                       return (
                         <TableRow key={item.id} className={!item.isWeightValid ? "bg-red-50" : ""}>
                           <TableCell className="text-sm">{idx + 1}</TableCell>
-                          <TableCell><Input type="number" value={item.noOfPckgs} onChange={(e) => updateGoodsItem(item.id, "noOfPckgs", Number(e.target.value))} className="h-8 w-24 text-sm" min="0" /></TableCell>
-                          <TableCell><Select value={item.contentCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentCategory", val)}><SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Category" /></SelectTrigger><SelectContent>{contentCategories.map(cat => (<SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>))}</SelectContent></Select></TableCell>
-                          <TableCell><Select value={item.contentSubCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)} disabled={!item.contentCategory}><SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Sub Category" /></SelectTrigger><SelectContent>{selectedCategory?.subCategories?.map((sub: any) => (<SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>))}</SelectContent></Select></TableCell>
-                          <TableCell><Select value={item.packing} onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}><SelectTrigger className="h-8 w-28 text-sm"><SelectValue /></SelectTrigger><SelectContent>{packingTypes.map(opt => (<SelectItem key={opt.name} value={opt.name}>{opt.name} ({opt.maxWeight}kg max/pkg)</SelectItem>))}</SelectContent></Select></TableCell>
-                          <TableCell><Input type="number" value={item.actualWeight} onChange={(e) => updateGoodsItem(item.id, "actualWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" min="0" /></TableCell>
-                          <TableCell><Input type="number" value={item.chargeWeight} onChange={(e) => updateGoodsItem(item.id, "chargeWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" min="0" /></TableCell>
-                          <TableCell>{!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}{item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}</TableCell>
-                          <TableCell><Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.noOfPckgs}
+                              onChange={(e) => updateGoodsItem(item.id, "noOfPckgs", Number(e.target.value))}
+                              className="h-8 w-24 text-sm"
+                              min="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select value={item.contentCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentCategory", val)}>
+                              <SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Category" /></SelectTrigger>
+                              <SelectContent>
+                                {contentCategories.map(cat => (<SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={item.contentSubCategory}
+                              onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)}
+                              disabled={!item.contentCategory}
+                            >
+                              <SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Sub Category" /></SelectTrigger>
+                              <SelectContent>
+                                {selectedCategory?.subCategories?.map((sub: any) => (<SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Select value={item.packing} onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}>
+                              <SelectTrigger className="h-8 w-28 text-sm"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {packingTypes.map(opt => (<SelectItem key={opt.name} value={opt.name}>{opt.name} ({opt.maxWeight}kg max/pkg)</SelectItem>))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.actualWeight}
+                              onChange={(e) => updateGoodsItem(item.id, "actualWeight", Number(e.target.value))}
+                              className="h-8 w-24 text-sm"
+                              step="0.01"
+                              min="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.chargeWeight}
+                              onChange={(e) => updateGoodsItem(item.id, "chargeWeight", Number(e.target.value))}
+                              className="h-8 w-24 text-sm"
+                              step="0.01"
+                              min="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}
+                            {item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       );
                     })}
                   </TableBody>
                 </Table>
               </div>
-              <div className="p-3 bg-gray-50 flex flex-wrap gap-4 justify-between items-center border-t">
-                <div className="flex flex-wrap gap-4 items-center"><span className="text-sm font-medium">Total Pckgs: <strong className="text-blue-600">{totalPckgs}</strong></span><span className="text-sm font-medium">Total Actual Weight: <strong className="text-blue-600">{totalActualWeight.toFixed(2)} kg</strong></span><span className="text-sm font-medium">Total Charge Weight: <strong className="text-blue-600">{totalChargeWeight.toFixed(2)} kg</strong></span>{!manualRates && (<span className="text-sm font-medium">Total Freight: <strong className="text-green-600">₹{(totalChargeWeight * 5).toFixed(2)}</strong></span>)}</div>
-                <div className="flex items-center gap-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={manualRates} onChange={(e) => setManualRates(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm font-medium">Manual Rates</span></label></div>
-              </div>
-            </div>
 
-            {/* Damage/Missing Section - FIXED VOICE RECORDING UI */}
-            <div className="border rounded-lg p-4 bg-red-50/20">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600"><AlertCircle className="h-5 w-5" /> Damage/Missing at the time of booking</h3>
-              <div className="mb-4"><Label className="text-sm font-medium mb-2 block">Select Damage/Missing Type:</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={damageType.includes("damaged")} onChange={() => handleDamageTypeChange("damaged")} className="h-4 w-4 rounded" /><span className="text-sm">Damaged</span></label>
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={damageType.includes("missing")} onChange={() => handleDamageTypeChange("missing")} className="h-4 w-4 rounded" /><span className="text-sm">Missing</span></label>
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={damageType.includes("both")} onChange={() => handleDamageTypeChange("both")} className="h-4 w-4 rounded" /><span className="text-sm">Both</span></label>
+              {/* Totals Bar with Manual Rates Checkbox */}
+              <div className="p-3 bg-gray-50 flex flex-wrap gap-4 justify-between items-center border-t">
+                <div className="flex flex-wrap gap-4 items-center">
+                  <span className="text-sm font-medium">Total Pckgs: <strong className="text-blue-600">{totalPckgs}</strong></span>
+                  <span className="text-sm font-medium">Total Actual Weight: <strong className="text-blue-600">{totalActualWeight.toFixed(2)} kg</strong></span>
+                  <span className="text-sm font-medium">Total Charge Weight: <strong className="text-blue-600">{totalChargeWeight.toFixed(2)} kg</strong></span>
+                  {!manualRates && (
+                    <span className="text-sm font-medium">Total Freight: <strong className="text-green-600">₹{(totalChargeWeight * 5).toFixed(2)}</strong></span>
+                  )}
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={manualRates} onChange={(e) => setManualRates(e.target.checked)} className="h-4 w-4 rounded" />
+                    <span className="text-sm font-medium">Manual Rates</span>
+                  </label>
                 </div>
               </div>
+              {validationErrors.weightError && <p className="text-red-500 text-sm p-2 bg-red-50">{validationErrors.weightError}</p>}
+            </div>
+
+            {/* Damage/Missing Section */}
+            <div className="border rounded-lg p-4 bg-red-50/20">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
+                <AlertCircle className="h-5 w-5" /> Damage/Missing at the time of booking
+              </h3>
+
+              <div className="mb-4">
+                <Label className="text-sm font-medium mb-2 block">Select Damage/Missing Type:</Label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={damageType.includes("damaged")}
+                      onChange={() => handleDamageTypeChange("damaged")}
+                      className="h-4 w-4 rounded"
+                    />
+                    <span className="text-sm">Damaged</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={damageType.includes("missing")}
+                      onChange={() => handleDamageTypeChange("missing")}
+                      className="h-4 w-4 rounded"
+                    />
+                    <span className="text-sm">Missing</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={damageType.includes("both")}
+                      onChange={() => handleDamageTypeChange("both")}
+                      className="h-4 w-4 rounded"
+                    />
+                    <span className="text-sm">Both</span>
+                  </label>
+                </div>
+              </div>
+
               {damageType.length > 0 && (
                 <>
-                  <div className="mb-4"><Label className="text-sm font-medium">Reason <span className="text-red-500">*</span></Label><Select value={damageReason} onValueChange={handleDamageReasonChange}><SelectTrigger className="mt-1"><SelectValue placeholder="Select reason" /></SelectTrigger><SelectContent>{damageReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select></div>
-                  {damageReason === "Other (specify)" && (<div className="mb-4"><Label className="text-sm font-medium">Please specify <span className="text-red-500">*</span></Label><Textarea value={damageOtherRemark} onChange={(e) => setDamageOtherRemark(e.target.value)} placeholder="Describe the issue in detail..." rows={2} className="mt-1" /></div>)}
-                  <div className="mb-4"><Label className="text-sm font-medium">Remark <span className="text-red-500">*</span></Label><Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="Enter remarks about damage/missing condition..." rows={2} className="mt-1" /></div>
-                  <div className="mb-4"><Label className="text-sm font-medium">Upload Damage Photos <span className="text-red-500">* (Min: 1, Max: 10, Max 5MB each)</span></Label>
-                    <div className="mt-2"><Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-9"><Camera className="h-4 w-4 mr-2" /> Select Photos (JPG, PNG, WEBP)</Button><input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handlePhotoUpload} className="hidden" /></div>
-                    {damagePhotos.length > 0 && (<div className="flex flex-wrap gap-3 mt-3">{damagePhotos.map((photo, idx) => (<div key={idx} className="relative w-24 h-24 border rounded-lg overflow-hidden group bg-gray-100"><img src={photo} alt={`Damage ${idx + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removePhoto(idx)} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"><X className="h-3 w-3" /></button></div>))}</div>)}
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium">Reason <span className="text-red-500">*</span></Label>
+                    <Select value={damageReason} onValueChange={handleDamageReasonChange}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {damageReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.damageReason && <p className="text-red-500 text-xs mt-1">{validationErrors.damageReason}</p>}
+                  </div>
+
+                  {damageReason === "Other (specify)" && (
+                    <div className="mb-4">
+                      <Label className="text-sm font-medium">Please specify <span className="text-red-500">*</span></Label>
+                      <Textarea
+                        value={damageOtherRemark}
+                        onChange={(e) => setDamageOtherRemark(e.target.value)}
+                        placeholder="Describe the issue in detail..."
+                        rows={2}
+                        className="mt-1"
+                      />
+                      {validationErrors.damageOtherRemark && <p className="text-red-500 text-xs mt-1">{validationErrors.damageOtherRemark}</p>}
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium">Number of Damaged/Missing Packages <span className="text-red-500">*</span></Label>
+                    <Input
+                      type="number"
+                      value={damagePackageCount || ""}
+                      onChange={(e) => handleDamagePackageCountChange(e.target.value)}
+                      placeholder={`Enter count (Max: ${totalPckgs})`}
+                      className="mt-1"
+                      min="1"
+                      max={totalPckgs}
+                    />
+                    {damagePackageError && <p className="text-red-500 text-xs mt-1">{damagePackageError}</p>}
+                    {validationErrors.damagePackageCount && <p className="text-red-500 text-xs mt-1">{validationErrors.damagePackageCount}</p>}
+                    <p className="text-xs text-gray-500 mt-1">Total packages in this booking: <strong>{totalPckgs}</strong></p>
+                  </div>
+
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium">Remark <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      value={remarks}
+                      onChange={(e) => setRemarks(e.target.value)}
+                      placeholder="Enter remarks about damage/missing condition..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                    {validationErrors.remarks && <p className="text-red-500 text-xs mt-1">{validationErrors.remarks}</p>}
+                  </div>
+
+                  <div className="mb-4">
+                    <Label className="text-sm font-medium">Upload Damage Photos <span className="text-red-500">* (Min: 1, Max: 10, Max 5MB each)</span></Label>
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="h-9"
+                      >
+                        <Camera className="h-4 w-4 mr-2" />
+                        Select Photos (JPG, PNG, WEBP)
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {damagePhotos.length > 0 && (
+                      <div className="flex flex-wrap gap-3 mt-3">
+                        {damagePhotos.map((photo, idx) => (
+                          <div key={idx} className="relative w-24 h-24 border rounded-lg overflow-hidden group bg-gray-100">
+                            <img
+                              src={photo}
+                              alt={`Damage ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(idx)}
+                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {validationErrors.damagePhotos && <p className="text-red-500 text-xs mt-1">{validationErrors.damagePhotos}</p>}
                     <p className="text-xs text-gray-500 mt-1">Supported: JPG, PNG, WEBP. Max 5MB per photo. Click X to remove.</p>
                   </div>
+
+                  {/* Voice Note Recording Section */}
                   <div className="mb-4">
                     <Label className="text-sm font-medium mb-2 block">Voice Note <span className="text-red-500">*</span></Label>
-                    {!isRecording && !voiceNoteUrl && (<Button type="button" onClick={startRecording} variant="outline" className="h-10 bg-blue-50 hover:bg-blue-100 border-blue-300"><Mic className="h-4 w-4 mr-2" /> Start Recording (Max 2 min)</Button>)}
-                    {isRecording && (<div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-200"><Button type="button" onClick={stopRecording} variant="destructive" className="h-10 w-full animate-pulse"><MicOff className="h-4 w-4 mr-2" /> ■ Stop Recording ({formatDuration(recordingDuration)})</Button><p className="text-xs text-red-600 text-center">Recording in progress... Please speak clearly</p></div>)}
-                    {voiceNoteUrl && !isRecording && (<div className="space-y-3 p-3 bg-green-50 rounded-lg border border-green-200"><div className="flex items-center gap-3 flex-wrap"><audio controls src={voiceNoteUrl} className="h-10 flex-1 min-w-[200px]" onError={() => { toast.error("Audio playback error"); deleteVoiceNote(); }} /><div className="flex gap-2"><Button type="button" onClick={() => { deleteVoiceNote(); startRecording(); }} variant="outline" size="sm" className="h-8"><Mic className="h-3 w-3 mr-1" /> Re-record</Button><Button type="button" onClick={deleteVoiceNote} variant="ghost" size="sm" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-3 w-3 mr-1" /> Delete</Button></div></div><p className="text-sm font-medium text-green-700">✅ Voice note recorded - Duration: {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}</p></div>)}
-                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Tip: Describe the damage verbally - what you see, package condition, any sender remarks (Max 2 minutes)</p>
+
+                    {!isRecording && !voiceNoteUrl && (
+                      <Button
+                        type="button"
+                        onClick={startRecording}
+                        variant="outline"
+                        className="h-10 bg-blue-50 hover:bg-blue-100 border-blue-300"
+                      >
+                        <Mic className="h-4 w-4 mr-2" />
+                        Start Recording (Max 2 min)
+                      </Button>
+                    )}
+
+                    {isRecording && (
+                      <div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <Button
+                          type="button"
+                          onClick={stopRecording}
+                          variant="destructive"
+                          className="h-10 w-full animate-pulse"
+                        >
+                          <MicOff className="h-4 w-4 mr-2" />
+                          ■ Stop Recording ({formatDuration(recordingDuration)})
+                        </Button>
+                        <p className="text-xs text-red-600 text-center">Recording in progress... Please speak clearly</p>
+                      </div>
+                    )}
+
+                    {voiceNoteUrl && !isRecording && (
+                      <div className="space-y-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <audio
+                            controls
+                            src={voiceNoteUrl}
+                            className="h-10 flex-1 min-w-[200px]"
+                            onError={() => {
+                              toast.error("Audio playback error");
+                              deleteVoiceNote();
+                            }}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                deleteVoiceNote();
+                                startRecording();
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="h-8"
+                            >
+                              <Mic className="h-3 w-3 mr-1" /> Re-record
+                            </Button>
+                            <Button
+                              type="button"
+                              onClick={deleteVoiceNote}
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" /> Delete
+                            </Button>
+                          </div>
+                        </div>
+                        <p className="text-sm font-medium text-green-700">
+                          ✅ Voice note recorded - Duration: {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}
+                        </p>
+                      </div>
+                    )}
+
+                    {validationErrors.voiceNote && <p className="text-red-500 text-xs mt-1">{validationErrors.voiceNote}</p>}
+                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Tip: Describe the damage verbally - what you see, package condition, any sender remarks (Max 2 minutes)
+                    </p>
                   </div>
                 </>
               )}
@@ -2496,18 +2821,96 @@ export default function BookingComputerizedGRL() {
               <div className="border rounded-lg p-3 bg-yellow-50/30">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2"><Label className="text-xs font-medium">Rate (per kg/pkg):</Label><Input type="number" value={freightRate} onChange={(e) => setFreightRate(Number(e.target.value))} className="h-7 text-xs w-28" step="0.01" /><Button onClick={handleClearFreight} variant="outline" size="sm" className="h-7 text-xs px-2">CLEAR</Button></div>
-                    <div className="flex items-center gap-2"><Label className="text-xs font-medium">Charge Wt:</Label><Input type="number" value={totalChargeWeight} readOnly className="h-7 text-xs w-28 bg-gray-50" /></div>
-                    <div className="flex items-center gap-2"><Label className="text-xs font-medium">Freight:</Label><Input type="number" value={calculatedFreight} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" /></div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs font-medium">Rate (per kg/pkg):</Label>
+                      <Input
+                        type="number"
+                        value={freightRate}
+                        onChange={(e) => setFreightRate(Number(e.target.value))}
+                        className="h-7 text-xs w-28"
+                        step="0.01"
+                      />
+                      <Button onClick={handleClearFreight} variant="outline" size="sm" className="h-7 text-xs px-2">
+                        CLEAR
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs font-medium">Charge Wt:</Label>
+                      <Input type="number" value={totalChargeWeight} readOnly className="h-7 text-xs w-28 bg-gray-50" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs font-medium">Freight:</Label>
+                      <Input type="number" value={calculatedFreight} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" />
+                    </div>
                   </div>
+
                   <div className="col-span-1">
-                    <Table className="text-xs"><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-xs p-1">Charges</TableHead><TableHead className="text-xs p-1 text-center w-16">Rate</TableHead><TableHead className="text-xs p-1 text-right w-20">Amount</TableHead></TableRow></TableHeader>
-                    <TableBody>{extraCharges.map((charge) => (<TableRow key={charge.id} className="text-xs"><TableCell className="text-xs p-1">{charge.name}</TableCell><TableCell className="p-1"><Input type="number" value={charge.rate} onChange={(e) => updateExtraCharge(charge.id, Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" /></TableCell><TableCell className="text-xs p-1 text-right">₹{charge.amount.toFixed(0)}</TableCell></TableRow>))}</TableBody></Table>
+                    <Table className="text-xs">
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="text-xs p-1">Charges</TableHead>
+                          <TableHead className="text-xs p-1 text-center w-16">Rate</TableHead>
+                          <TableHead className="text-xs p-1 text-right w-20">Amount</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {extraCharges.map((charge) => (
+                          <TableRow key={charge.id} className="text-xs">
+                            <TableCell className="text-xs p-1">{charge.name}</TableCell>
+                            <TableCell className="p-1">
+                              <Input
+                                type="number"
+                                value={charge.rate}
+                                onChange={(e) => updateExtraCharge(charge.id, Number(e.target.value))}
+                                className="h-7 w-20 text-xs"
+                                step="0.01"
+                              />
+                            </TableCell>
+                            <TableCell className="text-xs p-1 text-right">₹{charge.amount.toFixed(0)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
+
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between"><Label className="text-xs">GST Paid By:</Label><Select value={gstPaidBy} onValueChange={setGstPaidBy}><SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger><SelectContent>{gstPaidByOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                    <div className="flex items-center justify-between"><Label className="text-xs">GST Rate (%):</Label><Input type="number" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" /></div>
-                    <div className="border-t pt-1 mt-1"><div className="flex justify-between text-xs"><span>SubTotal:</span><span className="font-semibold">₹{subTotal.toFixed(0)}</span></div><div className="flex justify-between text-xs"><span>GST ({gstRate}%):</span><span>₹{gstAmount.toFixed(0)}</span></div><div className="flex justify-between text-xs font-bold text-green-600"><span>Total:</span><span>₹{totalAmount.toFixed(0)}</span></div><div className="flex justify-between items-center text-xs mt-1"><span>Advance:</span><Input type="number" value={advanceAmount} onChange={(e) => setAdvanceAmount(Number(e.target.value))} className="h-7 w-24 text-xs text-right" step="0.01" /></div><div className="flex justify-between text-xs font-bold text-blue-600 border-t pt-1 mt-1"><span>Balance:</span><span>₹{balanceAmount.toFixed(0)}</span></div></div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">GST Paid By:</Label>
+                      <Select value={gstPaidBy} onValueChange={setGstPaidBy}>
+                        <SelectTrigger className="h-7 w-32 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {gstPaidByOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">GST Rate (%):</Label>
+                      <Input type="number" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" />
+                    </div>
+                    <div className="border-t pt-1 mt-1">
+                      <div className="flex justify-between text-xs">
+                        <span>SubTotal:</span>
+                        <span className="font-semibold">₹{subTotal.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span>GST ({gstRate}%):</span>
+                        <span>₹{gstAmount.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-bold text-green-600">
+                        <span>Total:</span>
+                        <span>₹{totalAmount.toFixed(0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs mt-1">
+                        <span>Advance:</span>
+                        <Input type="number" value={advanceAmount} onChange={(e) => setAdvanceAmount(Number(e.target.value))} className="h-7 w-24 text-xs text-right" step="0.01" />
+                      </div>
+                      <div className="flex justify-between text-xs font-bold text-blue-600 border-t pt-1 mt-1">
+                        <span>Balance:</span>
+                        <span>₹{balanceAmount.toFixed(0)}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2515,27 +2918,151 @@ export default function BookingComputerizedGRL() {
 
             {/* Invoices Table */}
             <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="text-base font-semibold flex items-center gap-2"><FileText className="h-5 w-5" /> INVOICES</h3><div className="flex gap-3 items-center"><label className="flex items-center gap-1 cursor-pointer"><input type="checkbox" checked={ncv} onChange={(e) => setNcv(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm">NCV</span></label><Button onClick={addInvoiceRow} variant="ghost" size="sm" className="h-8 text-sm"><Plus className="mr-1 h-4 w-4" />ADD INVOICE</Button></div></div>
+              <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <FileText className="h-5 w-5" /> INVOICES
+                </h3>
+                <div className="flex gap-3 items-center">
+                  <label className="flex items-center gap-1 cursor-pointer">
+                    <input type="checkbox" checked={ncv} onChange={(e) => setNcv(e.target.checked)} className="h-4 w-4 rounded" />
+                    <span className="text-sm">NCV</span>
+                  </label>
+                  <Button onClick={addInvoiceRow} variant="ghost" size="sm" className="h-8 text-sm">
+                    <Plus className="mr-1 h-4 w-4" />ADD INVOICE
+                  </Button>
+                </div>
+              </div>
               <div className="overflow-x-auto p-4">
-                <Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">S#</TableHead><TableHead className="text-sm">Invoice #</TableHead><TableHead className="text-sm">Date</TableHead><TableHead className="text-sm">Value</TableHead><TableHead className="text-sm">Eway Bill #</TableHead><TableHead className="text-sm">Eway Date</TableHead><TableHead className="text-sm">Valid Upto</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
-                <TableBody>{invoices.map((inv, idx) => (<TableRow key={inv.id}><TableCell className="text-sm">{idx + 1}</TableCell><TableCell><Input value={inv.invoiceNo} onChange={(e) => updateInvoice(inv.id, "invoiceNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell><TableCell><Popover><PopoverTrigger asChild><Button variant="outline" className="h-8 w-28 text-sm justify-start"><CalendarIcon className="mr-1 h-4 w-4" />{format(inv.date, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="z-[10000]"><Calendar mode="single" selected={inv.date} onSelect={(d) => d && updateInvoice(inv.id, "date", d)} /></PopoverContent></Popover></TableCell><TableCell><Input value={inv.value} onChange={(e) => updateInvoice(inv.id, "value", e.target.value)} className="h-8 w-24 text-sm" /></TableCell><TableCell><Input value={inv.ewayBillNo} onChange={(e) => updateInvoice(inv.id, "ewayBillNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell><TableCell><Popover><PopoverTrigger asChild><Button variant="outline" className="h-8 w-28 text-sm justify-start"><CalendarIcon className="mr-1 h-4 w-4" />{format(inv.ewayBillDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="z-[10000]"><Calendar mode="single" selected={inv.ewayBillDate} onSelect={(d) => d && updateInvoice(inv.id, "ewayBillDate", d)} /></PopoverContent></Popover></TableCell><TableCell><Input value={inv.validUpto} onChange={(e) => updateInvoice(inv.id, "validUpto", e.target.value)} className="h-8 w-24 text-sm" placeholder="Valid upto" /></TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeInvoice(inv.id)} disabled={invoices.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-sm w-12">S#</TableHead>
+                      <TableHead className="text-sm">Invoice #</TableHead>
+                      <TableHead className="text-sm">Date</TableHead>
+                      <TableHead className="text-sm">Value</TableHead>
+                      <TableHead className="text-sm">Eway Bill #</TableHead>
+                      <TableHead className="text-sm">Eway Date</TableHead>
+                      <TableHead className="text-sm">Valid Upto</TableHead>
+                      <TableHead className="text-sm w-12">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((inv, idx) => (
+                      <TableRow key={inv.id}>
+                        <TableCell className="text-sm">{idx + 1}</TableCell>
+                        <TableCell><Input value={inv.invoiceNo} onChange={(e) => updateInvoice(inv.id, "invoiceNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell>
+                        <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="h-8 w-28 text-sm justify-start">
+                                <CalendarIcon className="mr-1 h-4 w-4" />
+                                {format(inv.date, "dd-MM-yyyy")}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="z-[10000]">
+                              <Calendar mode="single" selected={inv.date} onSelect={(d) => d && updateInvoice(inv.id, "date", d)} />
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                        <TableCell><Input value={inv.value} onChange={(e) => updateInvoice(inv.id, "value", e.target.value)} className="h-8 w-24 text-sm" /></TableCell>
+                        <TableCell><Input value={inv.ewayBillNo} onChange={(e) => updateInvoice(inv.id, "ewayBillNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell>
+                        <TableCell>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="outline" className="h-8 w-28 text-sm justify-start">
+                                <CalendarIcon className="mr-1 h-4 w-4" />
+                                {format(inv.ewayBillDate, "dd-MM-yyyy")}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="z-[10000]">
+                              <Calendar mode="single" selected={inv.ewayBillDate} onSelect={(d) => d && updateInvoice(inv.id, "ewayBillDate", d)} />
+                            </PopoverContent>
+                          </Popover>
+                        </TableCell>
+                        <TableCell><Input value={inv.validUpto} onChange={(e) => updateInvoice(inv.id, "validUpto", e.target.value)} className="h-8 w-24 text-sm" placeholder="Valid upto" /></TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" onClick={() => removeInvoice(inv.id)} disabled={invoices.length === 1} className="h-8 w-8 p-0 text-red-500">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
 
-            {/* Billing Details */}
-            <div className="border rounded-lg p-4"><h3 className="text-base font-semibold mb-3 flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Billing Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><Label className="text-sm">RO Remarks</Label><Textarea value={roRemarks} onChange={(e) => setRoRemarks(e.target.value)} rows={2} className="text-sm" placeholder="RO remarks" /></div><div><Label className="text-sm">Bill No</Label><Input value={billNo} onChange={(e) => setBillNo(e.target.value)} className="h-9 text-sm" placeholder="Bill number" /></div><div><Label className="text-sm">Supplementary Bill No</Label><Input value={supplementaryBillNo} onChange={(e) => setSupplementaryBillNo(e.target.value)} className="h-9 text-sm" placeholder="Supplementary bill number" /></div></div>
+            {/* Remarks Section */}
+            <div className="border rounded-lg p-4">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" /> Billing Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label className="text-sm">RO Remarks</Label><Textarea value={roRemarks} onChange={(e) => setRoRemarks(e.target.value)} rows={2} className="text-sm" placeholder="RO remarks" /></div>
+                <div><Label className="text-sm">Bill No</Label><Input value={billNo} onChange={(e) => setBillNo(e.target.value)} className="h-9 text-sm" placeholder="Bill number" /></div>
+                <div><Label className="text-sm">Supplementary Bill No</Label><Input value={supplementaryBillNo} onChange={(e) => setSupplementaryBillNo(e.target.value)} className="h-9 text-sm" placeholder="Supplementary bill number" /></div>
+              </div>
             </div>
 
             {/* Insurance Section */}
-            <div className="border rounded-lg p-4"><h3 className="text-base font-semibold mb-3 flex items-center gap-2"><Shield className="h-5 w-5" /> Insurance Details</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4"><div><Label className="text-sm">Insurance Covered By</Label><Select value={insuranceCoveredBy} onValueChange={setInsuranceCoveredBy}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{insuranceCoveredByOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div><div><Label className="text-sm">Insurance #</Label><Input value={insuranceNo} onChange={(e) => setInsuranceNo(e.target.value)} className="h-9 text-sm" placeholder="Insurance number" /></div><div><Label className="text-sm">Insurance Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(insuranceDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="z-[10000]"><Calendar mode="single" selected={insuranceDate} onSelect={(d) => d && setInsuranceDate(d)} /></PopoverContent></Popover></div><div><Label className="text-sm">Insurance Company</Label><Input value={insuranceCompany} onChange={(e) => setInsuranceCompany(e.target.value)} className="h-9 text-sm" placeholder="Insurance company name" /></div></div>
+            <div className="border rounded-lg p-4">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
+                <Shield className="h-5 w-5" /> Insurance Details
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-sm">Insurance Covered By</Label>
+                  <Select value={insuranceCoveredBy} onValueChange={setInsuranceCoveredBy}>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                    <SelectContent>{insuranceCoveredByOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-sm">Insurance #</Label><Input value={insuranceNo} onChange={(e) => setInsuranceNo(e.target.value)} className="h-9 text-sm" placeholder="Insurance number" /></div>
+                <div>
+                  <Label className="text-sm">Insurance Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(insuranceDate, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="z-[10000]">
+                      <Calendar mode="single" selected={insuranceDate} onSelect={(d) => d && setInsuranceDate(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div><Label className="text-sm">Insurance Company</Label><Input value={insuranceCompany} onChange={(e) => setInsuranceCompany(e.target.value)} className="h-9 text-sm" placeholder="Insurance company name" /></div>
+              </div>
             </div>
 
             {/* Footer Buttons */}
             <div className="flex flex-wrap justify-between items-center pt-4 border-t mt-4">
-              <div className="flex gap-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={printAfterSave} onChange={(e) => setPrintAfterSave(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm">Print After Save</span></label><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={ccAttached} onChange={(e) => setCcAttached(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm">CC Attached</span></label></div>
-              <div className="flex gap-2"><Button variant="outline" onClick={handlePrint} className="h-9 text-sm"><Printer className="mr-1 h-4 w-4" /> Print</Button><Button variant="outline" onClick={handleClear} className="h-9 text-sm"><RefreshCw className="mr-1 h-4 w-4" /> Clear</Button><Button variant="outline" onClick={() => setIsBookingModalOpen(false)} className="h-9 text-sm"><X className="mr-1 h-4 w-4" /> Cancel</Button><Button onClick={handleSave} disabled={loading} className="h-9 text-sm bg-blue-600 hover:bg-blue-700">{loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}{editMode ? "Update" : "Save"}</Button></div>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={printAfterSave} onChange={(e) => setPrintAfterSave(e.target.checked)} className="h-4 w-4 rounded" />
+                  <span className="text-sm">Print After Save</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={ccAttached} onChange={(e) => setCcAttached(e.target.checked)} className="h-4 w-4 rounded" />
+                  <span className="text-sm">CC Attached</span>
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={handlePrint} className="h-9 text-sm">
+                  <Printer className="mr-1 h-4 w-4" /> Print
+                </Button>
+                <Button variant="outline" onClick={handleClear} className="h-9 text-sm">
+                  <RefreshCw className="mr-1 h-4 w-4" /> Clear
+                </Button>
+                <Button variant="outline" onClick={() => setIsBookingModalOpen(false)} className="h-9 text-sm">
+                  <X className="mr-1 h-4 w-4" /> Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={loading} className="h-9 text-sm bg-blue-600 hover:bg-blue-700">
+                  {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+                  {editMode ? "Update" : "Save"}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
