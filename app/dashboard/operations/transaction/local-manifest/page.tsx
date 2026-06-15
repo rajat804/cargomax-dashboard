@@ -1851,76 +1851,76 @@ export default function LocalManifest() {
               </div>
               <div className="p-4">
                 {/* Stock Filters - Improved UI */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-  
-  {/* Branch Filter with ALL Checkbox */}
-  <div className="space-y-2">
-    <div className="flex items-center justify-between">
-      <Label className="text-sm font-semibold text-gray-700">Select Branch</Label>
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={selectAllBranch}
-          onChange={handleSelectAllBranch}
-          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-        />
-        <span className="text-sm font-medium text-green-700">ALL BRANCHES</span>
-      </label>
-    </div>
-    <Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}>
-      <SelectTrigger className="h-10 text-sm bg-white border-gray-300">
-        <SelectValue placeholder="-- Select Branch --" />
-      </SelectTrigger>
-      <SelectContent className="z-[99999]">
-        {branchOptions.map((branch) => (
-          <SelectItem key={branch.value} value={branch.value}>
-            {branch.text}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
 
-  {/* As On Date Filter */}
-  <div className="space-y-2">
-    <Label className="text-sm font-semibold text-gray-700 block">As On Date</Label>
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="h-10 w-full text-sm justify-start bg-white border-gray-300">
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {format(asOnDate, "dd-MM-yyyy")}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 z-[10000]">
-        <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
-      </PopoverContent>
-    </Popover>
-  </div>
+                  {/* Branch Filter with ALL Checkbox */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-gray-700">Select Branch</Label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectAllBranch}
+                          onChange={handleSelectAllBranch}
+                          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm font-medium text-green-700">ALL BRANCHES</span>
+                      </label>
+                    </div>
+                    <Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}>
+                      <SelectTrigger className="h-10 text-sm bg-white border-gray-300">
+                        <SelectValue placeholder="-- Select Branch --" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[99999]">
+                        {branchOptions.map((branch) => (
+                          <SelectItem key={branch.value} value={branch.value}>
+                            {branch.text}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-  {/* Destination Filter with ALL Checkbox */}
-  <div className="space-y-2">
-    <div className="flex items-center justify-between">
-      <Label className="text-sm font-semibold text-gray-700">Destination</Label>
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={selectAllDestination}
-          onChange={handleSelectAllDestination}
-          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-        />
-        <span className="text-sm font-medium text-green-700">ALL DESTINATIONS</span>
-      </label>
-    </div>
-    <Input
-      value={destination}
-      onChange={(e) => setDestination(e.target.value)}
-      placeholder="-- Enter Destination --"
-      className="h-10 text-sm bg-white border-gray-300"
-      disabled={selectAllDestination}
-    />
-  </div>
+                  {/* As On Date Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700 block">As On Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="h-10 w-full text-sm justify-start bg-white border-gray-300">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(asOnDate, "dd-MM-yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-[10000]">
+                        <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-</div>
+                  {/* Destination Filter with ALL Checkbox */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-gray-700">Destination</Label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectAllDestination}
+                          onChange={handleSelectAllDestination}
+                          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm font-medium text-green-700">ALL DESTINATIONS</span>
+                      </label>
+                    </div>
+                    <Input
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="-- Enter Destination --"
+                      className="h-10 text-sm bg-white border-gray-300"
+                      disabled={selectAllDestination}
+                    />
+                  </div>
+
+                </div>
 
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
