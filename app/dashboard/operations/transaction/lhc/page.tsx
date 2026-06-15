@@ -822,8 +822,8 @@ export default function LorryHireChallan() {
           </div></CardContent></Card>
 
           <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-xs p-3 text-center">#</TableHead><TableHead className="text-xs p-3">LHC #</TableHead><TableHead className="text-xs p-3">Date</TableHead><TableHead className="text-xs p-3">Branch</TableHead><TableHead className="text-xs p-3">Route</TableHead><TableHead className="text-xs p-3">Vehicle Type</TableHead><TableHead className="text-xs p-3 text-right">Hire Freight</TableHead><TableHead className="text-xs p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>
-            {loading ? <TableRow><TableCell colSpan={8} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedResults.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-12"><Truck className="h-12 w-12 mx-auto opacity-30" /><p>No records found</p></TableCell></TableRow> : paginatedResults.map((record, idx) => (<TableRow key={record._id}><TableCell className="text-center">{(currentPage-1)*itemsPerPage+idx+1}</TableCell><TableCell><Badge variant="outline" className="bg-blue-50">{record.lhcNo}</Badge></TableCell><TableCell>{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell>{record.branchName}</TableCell><TableCell>{record.route}</TableCell><TableCell>{record.vehicleType}</TableCell><TableCell className="text-right font-semibold">₹{record.hireFreight.toLocaleString()}</TableCell><TableCell><div className="flex gap-1 justify-center"><Button variant="ghost" size="sm" onClick={() => handleEdit(record)}><Edit className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => openCancelDialog(record)}><X className="h-4 w-4" /></Button></div></TableCell></TableRow>))}
-          </TableBody></Table></div>{totalPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToPage(currentPage-1)} disabled={currentPage===1}>Previous</Button><span className="px-4 py-2 text-sm">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" onClick={() => goToPage(currentPage+1)} disabled={currentPage===totalPages}>Next</Button></div>}</CardContent></Card>
+            {loading ? <TableRow><TableCell colSpan={8} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedResults.length === 0 ? <TableRow><TableCell colSpan={8} className="text-center py-12"><Truck className="h-12 w-12 mx-auto opacity-30" /><p>No records found</p></TableCell></TableRow> : paginatedResults.map((record, idx) => (<TableRow key={record._id}><TableCell className="text-center">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell><Badge variant="outline" className="bg-blue-50">{record.lhcNo}</Badge></TableCell><TableCell>{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell>{record.branchName}</TableCell><TableCell>{record.route}</TableCell><TableCell>{record.vehicleType}</TableCell><TableCell className="text-right font-semibold">₹{record.hireFreight.toLocaleString()}</TableCell><TableCell><div className="flex gap-1 justify-center"><Button variant="ghost" size="sm" onClick={() => handleEdit(record)}><Edit className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => openCancelDialog(record)}><X className="h-4 w-4" /></Button></div></TableCell></TableRow>))}
+          </TableBody></Table></div>{totalPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages}>Next</Button></div>}</CardContent></Card>
         </>
       )}
 
@@ -842,8 +842,8 @@ export default function LorryHireChallan() {
           </div></CardContent></Card>
 
           <Card><CardContent><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded" /></TableHead><TableHead>#</TableHead><TableHead>Manifest #</TableHead><TableHead>Date</TableHead><TableHead>Mode Name</TableHead><TableHead>Destination</TableHead><TableHead>Driver Name</TableHead><TableHead className="text-center">Pckgs</TableHead><TableHead className="text-right">Weight</TableHead></TableRow></TableHeader><TableBody>
-            {loading ? <TableRow><TableCell colSpan={9} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedPending.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-12"><Clock className="h-12 w-12 mx-auto opacity-30" /><p>No pending manifests found</p></TableCell></TableRow> : paginatedPending.map((item, idx) => (<TableRow key={item.id}><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell>{(pendingCurrentPage-1)*itemsPerPage+idx+1}</TableCell><TableCell className="font-mono">{item.manifestNo}</TableCell><TableCell>{format(new Date(item.manifestDate), "dd-MM-yyyy")}</TableCell><TableCell>{item.modeName}</TableCell><TableCell>{item.destination}</TableCell><TableCell>{item.driverName}</TableCell><TableCell className="text-center">{item.noOfPckgs}</TableCell><TableCell className="text-right">{item.chargeWeight}</TableCell></TableRow>))}
-          </TableBody></Table></div>{totalPendingPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToPendingPage(pendingCurrentPage-1)} disabled={pendingCurrentPage===1}>Previous</Button><span className="px-4 py-2 text-sm">Page {pendingCurrentPage} of {totalPendingPages}</span><Button variant="outline" size="sm" onClick={() => goToPendingPage(pendingCurrentPage+1)} disabled={pendingCurrentPage===totalPendingPages}>Next</Button></div>}</CardContent></Card>
+            {loading ? <TableRow><TableCell colSpan={9} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedPending.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-12"><Clock className="h-12 w-12 mx-auto opacity-30" /><p>No pending manifests found</p></TableCell></TableRow> : paginatedPending.map((item, idx) => (<TableRow key={item.id}><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell>{(pendingCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="font-mono">{item.manifestNo}</TableCell><TableCell>{format(new Date(item.manifestDate), "dd-MM-yyyy")}</TableCell><TableCell>{item.modeName}</TableCell><TableCell>{item.destination}</TableCell><TableCell>{item.driverName}</TableCell><TableCell className="text-center">{item.noOfPckgs}</TableCell><TableCell className="text-right">{item.chargeWeight}</TableCell></TableRow>))}
+          </TableBody></Table></div>{totalPendingPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToPendingPage(pendingCurrentPage - 1)} disabled={pendingCurrentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {pendingCurrentPage} of {totalPendingPages}</span><Button variant="outline" size="sm" onClick={() => goToPendingPage(pendingCurrentPage + 1)} disabled={pendingCurrentPage === totalPendingPages}>Next</Button></div>}</CardContent></Card>
         </>
       )}
 
@@ -853,8 +853,8 @@ export default function LorryHireChallan() {
           <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white"><CardContent className="p-4"><div className="flex justify-between"><div><p className="text-sm">Total Cancelled LHC</p><p className="text-2xl font-bold">{cancelledStats.total}</p></div><X className="h-8 w-8 opacity-80" /></div></CardContent></Card>
           <Card><CardHeader><CardTitle className="text-sm"><Search className="h-4 w-4 inline mr-1" />Search Cancelled LHC</CardTitle></CardHeader><CardContent><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><div><Label>From Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(searchFromDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={searchFromDate} onSelect={(d) => d && setSearchFromDate(d)} /></PopoverContent></Popover></div><div><Label>To Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(searchToDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={searchToDate} onSelect={(d) => d && setSearchToDate(d)} /></PopoverContent></Popover></div><div><Label>Branch</Label><Input value={searchBranch} onChange={(e) => setSearchBranch(e.target.value)} placeholder="Enter branch name" className="h-9 text-sm" /></div><div className="flex gap-2"><Button onClick={handleCancelSearch} className="bg-red-600"><Search className="h-4 w-4 mr-1" />Search</Button><Button onClick={handleClearSearch} variant="outline"><RefreshCw className="h-4 w-4" /></Button></div></div></CardContent></Card>
           <Card><CardContent><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead>#</TableHead><TableHead>LHC #</TableHead><TableHead>Date</TableHead><TableHead>Branch</TableHead><TableHead>Route</TableHead><TableHead className="text-center">Status</TableHead><TableHead className="text-center">Actions</TableHead></TableRow></TableHeader><TableBody>
-            {loading ? <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedCancelledResults.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-12"><X className="h-12 w-12 mx-auto opacity-30" /><p>No cancelled records found</p></TableCell></TableRow> : paginatedCancelledResults.map((record, idx) => (<TableRow key={record._id} className="bg-red-50/30"><TableCell>{(cancelledPage-1)*itemsPerPage+idx+1}</TableCell><TableCell><Badge variant="outline" className="bg-red-50 text-red-700">{record.lhcNo}</Badge></TableCell><TableCell>{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell>{record.branchName}</TableCell><TableCell>{record.route}</TableCell><TableCell className="text-center"><Badge className="bg-red-100 text-red-700">Cancelled</Badge></TableCell><TableCell className="text-center"><div className="flex gap-1 justify-center"><Button variant="ghost" size="sm" onClick={() => handleRestoreLHC(record)}><RefreshCw className="h-4 w-4 text-green-500" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(record._id!, record.lhcNo)}><Trash2 className="h-4 w-4 text-red-500" /></Button></div></TableCell></TableRow>))}
-          </TableBody></Table></div>{totalCancelledPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage-1)} disabled={cancelledPage===1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledPage} of {totalCancelledPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage+1)} disabled={cancelledPage===totalCancelledPages}>Next</Button></div>}</CardContent></Card>
+            {loading ? <TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin" /><p>Loading...</p></TableCell></TableRow> : paginatedCancelledResults.length === 0 ? <TableRow><TableCell colSpan={7} className="text-center py-12"><X className="h-12 w-12 mx-auto opacity-30" /><p>No cancelled records found</p></TableCell></TableRow> : paginatedCancelledResults.map((record, idx) => (<TableRow key={record._id} className="bg-red-50/30"><TableCell>{(cancelledPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell><Badge variant="outline" className="bg-red-50 text-red-700">{record.lhcNo}</Badge></TableCell><TableCell>{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell>{record.branchName}</TableCell><TableCell>{record.route}</TableCell><TableCell className="text-center"><Badge className="bg-red-100 text-red-700">Cancelled</Badge></TableCell><TableCell className="text-center"><div className="flex gap-1 justify-center"><Button variant="ghost" size="sm" onClick={() => handleRestoreLHC(record)}><RefreshCw className="h-4 w-4 text-green-500" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(record._id!, record.lhcNo)}><Trash2 className="h-4 w-4 text-red-500" /></Button></div></TableCell></TableRow>))}
+          </TableBody></Table></div>{totalCancelledPages > 1 && <div className="flex justify-center gap-2 p-4"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage - 1)} disabled={cancelledPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledPage} of {totalCancelledPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage + 1)} disabled={cancelledPage === totalCancelledPages}>Next</Button></div>}</CardContent></Card>
         </>
       )}
 
@@ -900,18 +900,117 @@ export default function LorryHireChallan() {
             <div className="rounded-md border">
               <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="font-semibold">Challan Details</h3><Button onClick={addItemRow} variant="ghost" size="sm"><PlusCircle className="mr-1 h-4 w-4" /> Add Row</Button></div>
               <div className="overflow-x-auto p-4"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="w-12">#</TableHead><TableHead>Challan#</TableHead><TableHead>Challan Date</TableHead><TableHead>From</TableHead><TableHead>To</TableHead><TableHead>Pckgs</TableHead><TableHead>Chargeable Wt</TableHead><TableHead>Rate</TableHead><TableHead>Amount</TableHead><TableHead className="w-8">Action</TableHead></TableRow></TableHeader><TableBody>
-                {items.map((item, idx) => (<TableRow key={item.id}><TableCell>{idx+1}</TableCell><TableCell><Input value={item.challanNo} onChange={(e) => updateItem(item.id, "challanNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell><TableCell><Popover><PopoverTrigger asChild><Button variant="outline" className="h-8 w-28 text-sm"><CalendarIcon className="mr-1 h-3 w-3" />{format(item.challanDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={item.challanDate} onSelect={(d) => d && updateItem(item.id, "challanDate", d)} /></PopoverContent></Popover></TableCell><TableCell><Input value={item.from} onChange={(e) => updateItem(item.id, "from", e.target.value)} className="h-8 w-24 text-sm" /></TableCell><TableCell><Input value={item.to} onChange={(e) => updateItem(item.id, "to", e.target.value)} className="h-8 w-24 text-sm" /></TableCell><TableCell><Input type="number" value={item.pckgs} onChange={(e) => updateItem(item.id, "pckgs", Number(e.target.value))} className="h-8 w-20 text-sm" /></TableCell><TableCell><Input type="number" value={item.chargeableWeight} onChange={(e) => updateItem(item.id, "chargeableWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" /></TableCell><TableCell><Input type="number" value={item.rate} onChange={(e) => updateItem(item.id, "rate", Number(e.target.value))} className="h-8 w-20 text-sm" /></TableCell><TableCell className="font-mono text-sm">₹{item.calcAmount.toFixed(2)}</TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeItem(item.id)} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}
+                {items.map((item, idx) => (<TableRow key={item.id}><TableCell>{idx + 1}</TableCell><TableCell><Input value={item.challanNo} onChange={(e) => updateItem(item.id, "challanNo", e.target.value)} className="h-8 w-28 text-sm" /></TableCell><TableCell><Popover><PopoverTrigger asChild><Button variant="outline" className="h-8 w-28 text-sm"><CalendarIcon className="mr-1 h-3 w-3" />{format(item.challanDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={item.challanDate} onSelect={(d) => d && updateItem(item.id, "challanDate", d)} /></PopoverContent></Popover></TableCell><TableCell><Input value={item.from} onChange={(e) => updateItem(item.id, "from", e.target.value)} className="h-8 w-24 text-sm" /></TableCell><TableCell><Input value={item.to} onChange={(e) => updateItem(item.id, "to", e.target.value)} className="h-8 w-24 text-sm" /></TableCell><TableCell><Input type="number" value={item.pckgs} onChange={(e) => updateItem(item.id, "pckgs", Number(e.target.value))} className="h-8 w-20 text-sm" /></TableCell><TableCell><Input type="number" value={item.chargeableWeight} onChange={(e) => updateItem(item.id, "chargeableWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" /></TableCell><TableCell><Input type="number" value={item.rate} onChange={(e) => updateItem(item.id, "rate", Number(e.target.value))} className="h-8 w-20 text-sm" /></TableCell><TableCell className="font-mono text-sm">₹{item.calcAmount.toFixed(2)}</TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeItem(item.id)} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>))}
               </TableBody></Table></div>
             </div>
 
             <div className="flex justify-end items-center gap-3"><div><Label className="font-semibold">Hire Freight</Label><Input type="number" value={hireFreight} onChange={(e) => setHireFreight(Number(e.target.value))} className="h-9 w-48 text-right font-bold text-sm" /></div><Button onClick={updateHireFreight} variant="outline" size="sm"><Calculator className="mr-1 h-4 w-4" /> Recalculate</Button></div>
 
             {/* Additional Charges Table */}
-            <div className="rounded-md border">
-              <div className="bg-gray-50 px-4 py-3 border-b"><h3 className="font-semibold">Additional Charges</h3></div>
-              <div className="overflow-x-auto p-4"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead>#</TableHead><TableHead>Particulars</TableHead><TableHead className="w-24">Address(+/-)</TableHead><TableHead>Amount</TableHead><TableHead className="w-24">TDS Applicable</TableHead><TableHead>Advance</TableHead><TableHead className="w-24">Check List</TableHead></TableRow></TableHeader><TableBody>
-                {additionalCharges.map((charge, idx) => (<TableRow key={charge.id}><TableCell>{idx+1}</TableCell><TableCell>{charge.name}</TableCell><TableCell><Select value={charge.type} onValueChange={(val) => updateAdditionalCharge(charge.id, "type", val as "add" | "subtract")}><SelectTrigger className="h-8 w-20 text-sm"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="add">+</SelectItem><SelectItem value="subtract">-</SelectItem></SelectContent></Select></TableCell><TableCell><Input type="number" value={charge.amount} onChange={(e) => updateAdditionalCharge(charge.id, "amount", Number(e.target.value))} className="h-8 w-32 text-right text-sm" /></TableCell><TableCell className="text-center"><input type="checkbox" checked={charge.tdsApplicable} onChange={(e) => updateAdditionalCharge(charge.id, "tdsApplicable", e.target.checked)} className="h-4 w-4" /></TableCell><TableCell><Input type="number" value={charge.advance} onChange={(e) => updateAdditionalCharge(charge.id, "advance", Number(e.target.value))} className="h-8 w-32 text-right text-sm" /></TableCell><TableCell className="text-center">{charge.hasChecklist && <input type="checkbox" className="h-4 w-4" />}</TableCell></TableRow>))}
-              </TableBody></Table></div>
+            <div className="rounded-md border shadow-sm">
+              <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-3 border-b">
+                <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                  <Calculator className="h-4 w-4" />
+                  Additional Charges
+                </h3>
+              </div>
+              <div className="overflow-x-auto p-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-100">
+                      <TableHead className="w-12 text-center">#</TableHead>
+                      <TableHead>Particulars</TableHead>
+                      <TableHead className="w-32 text-center">Type (+/-)</TableHead>
+                      <TableHead className="w-36 text-right">Amount (₹)</TableHead>
+                      <TableHead className="w-28 text-center">TDS</TableHead>
+                      <TableHead className="w-36 text-right">Advance (₹)</TableHead>
+                      <TableHead className="w-24 text-center">Check List</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {additionalCharges.map((charge, idx) => (
+                      <TableRow key={charge.id} className="hover:bg-gray-50 transition-colors">
+                        <TableCell className="text-center text-gray-500">{idx + 1}</TableCell>
+                        <TableCell>
+                          <span className="font-medium text-gray-800">{charge.name}</span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => updateAdditionalCharge(charge.id, "type", "add")}
+                              className={cn(
+                                "px-3 py-1 text-sm font-semibold rounded-md transition-all duration-200",
+                                charge.type === "add"
+                                  ? "bg-green-500 text-white shadow-sm"
+                                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                              )}
+                            >
+                              + Add
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateAdditionalCharge(charge.id, "type", "subtract")}
+                              className={cn(
+                                "px-3 py-1 text-sm font-semibold rounded-md transition-all duration-200",
+                                charge.type === "subtract"
+                                  ? "bg-red-500 text-white shadow-sm"
+                                  : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                              )}
+                            >
+                              - Subtract
+                            </button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={charge.amount}
+                            onChange={(e) => {
+                              updateAdditionalCharge(charge.id, "amount", Number(e.target.value));
+                              setTimeout(calculateTotals, 0);
+                            }}
+                            className="h-8 w-full text-right text-sm"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={charge.tdsApplicable}
+                            onChange={(e) => updateAdditionalCharge(charge.id, "tdsApplicable", e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={charge.advance}
+                            onChange={(e) => {
+                              updateAdditionalCharge(charge.id, "advance", Number(e.target.value));
+                              setTimeout(calculateTotals, 0);
+                            }}
+                            className="h-8 w-full text-right text-sm"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {charge.hasChecklist && (
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {/* TDS and Advance Section */}
@@ -930,7 +1029,7 @@ export default function LorryHireChallan() {
             <div className="rounded-md border">
               <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="font-semibold">Balance Payable At</h3><Button onClick={addBalancePayableBranch} variant="ghost" size="sm"><PlusCircle className="mr-1 h-4 w-4" /> ADD MORE...</Button></div>
               <div className="p-4"><Table><TableHeader><TableRow><TableHead>S#</TableHead><TableHead>Branch</TableHead><TableHead>Amount</TableHead><TableHead className="w-8">Action</TableHead></TableRow></TableHeader><TableBody>
-                {balancePayableBranches.map((branch, idx) => (<TableRow key={branch.id}><TableCell>{idx+1}</TableCell><TableCell><Input value={branch.branch} onChange={(e) => updateBalancePayableBranch(branch.id, "branch", e.target.value)} placeholder="Enter branch name" className="h-8 text-sm" /></TableCell><TableCell><Input type="number" value={branch.amount} onChange={(e) => updateBalancePayableBranch(branch.id, "amount", Number(e.target.value))} className="w-40 text-right h-8 text-sm" /></TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeBalancePayableBranch(branch.id)} disabled={balancePayableBranches.length === 1} className="h-8 w-8 p-0"><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell></TableRow>))}
+                {balancePayableBranches.map((branch, idx) => (<TableRow key={branch.id}><TableCell>{idx + 1}</TableCell><TableCell><Input value={branch.branch} onChange={(e) => updateBalancePayableBranch(branch.id, "branch", e.target.value)} placeholder="Enter branch name" className="h-8 text-sm" /></TableCell><TableCell><Input type="number" value={branch.amount} onChange={(e) => updateBalancePayableBranch(branch.id, "amount", Number(e.target.value))} className="w-40 text-right h-8 text-sm" /></TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeBalancePayableBranch(branch.id)} disabled={balancePayableBranches.length === 1} className="h-8 w-8 p-0"><Trash2 className="h-4 w-4 text-red-500" /></Button></TableCell></TableRow>))}
               </TableBody></Table></div>
               <div className="p-4 bg-gray-50 border-t flex justify-between items-center"><span className="font-bold">Balance Payable</span><span className="text-xl font-bold text-blue-600">₹{balancePayable.toFixed(2)}</span></div>
               <div className="p-4 bg-gray-100 border-t flex justify-between items-center"><span className="font-bold">Total:</span><span className="text-xl font-bold text-green-600">₹{(hireFreight + totalAdditionalCharges).toFixed(2)}</span><span className="font-bold">Amount:</span><span className="text-xl font-bold text-orange-600">₹{balancePayable.toFixed(2)}</span></div>
