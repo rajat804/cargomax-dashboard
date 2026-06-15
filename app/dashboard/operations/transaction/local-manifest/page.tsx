@@ -61,6 +61,7 @@ import {
   Trash2,
   CheckCircle,
   FileSpreadsheet,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -141,6 +142,7 @@ interface StockItem {
   toPay: string;
   paid: string;
   tbb: string;
+  bookedPckgs: number;
   stockPckgs: number;
   selected: boolean;
   bookingType: "computerized" | "manual";
@@ -159,6 +161,7 @@ interface StockItemResponse {
   toPay: string;
   paid: string;
   tbb: string;
+  bookedPckgs: number;
   stockPckgs: number;
   bookingType?: "computerized" | "manual";
   bookingId?: string;
@@ -430,7 +433,7 @@ export default function LocalManifest() {
   const [stockStats, setStockStats] = useState({ total: 0, selected: 0, totalPckgs: 0 });
   const stockItemsPerPage: number = 10;
   const [assignedGRs, setAssignedGRs] = useState<AssignedGR[]>([]);
-  
+
   // State for editing dispatched packages
   const [editingDispatchedPckgs, setEditingDispatchedPckgs] = useState<{ [key: string]: number }>({});
 
@@ -473,9 +476,9 @@ export default function LocalManifest() {
   const [cancelledResults, setCancelledResults] = useState<ManifestRecord[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [cancelledPage, setCancelledPage] = useState<number>(1);
-  const [stats, setStats] = useState({ 
-    active: { count: 0, totalPckgs: 0, totalWeight: 0 }, 
-    cancelled: { count: 0 } 
+  const [stats, setStats] = useState({
+    active: { count: 0, totalPckgs: 0, totalWeight: 0 },
+    cancelled: { count: 0 }
   });
   const itemsPerPage: number = 10;
 
@@ -495,7 +498,7 @@ export default function LocalManifest() {
       toast.error("Packages cannot be negative");
       return;
     }
-    
+
     setEditingDispatchedPckgs(prev => ({
       ...prev,
       [grId]: value
@@ -506,7 +509,7 @@ export default function LocalManifest() {
   const handleSaveDispatchedPckgs = (index: number) => {
     const gr = assignedGRs[index];
     const newDispatchedPckgs = editingDispatchedPckgs[gr.id];
-    
+
     if (newDispatchedPckgs !== undefined && newDispatchedPckgs !== gr.dispatchedPckgs) {
       const updatedGRs = [...assignedGRs];
       updatedGRs[index] = {
@@ -515,13 +518,13 @@ export default function LocalManifest() {
         weight: newDispatchedPckgs * 100
       };
       setAssignedGRs(updatedGRs);
-      
+
       setEditingDispatchedPckgs(prev => {
         const newState = { ...prev };
         delete newState[gr.id];
         return newState;
       });
-      
+
       toast.success(`Dispatched packages updated to ${newDispatchedPckgs}`);
     }
   };
@@ -535,17 +538,16 @@ export default function LocalManifest() {
     });
   };
 
-  // ========== AUTO LOAD STOCK DATA WHEN MODAL OPENS ==========
+  // Auto load stock data when modal opens
   const loadStockDataAutomatically = async () => {
     setLoading(true);
     try {
       const filters: any = {};
-      // Auto-fetch all stock items when modal opens
       const response = await getLocalManifestStockItems(filters);
-      
+
       const items: StockItem[] = response.data.map((item: StockItemResponse, index: number): StockItem => {
         const bookingIdValue = String(item.bookingId || item.id || item._id || index);
-        
+
         return {
           id: index + 1,
           grNo: item.grNo,
@@ -557,13 +559,14 @@ export default function LocalManifest() {
           toPay: item.toPay,
           paid: item.paid,
           tbb: item.tbb,
-          stockPckgs: item.stockPckgs,
+          bookedPckgs: item.bookedPckgs || item.stockPckgs || 0,
+          stockPckgs: item.stockPckgs || 0,
           selected: false,
           bookingType: item.bookingType || "computerized",
           bookingId: bookingIdValue,
         };
       });
-      
+
       setStockItems(items);
       setStockStats({
         total: items.length,
@@ -578,7 +581,7 @@ export default function LocalManifest() {
     }
   };
 
-  // Function to load stock items with filters (for SHOW STOCK button)
+  // Function to load stock items with filters
   const loadStockItemsWithFilters = async () => {
     setLoading(true);
     try {
@@ -588,10 +591,10 @@ export default function LocalManifest() {
       if (asOnDate) filters.asOnDate = asOnDate.toISOString();
 
       const response = await getLocalManifestStockItems(filters);
-      
+
       const items: StockItem[] = response.data.map((item: StockItemResponse, index: number): StockItem => {
         const bookingIdValue = String(item.bookingId || item.id || item._id || index);
-        
+
         return {
           id: index + 1,
           grNo: item.grNo,
@@ -603,13 +606,14 @@ export default function LocalManifest() {
           toPay: item.toPay,
           paid: item.paid,
           tbb: item.tbb,
-          stockPckgs: item.stockPckgs,
+          bookedPckgs: item.bookedPckgs || item.stockPckgs || 0,
+          stockPckgs: item.stockPckgs || 0,
           selected: false,
           bookingType: item.bookingType || "computerized",
           bookingId: bookingIdValue,
         };
       });
-      
+
       setStockItems(items);
       setStockStats({
         total: items.length,
@@ -647,13 +651,11 @@ export default function LocalManifest() {
   // Auto-load stock data when Create Modal opens
   useEffect(() => {
     if (isEntryModalOpen) {
-      // Reset stock filters first
       setStockBranch("");
       setDestination("");
       setSelectAllBranch(false);
       setSelectAllDestination(false);
       setAsOnDate(new Date());
-      // Auto-load stock data
       loadStockDataAutomatically();
     }
   }, [isEntryModalOpen]);
@@ -661,22 +663,20 @@ export default function LocalManifest() {
   // Auto-load stock data when Edit Modal opens
   useEffect(() => {
     if (isEditModalOpen) {
-      // Reset stock filters first
       setStockBranch("");
       setDestination("");
       setSelectAllBranch(false);
       setSelectAllDestination(false);
       setAsOnDate(new Date());
-      // Auto-load stock data
       loadStockDataAutomatically();
     }
   }, [isEditModalOpen]);
 
-  // Branch auto-selection with value and text matching
+  // Branch auto-selection
   useEffect(() => {
     if (selectedBranch && branchOptions.length > 0) {
       let matchedBranch = branchOptions.find((b) => b.value === selectedBranch);
-      
+
       if (!matchedBranch) {
         matchedBranch = branchOptions.find(
           (b) =>
@@ -684,7 +684,7 @@ export default function LocalManifest() {
             selectedBranch?.toLowerCase().trim()
         );
       }
-      
+
       if (matchedBranch) {
         setBranch(matchedBranch.value);
         setSelectedBranchText(matchedBranch.text);
@@ -701,7 +701,7 @@ export default function LocalManifest() {
       const userStr = localStorage.getItem('user');
       const selectedBranchStr = localStorage.getItem('selectedBranch');
       const branchCode = localStorage.getItem('branchCode');
-      
+
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -710,7 +710,7 @@ export default function LocalManifest() {
           console.error('Error parsing user:', e);
         }
       }
-      
+
       if (selectedBranchStr) {
         setSelectedBranch(selectedBranchStr);
         setSelectedBranchText(selectedBranchStr);
@@ -792,7 +792,6 @@ export default function LocalManifest() {
     setEditMode(false);
     setCurrentEditId(null);
     setAutoManifest(true);
-    // Reset stock related states
     setAssignedGRs([]);
     setStockItems([]);
     setStockBranch("");
@@ -863,7 +862,7 @@ export default function LocalManifest() {
       } else {
         response = await createLocalManifest(manifestData);
         toast.success(`Manifest created successfully! No: ${response.data.manifestNo}`);
-        
+
         if (assignedGRs.length > 0 && response?.data?._id) {
           try {
             const totalPckgs = assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0);
@@ -960,7 +959,7 @@ export default function LocalManifest() {
     setSelectAllBranch(false);
     setSelectAllDestination(false);
     setAsOnDate(new Date());
-    loadStockDataAutomatically(); // Reload all stock data after clearing filters
+    loadStockDataAutomatically();
     setStockCurrentPage(1);
   };
 
@@ -995,7 +994,7 @@ export default function LocalManifest() {
                 <tr><th>GR #</th><th>Date</th><th>Consignor</th><th>Consignee</th><th>Destination</th><th>Packages</th><th>Weight</th></tr>
               </thead>
               <tbody>
-                ${(record.assignedGRs || []).map(gr => `<tr><td>${gr.grNo}</td><td>${format(new Date(gr.grDate), "dd-MM-yyyy")}</td><td>${gr.consignor}</td><td>${gr.consignee}</td><td>${gr.destination}</td><td>${gr.dispatchedPckgs}</td><td>${gr.weight}</td></tr>`).join('')}
+                ${(record.assignedGRs || []).map(gr => `<tr><td>${gr.grNo}</td><td>${format(new Date(gr.grDate), "dd-MM-yyyy")}</td><td>${gr.consignor}${gr.consignee}${gr.destination}${gr.dispatchedPckgs}${gr.weight}</td>`).join('')}
               </tbody>
             </table>
             <hr />
@@ -1137,10 +1136,10 @@ export default function LocalManifest() {
     setSelectAllBranch(!selectAllBranch);
     if (!selectAllBranch) {
       setStockBranch("ALL");
-      loadStockDataAutomatically(); // Reload all stock data
+      loadStockDataAutomatically();
     } else {
       setStockBranch("");
-      loadStockDataAutomatically(); // Reload all stock data
+      loadStockDataAutomatically();
     }
   };
 
@@ -1148,10 +1147,10 @@ export default function LocalManifest() {
     setSelectAllDestination(!selectAllDestination);
     if (!selectAllDestination) {
       setDestination("ALL");
-      loadStockDataAutomatically(); // Reload all stock data
+      loadStockDataAutomatically();
     } else {
       setDestination("");
-      loadStockDataAutomatically(); // Reload all stock data
+      loadStockDataAutomatically();
     }
   };
 
@@ -1166,7 +1165,7 @@ export default function LocalManifest() {
     try {
       const newAssignedGRs: AssignedGR[] = selectedItems.map(item => {
         const bookingIdValue = String(item.bookingId || item.id);
-        
+
         return {
           id: bookingIdValue,
           grNo: item.grNo,
@@ -1177,7 +1176,7 @@ export default function LocalManifest() {
           toPay: parseFloat(item.toPay) || 0,
           paid: parseFloat(item.paid) || 0,
           tbb: parseFloat(item.tbb) || 0,
-          bookedPckgs: item.stockPckgs,
+          bookedPckgs: item.bookedPckgs,
           stockPckgs: item.stockPckgs,
           dispatchedPckgs: item.stockPckgs,
           weight: item.stockPckgs * 100,
@@ -1196,7 +1195,7 @@ export default function LocalManifest() {
       }
 
       toast.success(`${selectedItems.length} GR(s) assigned successfully!`);
-      
+
       const remainingItems = stockItems.filter(item => !item.selected);
       setStockItems(remainingItems);
       setStockStats({
@@ -1227,7 +1226,7 @@ export default function LocalManifest() {
       const totalWeight = assignedGRs.reduce((sum, gr) => sum + gr.weight, 0);
 
       await updateLocalManifestDispatch(currentEditId!, totalPckgs, totalWeight, assignedGRs);
-      
+
       toast.success("Manifest updated successfully!");
       setIsEditModalOpen(false);
       await loadManifests();
@@ -1289,7 +1288,6 @@ export default function LocalManifest() {
   );
   const goToStockPage = (page: number) => setStockCurrentPage(Math.max(1, Math.min(page, totalStockPages)));
 
-  // Rest of the JSX remains the same...
   return (
     <div className="space-y-4 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       {/* Header */}
@@ -1327,7 +1325,7 @@ export default function LocalManifest() {
         </button>
       </div>
 
-      {/* Active Manifests Tab - Same as before */}
+      {/* Active Manifests Tab */}
       {mainTab === "active" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1395,7 +1393,7 @@ export default function LocalManifest() {
         </>
       )}
 
-      {/* Cancelled Manifests Tab - Same as before */}
+      {/* Cancelled Manifests Tab */}
       {mainTab === "cancelled" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1464,7 +1462,7 @@ export default function LocalManifest() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Manifest Modal - Fixed Structure */}
+      {/* Edit Manifest Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="w-[95vw] max-w-7xl h-[90vh] max-h-[90vh] flex flex-col p-0 z-[9999]">
           <DialogHeader className="flex-shrink-0 bg-white z-10 px-6 pt-6 pb-3 border-b">
@@ -1482,50 +1480,328 @@ export default function LocalManifest() {
               <div><Label className="text-xs text-gray-500">Loading Person</Label><p className="font-semibold">{currentManifest?.loadingPerson}</p></div>
             </div>
 
-            {/* Stock of Despatch Section */}
+            {/* Stock of Despatch Section - UPDATED UI */}
             <div className="border rounded-lg">
-              <div className="bg-green-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-green-700"><Package className="h-5 w-5" /> STOCK OF DESPATCH</h3>
-                <div className="flex gap-2"><Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" /> SHOW STOCK</Button><Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm"><RefreshCw className="h-4 w-4" /></Button></div>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 border-b flex justify-between items-center rounded-t-lg">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-white">
+                  <Package className="h-5 w-5" />
+                  STOCK OF DESPATCH
+                </h3>
+                <div className="flex gap-2">
+                  <Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-white text-green-600 hover:bg-gray-100">
+                    <Search className="h-4 w-4 mr-1" /> SHOW STOCK
+                  </Button>
+                  <Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm bg-white text-gray-600 border-white hover:bg-gray-100">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllBranch} onChange={handleSelectAllBranch} className="h-4 w-4 rounded" id="allBranch" /><Label htmlFor="allBranch" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Branch</Label><Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent className="z-[99999]">{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
-                  <div className="space-y-1"><Label className="text-xs">As On Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(asOnDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} /></PopoverContent></Popover></div>
-                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllDestination} onChange={handleSelectAllDestination} className="h-4 w-4 rounded" id="allDestination" /><Label htmlFor="allDestination" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Destination</Label><Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Enter Destination" className="h-9 text-sm" disabled={selectAllDestination} /></div>
+                {/* Filters */}
+                {/* Stock Filters - Improved UI */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
+                  {/* Branch Filter with ALL Checkbox */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-gray-700">Select Branch</Label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectAllBranch}
+                          onChange={handleSelectAllBranch}
+                          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm font-medium text-green-700">ALL BRANCHES</span>
+                      </label>
+                    </div>
+                    <Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}>
+                      <SelectTrigger className="h-10 text-sm bg-white border-gray-300">
+                        <SelectValue placeholder="-- Select Branch --" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[99999]">
+                        {branchOptions.map((branch) => (
+                          <SelectItem key={branch.value} value={branch.value}>
+                            {branch.text}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* As On Date Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700 block">As On Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="h-10 w-full text-sm justify-start bg-white border-gray-300">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {format(asOnDate, "dd-MM-yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-[10000]">
+                        <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Destination Filter with ALL Checkbox */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-semibold text-gray-700">Destination</Label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectAllDestination}
+                          onChange={handleSelectAllDestination}
+                          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <span className="text-sm font-medium text-green-700">ALL DESTINATIONS</span>
+                      </label>
+                    </div>
+                    <Input
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="-- Enter Destination --"
+                      className="h-10 text-sm bg-white border-gray-300"
+                      disabled={selectAllDestination}
+                    />
+                  </div>
                 </div>
 
+                {/* Stock Table */}
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50"><TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded" /></TableHead><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead></TableRow>
+                      <TableRow className="bg-green-50">
+                        <TableHead className="w-8 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectAll}
+                            onChange={handleSelectAll}
+                            className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                          />
+                        </TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">ToPay</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">Paid</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">TBB</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-yellow-50">Booked Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-orange-50">Stock Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (<TableRow><TableCell colSpan={14} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" /><p className="text-gray-500 mt-2">Loading stock items...</p></TableCell></TableRow>) : paginatedStockItems.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No stock records found. Click "SHOW STOCK" to search.</TableCell></TableRow>) : (paginatedStockItems.map((item, idx) => (<TableRow key={item.id} className="hover:bg-gray-50"><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell className="py-3 px-2 text-center text-sm">{(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{item.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell><TableCell className="py-3 px-2 text-sm">{item.destination}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignee}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.toPay}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.paid}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.tbb}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100}</TableCell></TableRow>)))}
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={14} className="text-center py-12">
+                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" />
+                            <p className="text-gray-500 mt-2">Loading stock items...</p>
+                          </TableCell>
+                        </TableRow>
+                      ) : paginatedStockItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={14} className="text-center py-12 text-gray-500">
+                            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                            No stock records found. Click "SHOW STOCK" to search.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedStockItems.map((item, idx) => (
+                          <TableRow key={item.id} className="hover:bg-gray-50">
+                            <TableCell className="text-center">
+                              <input
+                                type="checkbox"
+                                checked={item.selected}
+                                onChange={() => handleSelectItem(item.id)}
+                                className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                              />
+                            </TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm">
+                              {(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}
+                            </TableCell>
+                            <TableCell className="py-3 px-2 font-mono text-sm font-semibold text-blue-600">{item.grNo}</TableCell>
+                            <TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell>
+                            <TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell>
+                            <TableCell className="py-3 px-2 text-sm font-medium">{item.destination}</TableCell>
+                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={item.consignor}>
+                              {item.consignor}
+                            </TableCell>
+                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={item.consignee}>
+                              {item.consignee}
+                            </TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm font-semibold text-green-600">₹{item.toPay}</TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm font-semibold text-blue-600">₹{item.paid}</TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm font-semibold text-purple-600">₹{item.tbb}</TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm font-bold bg-yellow-50">{item.bookedPckgs}</TableCell>
+                            <TableCell className="py-3 px-2 text-center text-sm font-bold bg-orange-50 text-orange-700">{item.stockPckgs}</TableCell>
+                            <TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100} kg</TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
 
-                {totalStockPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage - 1)} disabled={stockCurrentPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {stockCurrentPage} of {totalStockPages}</span><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage + 1)} disabled={stockCurrentPage === totalStockPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
+                {totalStockPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-gray-500">
+                      Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length} entries
+                    </div>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage - 1)} disabled={stockCurrentPage === 1} className="h-8 text-sm">
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                      </Button>
+                      <span className="px-3 py-1 text-sm">Page {stockCurrentPage} of {totalStockPages}</span>
+                      <Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage + 1)} disabled={stockCurrentPage === totalStockPages} className="h-8 text-sm">
+                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
-                <div className="flex justify-end gap-3 mt-4"><Button onClick={handleAssignGRs} className="h-9 text-sm bg-blue-600 hover:bg-blue-700" disabled={stockStats.selected === 0 || loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}ADD TO MANIFEST ({stockStats.selected})</Button></div>
+                <div className="flex justify-end gap-3 mt-4 pt-3 border-t">
+                  <Button
+                    onClick={handleAssignGRs}
+                    className="h-9 text-sm bg-green-600 hover:bg-green-700"
+                    disabled={stockStats.selected === 0 || loading}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
+                    ADD TO MANIFEST ({stockStats.selected})
+                  </Button>
+                </div>
               </div>
             </div>
 
-            {/* Assigned GRs Section */}
+            {/* Assigned GRs Section - UPDATED UI */}
             <div className="border rounded-lg">
-              <div className="bg-blue-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-700"><CheckCircle className="h-5 w-5" /> ASSIGNED GRs TO THIS MANIFEST</h3>
-                <div className="text-sm font-medium">Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg</div>
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 border-b flex justify-between items-center rounded-t-lg">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-white">
+                  <CheckCircle className="h-5 w-5" />
+                  ASSIGNED GRs TO THIS MANIFEST
+                </h3>
+                <div className="text-sm font-medium text-white bg-blue-700 px-3 py-1 rounded-full">
+                  Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg
+                </div>
               </div>
               <div className="p-4">
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50"><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[100px] text-center">Despatch Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead><TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead></TableRow>
+                      <TableRow className="bg-blue-50">
+                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">ToPay</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">Paid</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">TBB</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-yellow-100">Booked Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-orange-100">Stock Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[110px] text-center bg-purple-100">Despatch Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assignedGRs.length === 0 ? (<TableRow><TableCell colSpan={13} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".</TableCell></TableRow>) : (assignedGRs.map((gr, idx) => { const isEditing = editingDispatchedPckgs[gr.id] !== undefined; const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs; const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0; return (<TableRow key={idx} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{gr.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell><TableCell className="py-3 px-2 text-sm">{gr.destination}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.toPay?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.paid?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.tbb?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{gr.bookedPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1">{isEditing ? (<><Input type="number" value={currentValue} onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)} className="h-8 w-20 text-sm text-center" min="0" max={maxPckgs} autoFocus /><Button variant="ghost" size="sm" onClick={() => handleSaveDispatchedPckgs(idx)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700" title="Save"><CheckCircle className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleCancelEditDispatchedPckgs(gr.id)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700" title="Cancel"><X className="h-4 w-4" /></Button></>) : (<><span className="text-sm font-medium">{gr.dispatchedPckgs}</span><Button variant="ghost" size="sm" onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700" title="Edit Dispatched Packages"><Edit className="h-4 w-4" /></Button></>)}</div></TableCell><TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0}</TableCell><TableCell className="py-3 px-2 text-center"><Button variant="ghost" size="sm" onClick={() => handleRemoveAssignedGR(idx)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from manifest"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>); }))}
+                      {assignedGRs.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={14} className="text-center py-12 text-gray-500">
+                            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                            No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        assignedGRs.map((gr, idx) => {
+                          const isEditing = editingDispatchedPckgs[gr.id] !== undefined;
+                          const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs;
+                          const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0;
+
+                          return (
+                            <TableRow key={idx} className="hover:bg-gray-50">
+                              <TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell>
+                              <TableCell className="py-3 px-2 font-mono text-sm font-semibold text-blue-600">{gr.grNo}</TableCell>
+                              <TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell>
+                              <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell>
+                              <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell>
+                              <TableCell className="py-3 px-2 text-sm font-medium">{gr.destination}</TableCell>
+                              <TableCell className="py-3 px-2 text-center text-sm font-semibold text-green-600">₹{gr.toPay?.toFixed(2) || '0'}</TableCell>
+                              <TableCell className="py-3 px-2 text-center text-sm font-semibold text-blue-600">₹{gr.paid?.toFixed(2) || '0'}</TableCell>
+                              <TableCell className="py-3 px-2 text-center text-sm font-semibold text-purple-600">₹{gr.tbb?.toFixed(2) || '0'}</TableCell>
+                              <TableCell className="py-3 px-2 text-center text-sm font-bold bg-yellow-50">{gr.bookedPckgs || 0}</TableCell>
+                              <TableCell className="py-3 px-2 text-center text-sm font-bold bg-orange-50 text-orange-700">{gr.stockPckgs || 0}</TableCell>
+                              <TableCell className="py-3 px-2 text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                  {isEditing ? (
+                                    <>
+                                      <Input
+                                        type="number"
+                                        value={currentValue}
+                                        onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)}
+                                        className="h-8 w-20 text-sm text-center border-purple-300 focus:ring-purple-500"
+                                        min="0"
+                                        max={maxPckgs}
+                                        autoFocus
+                                      />
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleSaveDispatchedPckgs(idx)}
+                                        className="h-8 w-8 p-0 text-green-500 hover:text-green-700"
+                                        title="Save"
+                                      >
+                                        <CheckCircle className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCancelEditDispatchedPckgs(gr.id)}
+                                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                                        title="Cancel"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-sm font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded">{gr.dispatchedPckgs}</span>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))}
+                                        className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700"
+                                        title="Edit Dispatched Packages"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0} kg</TableCell>
+                              <TableCell className="py-3 px-2 text-center">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveAssignedGR(idx)}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  title="Remove from manifest"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -1540,7 +1816,7 @@ export default function LocalManifest() {
         </DialogContent>
       </Dialog>
 
-      {/* Create New Manifest Modal - Fixed Structure with Auto-Load */}
+      {/* Create New Manifest Modal */}
       <Dialog open={isEntryModalOpen} onOpenChange={setIsEntryModalOpen}>
         <DialogContent className="w-[95vw] max-w-7xl h-[90vh] max-h-[90vh] flex flex-col p-0 z-[9999]">
           <DialogHeader className="flex-shrink-0 bg-white z-10 px-6 pt-6 pb-3 border-b">
@@ -1567,50 +1843,146 @@ export default function LocalManifest() {
               <div className="mt-3"><Label className="text-sm">Remarks</Label><Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2} className="text-sm mt-1" placeholder="Enter remarks..." /></div>
             </div>
 
-            {/* STOCK OF DESPATCH SECTION - Auto loads when modal opens */}
+            {/* STOCK OF DESPATCH SECTION - Same as Edit Modal */}
             <div className="border rounded-lg">
-              <div className="bg-green-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-green-700"><Package className="h-5 w-5" /> STOCK OF DESPATCH</h3>
-                <div className="flex gap-2"><Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" /> SHOW STOCK</Button><Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm"><RefreshCw className="h-4 w-4" /></Button></div>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 border-b flex justify-between items-center rounded-t-lg">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-white"><Package className="h-5 w-5" /> STOCK OF DESPATCH</h3>
+                <div className="flex gap-2"><Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-white text-green-600 hover:bg-gray-100"><Search className="h-4 w-4 mr-1" /> SHOW STOCK</Button><Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm bg-white text-gray-600 border-white hover:bg-gray-100"><RefreshCw className="h-4 w-4" /></Button></div>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllBranch} onChange={handleSelectAllBranch} className="h-4 w-4 rounded" id="allBranchCreate" /><Label htmlFor="allBranchCreate" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Branch</Label><Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent className="z-[99999]">{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
-                  <div className="space-y-1"><Label className="text-xs">As On Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(asOnDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} /></PopoverContent></Popover></div>
-                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllDestination} onChange={handleSelectAllDestination} className="h-4 w-4 rounded" id="allDestinationCreate" /><Label htmlFor="allDestinationCreate" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Destination</Label><Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Enter Destination" className="h-9 text-sm" disabled={selectAllDestination} /></div>
-                </div>
+                {/* Stock Filters - Improved UI */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+  
+  {/* Branch Filter with ALL Checkbox */}
+  <div className="space-y-2">
+    <div className="flex items-center justify-between">
+      <Label className="text-sm font-semibold text-gray-700">Select Branch</Label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={selectAllBranch}
+          onChange={handleSelectAllBranch}
+          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+        />
+        <span className="text-sm font-medium text-green-700">ALL BRANCHES</span>
+      </label>
+    </div>
+    <Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}>
+      <SelectTrigger className="h-10 text-sm bg-white border-gray-300">
+        <SelectValue placeholder="-- Select Branch --" />
+      </SelectTrigger>
+      <SelectContent className="z-[99999]">
+        {branchOptions.map((branch) => (
+          <SelectItem key={branch.value} value={branch.value}>
+            {branch.text}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+
+  {/* As On Date Filter */}
+  <div className="space-y-2">
+    <Label className="text-sm font-semibold text-gray-700 block">As On Date</Label>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="h-10 w-full text-sm justify-start bg-white border-gray-300">
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {format(asOnDate, "dd-MM-yyyy")}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0 z-[10000]">
+        <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
+      </PopoverContent>
+    </Popover>
+  </div>
+
+  {/* Destination Filter with ALL Checkbox */}
+  <div className="space-y-2">
+    <div className="flex items-center justify-between">
+      <Label className="text-sm font-semibold text-gray-700">Destination</Label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={selectAllDestination}
+          onChange={handleSelectAllDestination}
+          className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+        />
+        <span className="text-sm font-medium text-green-700">ALL DESTINATIONS</span>
+      </label>
+    </div>
+    <Input
+      value={destination}
+      onChange={(e) => setDestination(e.target.value)}
+      placeholder="-- Enter Destination --"
+      className="h-10 text-sm bg-white border-gray-300"
+      disabled={selectAllDestination}
+    />
+  </div>
+
+</div>
 
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50"><TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded" /></TableHead><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead></TableRow>
+                      <TableRow className="bg-green-50">
+                        <TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500" /></TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">ToPay</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">Paid</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-50">TBB</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-yellow-50">Booked Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-orange-50">Stock Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (<TableRow><TableCell colSpan={14} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" /><p className="text-gray-500 mt-2">Loading stock items...</p></TableCell></TableRow>) : paginatedStockItems.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No stock records found. Click "SHOW STOCK" to search.</TableCell></TableRow>) : (paginatedStockItems.map((item, idx) => (<TableRow key={item.id} className="hover:bg-gray-50"><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell className="py-3 px-2 text-center text-sm">{(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{item.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell><TableCell className="py-3 px-2 text-sm">{item.destination}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignee}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.toPay}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.paid}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.tbb}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100}</TableCell></TableRow>)))}
+                      {loading ? (<TableRow><TableCell colSpan={14} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" /><p className="text-gray-500 mt-2">Loading stock items...</p></TableCell></TableRow>) : paginatedStockItems.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No stock records found. Click "SHOW STOCK" to search.</TableCell></TableRow>) : (paginatedStockItems.map((item, idx) => (<TableRow key={item.id} className="hover:bg-gray-50"><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500" /></TableCell><TableCell className="py-3 px-2 text-center text-sm">{(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold text-blue-600">{item.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell><TableCell className="py-3 px-2 text-sm font-medium">{item.destination}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={item.consignor}>{item.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={item.consignee}>{item.consignee}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-green-600">₹{item.toPay}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-blue-600">₹{item.paid}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-purple-600">₹{item.tbb}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-bold bg-yellow-50">{item.bookedPckgs}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-bold bg-orange-50 text-orange-700">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100} kg</TableCell></TableRow>)))}
                     </TableBody>
                   </Table>
                 </div>
 
                 {totalStockPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage - 1)} disabled={stockCurrentPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {stockCurrentPage} of {totalStockPages}</span><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage + 1)} disabled={stockCurrentPage === totalStockPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
 
-                <div className="flex justify-end gap-3 mt-4"><Button onClick={handleAssignGRs} className="h-9 text-sm bg-blue-600 hover:bg-blue-700" disabled={stockStats.selected === 0 || loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}ADD TO MANIFEST ({stockStats.selected})</Button></div>
+                <div className="flex justify-end gap-3 mt-4 pt-3 border-t"><Button onClick={handleAssignGRs} className="h-9 text-sm bg-green-600 hover:bg-green-700" disabled={stockStats.selected === 0 || loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}ADD TO MANIFEST ({stockStats.selected})</Button></div>
               </div>
             </div>
 
-            {/* ASSIGNED GRs SECTION */}
+            {/* ASSIGNED GRs SECTION - Same as Edit Modal */}
             <div className="border rounded-lg">
-              <div className="bg-blue-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-700"><CheckCircle className="h-5 w-5" /> ASSIGNED GRs TO THIS MANIFEST</h3>
-                <div className="text-sm font-medium">Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg</div>
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 border-b flex justify-between items-center rounded-t-lg">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-white"><CheckCircle className="h-5 w-5" /> ASSIGNED GRs TO THIS MANIFEST</h3>
+                <div className="text-sm font-medium text-white bg-blue-700 px-3 py-1 rounded-full">Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg</div>
               </div>
               <div className="p-4">
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50"><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[100px] text-center">Despatch Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead><TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead></TableRow>
+                      <TableRow className="bg-blue-50">
+                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
+                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">ToPay</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">Paid</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[70px] text-center bg-blue-100">TBB</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-yellow-100">Booked Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[90px] text-center bg-orange-100">Stock Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[110px] text-center bg-purple-100">Despatch Pckgs</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assignedGRs.length === 0 ? (<TableRow><TableCell colSpan={13} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".</TableCell></TableRow>) : (assignedGRs.map((gr, idx) => { const isEditing = editingDispatchedPckgs[gr.id] !== undefined; const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs; const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0; return (<TableRow key={idx} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{gr.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell><TableCell className="py-3 px-2 text-sm">{gr.destination}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.toPay?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.paid?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.tbb?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{gr.bookedPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1">{isEditing ? (<><Input type="number" value={currentValue} onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)} className="h-8 w-20 text-sm text-center" min="0" max={maxPckgs} autoFocus /><Button variant="ghost" size="sm" onClick={() => handleSaveDispatchedPckgs(idx)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700" title="Save"><CheckCircle className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleCancelEditDispatchedPckgs(gr.id)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700" title="Cancel"><X className="h-4 w-4" /></Button></>) : (<><span className="text-sm font-medium">{gr.dispatchedPckgs}</span><Button variant="ghost" size="sm" onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700" title="Edit Dispatched Packages"><Edit className="h-4 w-4" /></Button></>)}</div></TableCell><TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0}</TableCell><TableCell className="py-3 px-2 text-center"><Button variant="ghost" size="sm" onClick={() => handleRemoveAssignedGR(idx)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from manifest"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>); }))}
+                      {assignedGRs.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".</TableCell></TableRow>) : (assignedGRs.map((gr, idx) => { const isEditing = editingDispatchedPckgs[gr.id] !== undefined; const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs; const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0; return (<TableRow key={idx} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold text-blue-600">{gr.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell><TableCell className="py-3 px-2 text-sm font-medium">{gr.destination}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-green-600">₹{gr.toPay?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-blue-600">₹{gr.paid?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-semibold text-purple-600">₹{gr.tbb?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-bold bg-yellow-50">{gr.bookedPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center text-sm font-bold bg-orange-50 text-orange-700">{gr.stockPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1">{isEditing ? (<><Input type="number" value={currentValue} onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)} className="h-8 w-20 text-sm text-center border-purple-300 focus:ring-purple-500" min="0" max={maxPckgs} autoFocus /><Button variant="ghost" size="sm" onClick={() => handleSaveDispatchedPckgs(idx)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700" title="Save"><CheckCircle className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleCancelEditDispatchedPckgs(gr.id)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700" title="Cancel"><X className="h-4 w-4" /></Button></>) : (<><span className="text-sm font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded">{gr.dispatchedPckgs}</span><Button variant="ghost" size="sm" onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700" title="Edit Dispatched Packages"><Edit className="h-4 w-4" /></Button></>)}</div></TableCell><TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0} kg</TableCell><TableCell className="py-3 px-2 text-center"><Button variant="ghost" size="sm" onClick={() => handleRemoveAssignedGR(idx)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from manifest"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>); }))}
                     </TableBody>
                   </Table>
                 </div>
