@@ -171,10 +171,216 @@ interface Branch {
 
 // Destination options
 const destinationOptions = [
+  { value: "AGARTALA", label: "AGARTALA" },
+  { value: "AKBERPUR/AMBEDKAR NAGAR", label: "AKBERPUR/AMBEDKAR NAGAR" },
+  { value: "ALIPURDUAR", label: "ALIPURDUAR" },
+  { value: "ALLAHABAD", label: "ALLAHABAD" },
+  { value: "ALZALGARH", label: "ALZALGARH" },
+  { value: "AMRITSAR", label: "AMRITSAR" },
+  { value: "ANANTAPUR", label: "ANANTAPUR" },
+  { value: "ANOOPSHER", label: "ANOOPSHER" },
+  { value: "ARARIA COURT", label: "ARARIA COURT" },
+  { value: "ARRAH", label: "ARRAH" },
+  { value: "ASANSOL", label: "ASANSOL" },
+  { value: "AURANGABAD B.R", label: "AURANGABAD B.R" },
+  { value: "AURANGABAD U.P", label: "AURANGABAD U.P" },
+  { value: "AZAMGARH", label: "AZAMGARH" },
+  { value: "BABRALA", label: "BABRALA" },
+  { value: "BAHERI", label: "BAHERI" },
+  { value: "BAHJOI", label: "BAHJOI" },
+  { value: "BALLIA", label: "BALLIA" },
+  { value: "BANKURA", label: "BANKURA" },
+  { value: "BAREILLY", label: "BAREILLY" },
+  { value: "BARHALGANJ", label: "BARHALGANJ" },
+  { value: "BARHI", label: "BARHI" },
+  { value: "BARPETA ROAD", label: "BARPETA ROAD" },
+  { value: "BASTI", label: "BASTI" },
+  { value: "BEGUSARAI", label: "BEGUSARAI" },
+  { value: "BELTHARA ROAD", label: "BELTHARA ROAD" },
+  { value: "BERHAMPORE W.B", label: "BERHAMPORE W.B" },
+  { value: "BETTIAH", label: "BETTIAH" },
+  { value: "BHABHUA", label: "BHABHUA" },
+  { value: "BHADOHI", label: "BHADOHI" },
+  { value: "BHAGALPUR", label: "BHAGALPUR" },
+  { value: "BHULANDSHAHAR", label: "BHULANDSHAHAR" },
+  { value: "BIHARIGANJ", label: "BIHARIGANJ" },
+  { value: "BIHARSHARIF", label: "BIHARSHARIF" },
+  { value: "BIHIYA", label: "BIHIYA" },
+  { value: "BIHTA", label: "BIHTA" },
+  { value: "BIJNOR", label: "BIJNOR" },
+  { value: "BILASIPARA", label: "BILASIPARA" },
+  { value: "BONGAIGOAN", label: "BONGAIGOAN" },
+  { value: "BRAHMAPUR", label: "BRAHMAPUR" },
+  { value: "BURDWAN", label: "BURDWAN" },
+  { value: "BUXAR", label: "BUXAR" },
+  { value: "CHANCHAL", label: "CHANCHAL" },
+  { value: "CHANDAUSI", label: "CHANDAUSI" },
+  { value: "CHANDPUR", label: "CHANDPUR" },
+  { value: "CHAS", label: "CHAS" },
+  { value: "CHHAPRA", label: "CHHAPRA" },
+  { value: "COOCHBEHAR", label: "COOCHBEHAR" },
+  { value: "DALKOLA", label: "DALKOLA" },
+  { value: "DALTONGANJ", label: "DALTONGANJ" },
+  { value: "DARBHANGA", label: "DARBHANGA" },
+  { value: "DAUDNAGAR", label: "DAUDNAGAR" },
+  { value: "DEHRI ON SON", label: "DEHRI ON SON" },
+  { value: "DEOGHAR", label: "DEOGHAR" },
+  { value: "DEORIA", label: "DEORIA" },
+  { value: "DHAMPUR", label: "DHAMPUR" },
+  { value: "DHANAURA", label: "DHANAURA" },
+  { value: "DHANBAD", label: "DHANBAD" },
+  { value: "DHUBRI", label: "DHUBRI" },
+  { value: "DHUPGURI", label: "DHUPGURI" },
+  { value: "DIBAI", label: "DIBAI" },
+  { value: "DINHATA", label: "DINHATA" },
+  { value: "DUMKA", label: "DUMKA" },
+  { value: "DUMROAN", label: "DUMROAN" },
+  { value: "DURGAPUR", label: "DURGAPUR" },
+  { value: "FAIZABAD", label: "FAIZABAD" },
+  { value: "FALAKATA", label: "FALAKATA" },
+  { value: "FORBISGANJ", label: "FORBISGANJ" },
+  { value: "GANGARAMPUR", label: "GANGARAMPUR" },
+  { value: "GARWA", label: "GARWA" },
+  { value: "GAYA", label: "GAYA" },
+  { value: "GHAZIPUR", label: "GHAZIPUR" },
+  { value: "GHOSI", label: "GHOSI" },
+  { value: "GIRIDIH", label: "GIRIDIH" },
+  { value: "GOALPARA", label: "GOALPARA" },
+  { value: "GODDA", label: "GODDA" },
+  { value: "GOPALGANJ", label: "GOPALGANJ" },
+  { value: "GORAKHPUR", label: "GORAKHPUR" },
+  { value: "GOSAINGANJ", label: "GOSAINGANJ" },
+  { value: "GULABBAGH", label: "GULABBAGH" },
+  { value: "GULAOTHI", label: "GULAOTHI" },
+  { value: "GUMLA", label: "GUMLA" },
+  { value: "HAJIPUR", label: "HAJIPUR" },
+  { value: "HARRAIYA", label: "HARRAIYA" },
+  { value: "HATA", label: "HATA" },
+  { value: "HAZARIBAGH", label: "HAZARIBAGH" },
+  { value: "HEAD OFFICE", label: "HEAD OFFICE" },
+  { value: "HINDUPUR", label: "HINDUPUR" },
+  { value: "HYDERABAD", label: "HYDERABAD" },
+  { value: "ISLAMPUR", label: "ISLAMPUR" },
+  { value: "JAGITAL", label: "JAGITAL" },
+  { value: "JAHANGIRABAD", label: "JAHANGIRABAD" },
+  { value: "JAINAGAR", label: "JAINAGAR" },
+  { value: "JALALPUR", label: "JALALPUR" },
+  { value: "JALPAIGURI", label: "JALPAIGURI" },
+  { value: "JAMSHEDPUR", label: "JAMSHEDPUR" },
+  { value: "JAMUI", label: "JAMUI" },
+  { value: "JAUNPUR", label: "JAUNPUR" },
+  { value: "JHANJHARPUR", label: "JHANJHARPUR" },
+  { value: "JHARIYA", label: "JHARIYA" },
+  { value: "JHUMRITALIYA", label: "JHUMRITALIYA" },
+  { value: "KADAPA", label: "KADAPA" },
+  { value: "KALIACHAK", label: "KALIACHAK" },
+  { value: "KALIYAGANJ", label: "KALIYAGANJ" },
+  { value: "KANPUR", label: "KANPUR" },
+  { value: "KAPTANGANJ", label: "KAPTANGANJ" },
+  { value: "KARIM NAGAR", label: "KARIM NAGAR" },
+  { value: "KASIA", label: "KASIA" },
+  { value: "KATIHAR", label: "KATIHAR" },
+  { value: "KHAGARIA", label: "KHAGARIA" },
+  { value: "KHALILABAD", label: "KHALILABAD" },
+  { value: "KIRATPUR", label: "KIRATPUR" },
+  { value: "KISHANGANJ", label: "KISHANGANJ" },
+  { value: "KOCHAS", label: "KOCHAS" },
+  { value: "KOKRAJHAR", label: "KOKRAJHAR" },
+  { value: "KRISHNAI", label: "KRISHNAI" },
+  { value: "KUNDA", label: "KUNDA" },
+  { value: "KURNOOL", label: "KURNOOL" },
+  { value: "KUSHINAGAR", label: "KUSHINAGAR" },
+  { value: "LAKHISARAI", label: "LAKHISARAI" },
+  { value: "LALGANJ", label: "LALGANJ" },
+  { value: "LOHARDGA", label: "LOHARDGA" },
+  { value: "LUCKNOW", label: "LUCKNOW" },
+  { value: "MACHHALISHAR", label: "MACHHALISHAR" },
+  { value: "MADHEPURA", label: "MADHEPURA" },
+  { value: "MADHUBANI", label: "MADHUBANI" },
+  { value: "MADHUPUR", label: "MADHUPUR" },
+  { value: "MAHARAJGANJ", label: "MAHARAJGANJ" },
+  { value: "MAIRWA", label: "MAIRWA" },
+  { value: "MALDA", label: "MALDA" },
+  { value: "MATHABHANGA", label: "MATHABHANGA" },
+  { value: "MAU", label: "MAU" },
+  { value: "MAYNAGURI", label: "MAYNAGURI" },
+  { value: "MIRZAPUR", label: "MIRZAPUR" },
+  { value: "MOHAMMDABAD GOHNA", label: "MOHAMMDABAD GOHNA" },
+  { value: "MOHANIYA", label: "MOHANIYA" },
+  { value: "MORADABAD", label: "MORADABAD" },
+  { value: "MOTIHARI", label: "MOTIHARI" },
+  { value: "MUBARAKPUR", label: "MUBARAKPUR" },
+  { value: "MUGHALSARAI", label: "MUGHALSARAI" },
+  { value: "MUNGRA BADSHAHPUR", label: "MUNGRA BADSHAHPUR" },
+  { value: "MURLIGANJ", label: "MURLIGANJ" },
+  { value: "MURSHIDABAD", label: "MURSHIDABAD" },
+  { value: "MUZAFFARPUR", label: "MUZAFFARPUR" },
+  { value: "NAGINA", label: "NAGINA" },
+  { value: "NALBARI", label: "NALBARI" },
+  { value: "NANDYAL", label: "NANDYAL" },
+  { value: "NARKATIYA GANJ", label: "NARKATIYA GANJ" },
+  { value: "NAWABGANJ", label: "NAWABGANJ" },
+  { value: "NAWADA", label: "NAWADA" },
+  { value: "NETHAUR", label: "NETHAUR" },
+  { value: "NOJIBABAD", label: "NOJIBABAD" },
+  { value: "NOORPUR", label: "NOORPUR" },
+  { value: "PADRAUNA", label: "PADRAUNA" },
+  { value: "PATNA", label: "PATNA" },
+  { value: "PHUSRO", label: "PHUSRO" },
+  { value: "PILIBHIT", label: "PILIBHIT" },
+  { value: "PODDATUR", label: "PODDATUR" },
+  { value: "PRATAPGARH", label: "PRATAPGARH" },
+  { value: "PURANPUR", label: "PURANPUR" },
+  { value: "PURNIA", label: "PURNIA" },
+  { value: "PURULIA", label: "PURULIA" },
+  { value: "RAFIGANJ", label: "RAFIGANJ" },
+  { value: "RAGHUNATHGANJ", label: "RAGHUNATHGANJ" },
+  { value: "RAIGANJ", label: "RAIGANJ" },
+  { value: "RAJAHMUNDRY", label: "RAJAHMUNDRY" },
+  { value: "RAMGARH", label: "RAMGARH" },
+  { value: "RANCHI", label: "RANCHI" },
+  { value: "RANGIA", label: "RANGIA" },
+  { value: "RANIGANJ", label: "RANIGANJ" },
+  { value: "RASARA", label: "RASARA" },
+  { value: "RAXAUL", label: "RAXAUL" },
+  { value: "SAHARSA", label: "SAHARSA" },
+  { value: "SAHASWAN", label: "SAHASWAN" },
+  { value: "SALEMPUR", label: "SALEMPUR" },
+  { value: "SAMASTIPUR", label: "SAMASTIPUR" },
+  { value: "SAMBAL", label: "SAMBAL" },
+  { value: "SAMSI", label: "SAMSI" },
+  { value: "SASARAM", label: "SASARAM" },
+  { value: "SECUNDERABAD", label: "SECUNDERABAD" },
+  { value: "SEOHARA", label: "SEOHARA" },
+  { value: "SHAHGANJ", label: "SHAHGANJ" },
+  { value: "SHERGHATI", label: "SHERGHATI" },
+  { value: "SHIKARPUR", label: "SHIKARPUR" },
+  { value: "SIDDHARTHNAGAR", label: "SIDDHARTHNAGAR" },
+  { value: "SIDDIPET", label: "SIDDIPET" },
+  { value: "SILLIGURI", label: "SILLIGURI" },
+  { value: "SIMDEGA", label: "SIMDEGA" },
+  { value: "SISWABAZAR", label: "SISWABAZAR" },
+  { value: "SITAMARHI", label: "SITAMARHI" },
+  { value: "SIWAN", label: "SIWAN" },
+  { value: "SIYANA", label: "SIYANA" },
+  { value: "SRIKAKULAM", label: "SRIKAKULAM" },
+  { value: "SULTANPUR", label: "SULTANPUR" },
+  { value: "SUPAUL", label: "SUPAUL" },
+  { value: "TAMKUHI", label: "TAMKUHI" },
+  { value: "TANDA", label: "TANDA" },
+  { value: "THAKURDWARA", label: "THAKURDWARA" },
+  { value: "TRONICA CITY", label: "TRONICA CITY" },
+  { value: "TUFANGANJ", label: "TUFANGANJ" },
   { value: "U P BORDER A JH UP", label: "U P BORDER A JH UP" },
   { value: "U P BORDER B BR", label: "U P BORDER B BR" },
   { value: "U P BORDER C ASM WB", label: "U P BORDER C ASM WB" },
   { value: "U P BORDER D BR GP", label: "U P BORDER D BR GP" },
+  { value: "VARANASI", label: "VARANASI" },
+  { value: "VIJAYWADA", label: "VIJAYWADA" },
+  { value: "VIKRAMGANJ", label: "VIKRAMGANJ" },
+  { value: "VISAKHAPATNAM", label: "VISAKHAPATNAM" },
+  { value: "VIZIANAGARAM", label: "VIZIANAGARAM" },
+  { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
 
 const cancelledReasonOptions = [
@@ -224,6 +430,9 @@ export default function LocalManifest() {
   const [stockStats, setStockStats] = useState({ total: 0, selected: 0, totalPckgs: 0 });
   const stockItemsPerPage: number = 10;
   const [assignedGRs, setAssignedGRs] = useState<AssignedGR[]>([]);
+  
+  // State for editing dispatched packages
+  const [editingDispatchedPckgs, setEditingDispatchedPckgs] = useState<{ [key: string]: number }>({});
 
   // Static data from API
   const [driverOptions, setDriverOptions] = useState<string[]>([]);
@@ -276,6 +485,147 @@ export default function LocalManifest() {
     return found ? found.text : branchValue;
   };
 
+  // Handle dispatched packages change
+  const handleDispatchedPckgsChange = (grId: string, value: number, maxPckgs: number) => {
+    if (value > maxPckgs) {
+      toast.error(`Cannot dispatch more than ${maxPckgs} packages`);
+      return;
+    }
+    if (value < 0) {
+      toast.error("Packages cannot be negative");
+      return;
+    }
+    
+    setEditingDispatchedPckgs(prev => ({
+      ...prev,
+      [grId]: value
+    }));
+  };
+
+  // Save dispatched packages change
+  const handleSaveDispatchedPckgs = (index: number) => {
+    const gr = assignedGRs[index];
+    const newDispatchedPckgs = editingDispatchedPckgs[gr.id];
+    
+    if (newDispatchedPckgs !== undefined && newDispatchedPckgs !== gr.dispatchedPckgs) {
+      const updatedGRs = [...assignedGRs];
+      updatedGRs[index] = {
+        ...updatedGRs[index],
+        dispatchedPckgs: newDispatchedPckgs,
+        weight: newDispatchedPckgs * 100
+      };
+      setAssignedGRs(updatedGRs);
+      
+      setEditingDispatchedPckgs(prev => {
+        const newState = { ...prev };
+        delete newState[gr.id];
+        return newState;
+      });
+      
+      toast.success(`Dispatched packages updated to ${newDispatchedPckgs}`);
+    }
+  };
+
+  // Cancel editing
+  const handleCancelEditDispatchedPckgs = (grId: string) => {
+    setEditingDispatchedPckgs(prev => {
+      const newState = { ...prev };
+      delete newState[grId];
+      return newState;
+    });
+  };
+
+  // ========== AUTO LOAD STOCK DATA WHEN MODAL OPENS ==========
+  const loadStockDataAutomatically = async () => {
+    setLoading(true);
+    try {
+      const filters: any = {};
+      // Auto-fetch all stock items when modal opens
+      const response = await getLocalManifestStockItems(filters);
+      
+      const items: StockItem[] = response.data.map((item: StockItemResponse, index: number): StockItem => {
+        const bookingIdValue = String(item.bookingId || item.id || item._id || index);
+        
+        return {
+          id: index + 1,
+          grNo: item.grNo,
+          grDate: item.grDate,
+          origin: item.origin,
+          destination: item.destination,
+          consignor: item.consignor,
+          consignee: item.consignee,
+          toPay: item.toPay,
+          paid: item.paid,
+          tbb: item.tbb,
+          stockPckgs: item.stockPckgs,
+          selected: false,
+          bookingType: item.bookingType || "computerized",
+          bookingId: bookingIdValue,
+        };
+      });
+      
+      setStockItems(items);
+      setStockStats({
+        total: items.length,
+        selected: 0,
+        totalPckgs: items.reduce((sum: number, i: StockItem) => sum + i.stockPckgs, 0),
+      });
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Error auto-loading stock items:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to load stock items with filters (for SHOW STOCK button)
+  const loadStockItemsWithFilters = async () => {
+    setLoading(true);
+    try {
+      const filters: any = {};
+      if (stockBranch && !selectAllBranch && stockBranch !== 'ALL') filters.branch = stockBranch;
+      if (destination && !selectAllDestination && destination !== 'ALL') filters.destination = destination;
+      if (asOnDate) filters.asOnDate = asOnDate.toISOString();
+
+      const response = await getLocalManifestStockItems(filters);
+      
+      const items: StockItem[] = response.data.map((item: StockItemResponse, index: number): StockItem => {
+        const bookingIdValue = String(item.bookingId || item.id || item._id || index);
+        
+        return {
+          id: index + 1,
+          grNo: item.grNo,
+          grDate: item.grDate,
+          origin: item.origin,
+          destination: item.destination,
+          consignor: item.consignor,
+          consignee: item.consignee,
+          toPay: item.toPay,
+          paid: item.paid,
+          tbb: item.tbb,
+          stockPckgs: item.stockPckgs,
+          selected: false,
+          bookingType: item.bookingType || "computerized",
+          bookingId: bookingIdValue,
+        };
+      });
+      
+      setStockItems(items);
+      setStockStats({
+        total: items.length,
+        selected: 0,
+        totalPckgs: items.reduce((sum: number, i: StockItem) => sum + i.stockPckgs, 0),
+      });
+      setSelectAll(false);
+      toast.success(`Found ${items.length} stock items`);
+    } catch (error) {
+      console.error("Error loading stock items:", error);
+      toast.error("Failed to load stock items");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load current user first
   useEffect(() => {
     loadCurrentUser();
@@ -294,6 +644,34 @@ export default function LocalManifest() {
     }
   }, [staticDataLoaded]);
 
+  // Auto-load stock data when Create Modal opens
+  useEffect(() => {
+    if (isEntryModalOpen) {
+      // Reset stock filters first
+      setStockBranch("");
+      setDestination("");
+      setSelectAllBranch(false);
+      setSelectAllDestination(false);
+      setAsOnDate(new Date());
+      // Auto-load stock data
+      loadStockDataAutomatically();
+    }
+  }, [isEntryModalOpen]);
+
+  // Auto-load stock data when Edit Modal opens
+  useEffect(() => {
+    if (isEditModalOpen) {
+      // Reset stock filters first
+      setStockBranch("");
+      setDestination("");
+      setSelectAllBranch(false);
+      setSelectAllDestination(false);
+      setAsOnDate(new Date());
+      // Auto-load stock data
+      loadStockDataAutomatically();
+    }
+  }, [isEditModalOpen]);
+
   // Branch auto-selection with value and text matching
   useEffect(() => {
     if (selectedBranch && branchOptions.length > 0) {
@@ -310,11 +688,9 @@ export default function LocalManifest() {
       if (matchedBranch) {
         setBranch(matchedBranch.value);
         setSelectedBranchText(matchedBranch.text);
-        console.log("Branch auto-selected:", matchedBranch.value, matchedBranch.text);
       } else {
         if (branchOptions.length > 0) {
           setBranch(branchOptions[0].value);
-          console.log("Fallback to first branch:", branchOptions[0].value);
         }
       }
     }
@@ -347,7 +723,6 @@ export default function LocalManifest() {
 
   const loadStaticData = async () => {
     try {
-      console.log("Loading static data...");
       const [driversRes, vendorsRes, personsRes, branchesRes] = await Promise.all([
         getDrivers(),
         getVendors(),
@@ -358,7 +733,6 @@ export default function LocalManifest() {
       setVendorOptions(vendorsRes.data || []);
       setLoadingPersonOptions(personsRes.data || []);
       setBranchOptions(branchesRes.data || []);
-      console.log("Branch options loaded:", branchesRes.data);
       setStaticDataLoaded(true);
     } catch (error) {
       console.error("Error loading static data:", error);
@@ -402,57 +776,6 @@ export default function LocalManifest() {
     }
   };
 
-  const loadStockItems = async () => {
-    setLoading(true);
-    try {
-      const filters: any = {};
-      if (stockBranch && !selectAllBranch && stockBranch !== 'ALL') filters.branch = stockBranch;
-      if (destination && !selectAllDestination && destination !== 'ALL') filters.destination = destination;
-      if (asOnDate) filters.asOnDate = asOnDate.toISOString();
-
-      console.log("Loading stock items with filters:", filters);
-      const response = await getLocalManifestStockItems(filters);
-      console.log("Stock items response:", response);
-      
-      const items: StockItem[] = response.data.map((item: StockItemResponse, index: number): StockItem => {
-        const bookingIdValue = String(item.bookingId || item.id || item._id || index);
-        
-        return {
-          id: index + 1,
-          grNo: item.grNo,
-          grDate: item.grDate,
-          origin: item.origin,
-          destination: item.destination,
-          consignor: item.consignor,
-          consignee: item.consignee,
-          toPay: item.toPay,
-          paid: item.paid,
-          tbb: item.tbb,
-          stockPckgs: item.stockPckgs,
-          selected: false,
-          bookingType: item.bookingType || "computerized",
-          bookingId: bookingIdValue,
-        };
-      });
-      
-      console.log("Mapped stock items with bookingId:", items.map(i => ({ grNo: i.grNo, bookingId: i.bookingId })));
-      
-      setStockItems(items);
-      setStockStats({
-        total: items.length,
-        selected: 0,
-        totalPckgs: items.reduce((sum: number, i: StockItem) => sum + i.stockPckgs, 0),
-      });
-      setSelectAll(false);
-      toast.success(`Found ${items.length} stock items`);
-    } catch (error) {
-      console.error("Error loading stock items:", error);
-      toast.error("Failed to load stock items");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const resetForm = () => {
     setToStation("");
     setManifestNo("");
@@ -469,6 +792,17 @@ export default function LocalManifest() {
     setEditMode(false);
     setCurrentEditId(null);
     setAutoManifest(true);
+    // Reset stock related states
+    setAssignedGRs([]);
+    setStockItems([]);
+    setStockBranch("");
+    setDestination("");
+    setSelectAllBranch(false);
+    setSelectAllDestination(false);
+    setEditingDispatchedPckgs({});
+    setStockCurrentPage(1);
+    setSelectAll(false);
+    setStockStats({ total: 0, selected: 0, totalPckgs: 0 });
   };
 
   const handleSave = async () => {
@@ -514,6 +848,7 @@ export default function LocalManifest() {
       grossWeight: 0,
       vehicleNo: modeName,
       autoManifest,
+      assignedGRs: assignedGRs,
     };
 
     if (!autoManifest && manifestNo) {
@@ -528,6 +863,16 @@ export default function LocalManifest() {
       } else {
         response = await createLocalManifest(manifestData);
         toast.success(`Manifest created successfully! No: ${response.data.manifestNo}`);
+        
+        if (assignedGRs.length > 0 && response?.data?._id) {
+          try {
+            const totalPckgs = assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0);
+            const totalWeight = assignedGRs.reduce((sum, gr) => sum + gr.weight, 0);
+            await updateLocalManifestDispatch(response.data._id, totalPckgs, totalWeight, assignedGRs);
+          } catch (error) {
+            console.error("Error updating dispatch details:", error);
+          }
+        }
       }
 
       await loadManifests();
@@ -605,7 +950,7 @@ export default function LocalManifest() {
   };
 
   const handleStockSearch = async () => {
-    await loadStockItems();
+    await loadStockItemsWithFilters();
     setStockCurrentPage(1);
   };
 
@@ -615,9 +960,7 @@ export default function LocalManifest() {
     setSelectAllBranch(false);
     setSelectAllDestination(false);
     setAsOnDate(new Date());
-    setStockItems([]);
-    setStockStats({ total: 0, selected: 0, totalPckgs: 0 });
-    setSelectAll(false);
+    loadStockDataAutomatically(); // Reload all stock data after clearing filters
     setStockCurrentPage(1);
   };
 
@@ -625,6 +968,7 @@ export default function LocalManifest() {
     setCurrentManifest(record);
     setCurrentEditId(record._id!);
     setAssignedGRs(record.assignedGRs || []);
+    setEditingDispatchedPckgs({});
     setIsEditModalOpen(true);
   };
 
@@ -648,28 +992,10 @@ export default function LocalManifest() {
             <h3>Assigned GRs</h3>
             <table border="1" cellpadding="5" cellspacing="0" style="width: 100%; border-collapse: collapse;">
               <thead>
-                <tr>
-                  <th>GR #</th>
-                  <th>Date</th>
-                  <th>Consignor</th>
-                  <th>Consignee</th>
-                  <th>Destination</th>
-                  <th>Packages</th>
-                  <th>Weight</th>
-                </tr>
+                <tr><th>GR #</th><th>Date</th><th>Consignor</th><th>Consignee</th><th>Destination</th><th>Packages</th><th>Weight</th></tr>
               </thead>
               <tbody>
-                ${(record.assignedGRs || []).map(gr => `
-                  <tr>
-                    <td>${gr.grNo}</td>
-                    <td>${format(new Date(gr.grDate), "dd-MM-yyyy")}</td>
-                    <td>${gr.consignor}</td>
-                    <td>${gr.consignee}</td>
-                    <td>${gr.destination}</td>
-                    <td>${gr.dispatchedPckgs}</td>
-                    <td>${gr.weight}</td>
-                  </tr>
-                `).join('')}
+                ${(record.assignedGRs || []).map(gr => `<tr><td>${gr.grNo}</td><td>${format(new Date(gr.grDate), "dd-MM-yyyy")}</td><td>${gr.consignor}</td><td>${gr.consignee}</td><td>${gr.destination}</td><td>${gr.dispatchedPckgs}</td><td>${gr.weight}</td></tr>`).join('')}
               </tbody>
             </table>
             <hr />
@@ -811,8 +1137,10 @@ export default function LocalManifest() {
     setSelectAllBranch(!selectAllBranch);
     if (!selectAllBranch) {
       setStockBranch("ALL");
+      loadStockDataAutomatically(); // Reload all stock data
     } else {
       setStockBranch("");
+      loadStockDataAutomatically(); // Reload all stock data
     }
   };
 
@@ -820,8 +1148,10 @@ export default function LocalManifest() {
     setSelectAllDestination(!selectAllDestination);
     if (!selectAllDestination) {
       setDestination("ALL");
+      loadStockDataAutomatically(); // Reload all stock data
     } else {
       setDestination("");
+      loadStockDataAutomatically(); // Reload all stock data
     }
   };
 
@@ -832,16 +1162,10 @@ export default function LocalManifest() {
       return;
     }
 
-    console.log("Selected items:", selectedItems.map(i => ({ grNo: i.grNo, bookingId: i.bookingId })));
-
     setLoading(true);
     try {
-      const totalPckgs = selectedItems.reduce((sum, item) => sum + item.stockPckgs, 0);
-      const totalWeight = selectedItems.reduce((sum, item) => sum + (item.stockPckgs * 100), 0);
-
       const newAssignedGRs: AssignedGR[] = selectedItems.map(item => {
         const bookingIdValue = String(item.bookingId || item.id);
-        console.log(`Creating assigned GR for ${item.grNo} with bookingId: ${bookingIdValue}`);
         
         return {
           id: bookingIdValue,
@@ -862,12 +1186,14 @@ export default function LocalManifest() {
         };
       });
 
-      console.log("New assigned GRs being sent:", JSON.stringify(newAssignedGRs, null, 2));
-
       const updatedAssignedGRs = [...assignedGRs, ...newAssignedGRs];
       setAssignedGRs(updatedAssignedGRs);
 
-      await updateLocalManifestDispatch(currentEditId!, totalPckgs, totalWeight, updatedAssignedGRs);
+      if (currentEditId) {
+        const totalPckgs = updatedAssignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0);
+        const totalWeight = updatedAssignedGRs.reduce((sum, gr) => sum + gr.weight, 0);
+        await updateLocalManifestDispatch(currentEditId, totalPckgs, totalWeight, updatedAssignedGRs);
+      }
 
       toast.success(`${selectedItems.length} GR(s) assigned successfully!`);
       
@@ -881,7 +1207,6 @@ export default function LocalManifest() {
       setSelectAll(false);
     } catch (error: any) {
       console.error("Assign GRs error:", error);
-      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to assign GRs");
     } finally {
       setLoading(false);
@@ -964,6 +1289,7 @@ export default function LocalManifest() {
   );
   const goToStockPage = (page: number) => setStockCurrentPage(Math.max(1, Math.min(page, totalStockPages)));
 
+  // Rest of the JSX remains the same...
   return (
     <div className="space-y-4 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       {/* Header */}
@@ -972,20 +1298,13 @@ export default function LocalManifest() {
           <div>
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-blue-600" />
-              <h1 className="text-xl md:text-2xl font-bold text-gray-800">
-                LOCAL MANIFEST
-              </h1>
+              <h1 className="text-xl md:text-2xl font-bold text-gray-800">LOCAL MANIFEST</h1>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Company: GOLDEN ROADWAYS & LOGISTICS PVT LTD
-            </div>
-            <div className="text-xs text-gray-500">
-              Login Branch: {getBranchDisplayText(selectedBranch) || "Not selected"}
-            </div>
+            <div className="text-xs text-gray-500 mt-1">Company: GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD</div>
+            <div className="text-xs text-gray-500">Login Branch: {getBranchDisplayText(selectedBranch) || "Not selected"}</div>
           </div>
           <Button onClick={openAddModal} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="mr-2 h-4 w-4" />
-            New Manifest
+            <Plus className="mr-2 h-4 w-4" /> New Manifest
           </Button>
         </div>
       </div>
@@ -993,207 +1312,58 @@ export default function LocalManifest() {
       {/* Main Tabs */}
       <div className="flex border-b bg-white rounded-t-lg">
         <button
-          onClick={() => {
-            setMainTab("active");
-            loadManifests();
-          }}
-          className={cn(
-            "px-6 py-2.5 text-sm font-medium transition-all rounded-t-lg",
-            mainTab === "active"
-              ? "bg-blue-600 text-white shadow-md"
-              : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          )}
+          onClick={() => { setMainTab("active"); loadManifests(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium transition-all rounded-t-lg",
+            mainTab === "active" ? "bg-blue-600 text-white shadow-md" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100")}
         >
           Active Manifests
         </button>
         <button
-          onClick={() => {
-            setMainTab("cancelled");
-            loadCancelledManifests();
-          }}
-          className={cn(
-            "px-6 py-2.5 text-sm font-medium transition-all rounded-t-lg",
-            mainTab === "cancelled"
-              ? "bg-red-600 text-white shadow-md"
-              : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          )}
+          onClick={() => { setMainTab("cancelled"); loadCancelledManifests(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium transition-all rounded-t-lg",
+            mainTab === "cancelled" ? "bg-red-600 text-white shadow-md" : "text-gray-600 hover:text-gray-800 hover:bg-gray-100")}
         >
           Cancelled Manifests
         </button>
       </div>
 
-      {/* Active Manifests Tab */}
+      {/* Active Manifests Tab - Same as before */}
       {mainTab === "active" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm opacity-90">Total Manifests</p>
-                    <p className="text-2xl font-bold">{activeStats.total}</p>
-                  </div>
-                  <Truck className="h-8 w-8 opacity-80" />
-                </div>
-              </CardContent>
+              <CardContent className="p-4"><div className="flex justify-between items-center"><div><p className="text-sm opacity-90">Total Manifests</p><p className="text-2xl font-bold">{activeStats.total}</p></div><Truck className="h-8 w-8 opacity-80" /></div></CardContent>
             </Card>
             <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm opacity-90">Total Packages</p>
-                    <p className="text-2xl font-bold">{activeStats.totalPckgs.toLocaleString()}</p>
-                  </div>
-                  <Package className="h-8 w-8 opacity-80" />
-                </div>
-              </CardContent>
+              <CardContent className="p-4"><div className="flex justify-between items-center"><div><p className="text-sm opacity-90">Total Packages</p><p className="text-2xl font-bold">{activeStats.totalPckgs.toLocaleString()}</p></div><Package className="h-8 w-8 opacity-80" /></div></CardContent>
             </Card>
             <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm opacity-90">Total Weight (kg)</p>
-                    <p className="text-2xl font-bold">{activeStats.totalWeight.toLocaleString()}</p>
-                  </div>
-                  <Clock className="h-8 w-8 opacity-80" />
-                </div>
-              </CardContent>
+              <CardContent className="p-4"><div className="flex justify-between items-center"><div><p className="text-sm opacity-90">Total Weight (kg)</p><p className="text-2xl font-bold">{activeStats.totalWeight.toLocaleString()}</p></div><Clock className="h-8 w-8 opacity-80" /></div></CardContent>
             </Card>
           </div>
 
           {/* Search Filters */}
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
-                <Search className="h-4 w-4" />
-                Search Manifests
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700"><Search className="h-4 w-4" /> Search Manifests</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">From Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(fromDate, "dd-MM-yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[10000]">
-                      <Calendar mode="single" selected={fromDate} onSelect={(d) => d && setFromDate(d)} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">To Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(toDate, "dd-MM-yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[10000]">
-                      <Calendar mode="single" selected={toDate} onSelect={(d) => d && setToDate(d)} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Branch</Label>
-                  <Select value={searchBranch} onValueChange={setSearchBranch}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="All Branches" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[99999]">
-                      <SelectItem value="all">All Branches</SelectItem>
-                      {branchOptions.map((branch) => (
-                        <SelectItem key={branch.value} value={branch.value}>
-                          {branch.text}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Manifest #</Label>
-                  <Input
-                    value={searchManifestNo}
-                    onChange={(e) => setSearchManifestNo(e.target.value)}
-                    placeholder="Enter Manifest #"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Mode Name</Label>
-                  <Input
-                    value={searchModeName}
-                    onChange={(e) => setSearchModeName(e.target.value)}
-                    placeholder="Enter Mode Name"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Driver Name</Label>
-                  <Input
-                    value={searchDriverName}
-                    onChange={(e) => setSearchDriverName(e.target.value)}
-                    placeholder="Enter Driver Name"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Vehicle Vendor</Label>
-                  <Input
-                    value={searchVehicleVendor}
-                    onChange={(e) => setSearchVehicleVendor(e.target.value)}
-                    placeholder="Enter Vehicle Vendor"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Vendor CD #</Label>
-                  <Input
-                    value={searchVendorCDNo}
-                    onChange={(e) => setSearchVendorCDNo(e.target.value)}
-                    placeholder="Enter Vendor CD #"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Remarks</Label>
-                  <Input
-                    value={searchRemarks}
-                    onChange={(e) => setSearchRemarks(e.target.value)}
-                    placeholder="Enter Remarks"
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div className="flex items-end gap-2 col-span-full">
-                  <Button onClick={handleSearch} className="h-9 text-sm bg-blue-600" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
-                    Search
-                  </Button>
-                  <Button onClick={handleClearSearch} variant="outline" className="h-9 text-sm">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button onClick={handleExportToExcel} variant="outline" className="h-9 text-sm ml-auto">
-                    <FileSpreadsheet className="h-4 w-4 mr-1" />
-                    Export to Excel
-                  </Button>
-                </div>
+                <div className="space-y-1"><Label className="text-xs">From Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(fromDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={fromDate} onSelect={(d) => d && setFromDate(d)} /></PopoverContent></Popover></div>
+                <div className="space-y-1"><Label className="text-xs">To Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(toDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={toDate} onSelect={(d) => d && setToDate(d)} /></PopoverContent></Popover></div>
+                <div className="space-y-1"><Label className="text-xs">Branch</Label><Select value={searchBranch} onValueChange={setSearchBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="All Branches" /></SelectTrigger><SelectContent className="z-[99999]"><SelectItem value="all">All Branches</SelectItem>{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
+                <div className="space-y-1"><Label className="text-xs">Manifest #</Label><Input value={searchManifestNo} onChange={(e) => setSearchManifestNo(e.target.value)} placeholder="Enter Manifest #" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-xs">Mode Name</Label><Input value={searchModeName} onChange={(e) => setSearchModeName(e.target.value)} placeholder="Enter Mode Name" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-xs">Driver Name</Label><Input value={searchDriverName} onChange={(e) => setSearchDriverName(e.target.value)} placeholder="Enter Driver Name" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-xs">Vehicle Vendor</Label><Input value={searchVehicleVendor} onChange={(e) => setSearchVehicleVendor(e.target.value)} placeholder="Enter Vehicle Vendor" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-xs">Vendor CD #</Label><Input value={searchVendorCDNo} onChange={(e) => setSearchVendorCDNo(e.target.value)} placeholder="Enter Vendor CD #" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-xs">Remarks</Label><Input value={searchRemarks} onChange={(e) => setSearchRemarks(e.target.value)} placeholder="Enter Remarks" className="h-9 text-sm" /></div>
+                <div className="flex items-end gap-2 col-span-full"><Button onClick={handleSearch} className="h-9 text-sm bg-blue-600" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}Search</Button><Button onClick={handleClearSearch} variant="outline" className="h-9 text-sm"><RefreshCw className="h-4 w-4" /></Button><Button onClick={handleExportToExcel} variant="outline" className="h-9 text-sm ml-auto"><FileSpreadsheet className="h-4 w-4 mr-1" />Export to Excel</Button></div>
               </div>
             </CardContent>
           </Card>
 
           {/* Results Table */}
           <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-base font-semibold text-gray-800">Manifests List</h3>
-                <div className="text-xs text-gray-500">Total: {searchResults.length} records</div>
-              </div>
-            </CardHeader>
+            <CardHeader className="pb-2"><div className="flex justify-between items-center"><h3 className="text-base font-semibold text-gray-800">Manifests List</h3><div className="text-xs text-gray-500">Total: {searchResults.length} records</div></div></CardHeader>
             <CardContent>
               <div className="rounded-md border overflow-x-auto">
                 <div className="min-w-[1200px]">
@@ -1214,1028 +1384,244 @@ export default function LocalManifest() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={11} className="text-center py-12">
-                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-500" />
-                            <p className="text-gray-500 mt-2">Loading manifests...</p>
-                          </TableCell>
-                        </TableRow>
-                      ) : paginatedResults.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={11} className="text-center py-12 text-gray-500">
-                            <Truck className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                            No manifests found. Click "New Manifest" to create one.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedResults.map((record, idx) => (
-                          <TableRow key={record._id} className="hover:bg-gray-50">
-                            <TableCell className="py-3 px-2 text-center text-sm">
-                              {(currentPage - 1) * itemsPerPage + idx + 1}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 font-mono font-semibold text-sm">
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                                {record.manifestNo}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">
-                              {format(new Date(record.date), "dd-MM-yyyy")}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{record.lhcNo || "-"}</TableCell>
-                            {/* FIX: Display branch name instead of code */}
-                            <TableCell className="py-3 px-2 text-sm">
-                              {getBranchDisplayText(record.branch)}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{record.toStation}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{record.modeName}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{record.modeCategory}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{record.noOfPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-right text-sm">{record.grossWeight.toFixed(3)}</TableCell>
-                            <TableCell className="py-3 px-2 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEdit(record)}
-                                  className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                                  title="Edit"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handlePrint(record)}
-                                  className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
-                                  title="Print"
-                                >
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleExportToExcel()}
-                                  className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50"
-                                  title="Export to Excel"
-                                >
-                                  <FileSpreadsheet className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleUpdateDestination(record)}
-                                  className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
-                                  title="Update Destination"
-                                >
-                                  <MapPin className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => openCancelDialog(record)}
-                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
+                      {loading ? (<TableRow><TableCell colSpan={11} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-blue-500" /><p className="text-gray-500 mt-2">Loading manifests...</p></TableCell></TableRow>) : paginatedResults.length === 0 ? (<TableRow><TableCell colSpan={11} className="text-center py-12 text-gray-500"><Truck className="h-12 w-12 mx-auto mb-3 opacity-30" />No manifests found. Click "New Manifest" to create one.</TableCell></TableRow>) : (paginatedResults.map((record, idx) => (<TableRow key={record._id} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono font-semibold text-sm"><Badge variant="outline" className="bg-blue-50 text-blue-700">{record.manifestNo}</Badge></TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{record.lhcNo || "-"}</TableCell><TableCell className="py-3 px-2 text-sm">{getBranchDisplayText(record.branch)}</TableCell><TableCell className="py-3 px-2 text-sm">{record.toStation}</TableCell><TableCell className="py-3 px-2 text-sm">{record.modeName}</TableCell><TableCell className="py-3 px-2 text-sm">{record.modeCategory}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{record.noOfPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{record.grossWeight.toFixed(3)}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="sm" onClick={() => handleEdit(record)} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50" title="Edit"><Edit className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handlePrint(record)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Print"><Printer className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleExportToExcel()} className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50" title="Export to Excel"><FileSpreadsheet className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleUpdateDestination(record)} className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50" title="Update Destination"><MapPin className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => openCancelDialog(record)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Cancel"><X className="h-4 w-4" /></Button></div></TableCell></TableRow>)))}
                     </TableBody>
                   </Table>
                 </div>
               </div>
-
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-gray-500">
-                    Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
-                    {Math.min(currentPage * itemsPerPage, searchResults.length)} of {searchResults.length}{" "}
-                    entries
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="h-8 text-sm"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                    </Button>
-                    <span className="px-3 py-1 text-sm">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="h-8 text-sm"
-                    >
-                      Next <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {totalPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, searchResults.length)} of {searchResults.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {currentPage} of {totalPages}</span><Button variant="outline" size="sm" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
             </CardContent>
           </Card>
         </>
       )}
 
-      {/* Cancelled Manifests Tab - Same fix for branch name */}
+      {/* Cancelled Manifests Tab - Same as before */}
       {mainTab === "cancelled" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm opacity-90">Total Cancelled Manifests</p>
-                    <p className="text-2xl font-bold">{cancelledStats.total}</p>
-                  </div>
-                  <X className="h-8 w-8 opacity-80" />
-                </div>
-              </CardContent>
+              <CardContent className="p-4"><div className="flex justify-between items-center"><div><p className="text-sm opacity-90">Total Cancelled Manifests</p><p className="text-2xl font-bold">{cancelledStats.total}</p></div><X className="h-8 w-8 opacity-80" /></div></CardContent>
             </Card>
           </div>
 
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
-                <Search className="h-4 w-4" />
-                Search Cancelled Manifests
-              </CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700"><Search className="h-4 w-4" /> Search Cancelled Manifests</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">From Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(fromDate, "dd-MM-yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[10000]">
-                      <Calendar mode="single" selected={fromDate} onSelect={(d) => d && setFromDate(d)} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">To Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9 w-full text-sm justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(toDate, "dd-MM-yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[10000]">
-                      <Calendar mode="single" selected={toDate} onSelect={(d) => d && setToDate(d)} />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Branch</Label>
-                  <Select value={searchBranch} onValueChange={setSearchBranch}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="All Branches" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[99999]">
-                      <SelectItem value="all">All Branches</SelectItem>
-                      {branchOptions.map((branch) => (
-                        <SelectItem key={branch.value} value={branch.value}>
-                          {branch.text}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-end gap-2">
-                  <Button onClick={handleCancelledSearch} className="h-9 text-sm bg-red-600" disabled={loading}>
-                    {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}
-                    Search
-                  </Button>
-                  <Button onClick={handleClearSearch} variant="outline" className="h-9 text-sm">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
+                <div className="space-y-1"><Label className="text-xs">From Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(fromDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={fromDate} onSelect={(d) => d && setFromDate(d)} /></PopoverContent></Popover></div>
+                <div className="space-y-1"><Label className="text-xs">To Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(toDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={toDate} onSelect={(d) => d && setToDate(d)} /></PopoverContent></Popover></div>
+                <div className="space-y-1"><Label className="text-xs">Branch</Label><Select value={searchBranch} onValueChange={setSearchBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="All Branches" /></SelectTrigger><SelectContent className="z-[99999]"><SelectItem value="all">All Branches</SelectItem>{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
+                <div className="flex items-end gap-2"><Button onClick={handleCancelledSearch} className="h-9 text-sm bg-red-600" disabled={loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Search className="h-4 w-4 mr-1" />}Search</Button><Button onClick={handleClearSearch} variant="outline" className="h-9 text-sm"><RefreshCw className="h-4 w-4" /></Button></div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <h3 className="text-base font-semibold text-gray-800">Cancelled Manifests List</h3>
-                <div className="text-xs text-gray-500">Total: {cancelledResults.length} records</div>
-              </div>
-            </CardHeader>
+            <CardHeader className="pb-2"><div className="flex justify-between items-center"><h3 className="text-base font-semibold text-gray-800">Cancelled Manifests List</h3><div className="text-xs text-gray-500">Total: {cancelledResults.length} records</div></div></CardHeader>
             <CardContent>
               <div className="rounded-md border overflow-x-auto">
                 <div className="min-w-[800px]">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-xs py-3 px-2 w-12 text-center">#</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[100px]">Manifest #</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">Date</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[100px]">Branch</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">To Station</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-24 text-center">Status</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-24 text-center">Actions</TableHead>
-                      </TableRow>
+                      <TableRow className="bg-gray-50"><TableHead className="text-xs py-3 px-2 w-12 text-center">#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Manifest #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Branch</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">To Station</TableHead><TableHead className="text-xs py-3 px-2 w-24 text-center">Status</TableHead><TableHead className="text-xs py-3 px-2 w-24 text-center">Actions</TableHead></TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12">
-                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-red-500" />
-                            <p className="text-gray-500 mt-2">Loading cancelled manifests...</p>
-                          </TableCell>
-                        </TableRow>
-                      ) : paginatedCancelledResults.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                            <X className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                            No cancelled manifests found
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedCancelledResults.map((record, idx) => (
-                          <TableRow key={record._id} className="hover:bg-gray-50 bg-red-50/30">
-                            <TableCell className="py-3 px-2 text-center text-sm">
-                              {(cancelledPage - 1) * itemsPerPage + idx + 1}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 font-mono font-semibold text-sm">
-                              <Badge variant="outline" className="bg-red-50 text-red-700">
-                                {record.manifestNo}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">
-                              {format(new Date(record.date), "dd-MM-yyyy")}
-                            </TableCell>
-                            {/* FIX: Display branch name instead of code */}
-                            <TableCell className="py-3 px-2 text-sm">
-                              {getBranchDisplayText(record.branch)}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{record.toStation}</TableCell>
-                            <TableCell className="py-3 px-2 text-center">
-                              <Badge className="bg-red-100 text-red-700">Cancelled</Badge>
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRestoreManifest(record)}
-                                  className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
-                                  title="Restore"
-                                >
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDelete(record._id!, record.manifestNo)}
-                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                  title="Delete Permanently"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
+                      {loading ? (<TableRow><TableCell colSpan={7} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-red-500" /><p className="text-gray-500 mt-2">Loading cancelled manifests...</p></TableCell></TableRow>) : paginatedCancelledResults.length === 0 ? (<TableRow><TableCell colSpan={7} className="text-center py-12 text-gray-500"><X className="h-12 w-12 mx-auto mb-3 opacity-30" />No cancelled manifests found</TableCell></TableRow>) : (paginatedCancelledResults.map((record, idx) => (<TableRow key={record._id} className="hover:bg-gray-50 bg-red-50/30"><TableCell className="py-3 px-2 text-center text-sm">{(cancelledPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono font-semibold text-sm"><Badge variant="outline" className="bg-red-50 text-red-700">{record.manifestNo}</Badge></TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(record.date), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{getBranchDisplayText(record.branch)}</TableCell><TableCell className="py-3 px-2 text-sm">{record.toStation}</TableCell><TableCell className="py-3 px-2 text-center"><Badge className="bg-red-100 text-red-700">Cancelled</Badge></TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="sm" onClick={() => handleRestoreManifest(record)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore"><RefreshCw className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(record._id!, record.manifestNo)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Delete Permanently"><Trash2 className="h-4 w-4" /></Button></div></TableCell></TableRow>)))}
                     </TableBody>
                   </Table>
                 </div>
               </div>
-
-              {totalCancelledPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-sm text-gray-500">
-                    Showing {((cancelledPage - 1) * itemsPerPage) + 1} to{" "}
-                    {Math.min(cancelledPage * itemsPerPage, cancelledResults.length)} of {cancelledResults.length}{" "}
-                    entries
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToCancelledPage(cancelledPage - 1)}
-                      disabled={cancelledPage === 1}
-                      className="h-8 text-sm"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                    </Button>
-                    <span className="px-3 py-1 text-sm">
-                      Page {cancelledPage} of {totalCancelledPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToCancelledPage(cancelledPage + 1)}
-                      disabled={cancelledPage === totalCancelledPages}
-                      className="h-8 text-sm"
-                    >
-                      Next <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {totalCancelledPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((cancelledPage - 1) * itemsPerPage) + 1} to {Math.min(cancelledPage * itemsPerPage, cancelledResults.length)} of {cancelledResults.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage - 1)} disabled={cancelledPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {cancelledPage} of {totalCancelledPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledPage + 1)} disabled={cancelledPage === totalCancelledPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
             </CardContent>
           </Card>
         </>
       )}
 
-      {/* Rest of the modals remain the same... */}
       {/* Cancel Manifest Dialog */}
       <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
         <DialogContent className="sm:max-w-md z-[9999]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <X className="h-5 w-5" />
-              Cancel Manifest
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel manifest{" "}
-              <strong>{cancellingManifest?.manifestNo}</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Cancellation Reason <span className="text-red-500">*</span>
-              </Label>
-              <Select value={cancelledReason} onValueChange={setCancelledReason}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Select cancellation reason" />
-                </SelectTrigger>
-                <SelectContent className="z-[99999]">
-                  {cancelledReasonOptions.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>
-              No, Keep Manifest
-            </Button>
-            <Button variant="destructive" onClick={handleCancelManifest} disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Yes, Cancel Manifest
-            </Button>
-          </DialogFooter>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-red-600"><X className="h-5 w-5" />Cancel Manifest</DialogTitle><DialogDescription>Are you sure you want to cancel manifest <strong>{cancellingManifest?.manifestNo}</strong>?</DialogDescription></DialogHeader>
+          <div className="space-y-4 py-4"><div className="space-y-2"><Label className="text-sm font-medium">Cancellation Reason <span className="text-red-500">*</span></Label><Select value={cancelledReason} onValueChange={setCancelledReason}><SelectTrigger className="h-10"><SelectValue placeholder="Select cancellation reason" /></SelectTrigger><SelectContent className="z-[99999]">{cancelledReasonOptions.map((opt) => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent></Select></div></div>
+          <DialogFooter className="gap-2"><Button variant="outline" onClick={() => setIsCancelDialogOpen(false)}>No, Keep Manifest</Button><Button variant="destructive" onClick={handleCancelManifest} disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Yes, Cancel Manifest</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Update Destination Modal */}
       <Dialog open={isUpdateModalOpen} onOpenChange={setIsUpdateModalOpen}>
         <DialogContent className="max-w-2xl z-[9999]">
-          <DialogHeader>
-            <DialogTitle>
-              Update Destination - Manifest #: {selectedManifest?.manifestNo}
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Update Destination - Manifest #: {selectedManifest?.manifestNo}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-1">
-              <Label className="text-sm">Current Destination</Label>
-              <Input
-                value={selectedManifest?.toStation || ""}
-                readOnly
-                className="h-9 text-sm bg-gray-50"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">
-                New Destination <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                value={newDestination}
-                onChange={(e) => setNewDestination(e.target.value)}
-                placeholder="Enter New Destination"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">Current Vehicle #</Label>
-              <Input
-                value={selectedManifest?.vehicleNo || "-"}
-                readOnly
-                className="h-9 text-sm bg-gray-50"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">New Vehicle #</Label>
-              <Input
-                value={newVehicleNo}
-                onChange={(e) => setNewVehicleNo(e.target.value)}
-                placeholder="Enter New Vehicle #"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">Current Driver</Label>
-              <Input
-                value={selectedManifest?.driverName || ""}
-                readOnly
-                className="h-9 text-sm bg-gray-50"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">New Driver</Label>
-              <Input
-                value={newDriver}
-                onChange={(e) => setNewDriver(e.target.value)}
-                placeholder="Enter New Driver"
-                className="h-9 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">Current Vendor</Label>
-              <Input
-                value={selectedManifest?.vehicleVendor || ""}
-                readOnly
-                className="h-9 text-sm bg-gray-50"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-sm">New Vendor</Label>
-              <Input
-                value={newVendor}
-                onChange={(e) => setNewVendor(e.target.value)}
-                placeholder="Enter New Vendor"
-                className="h-9 text-sm"
-              />
-            </div>
+            <div className="space-y-1"><Label className="text-sm">Current Destination</Label><Input value={selectedManifest?.toStation || ""} readOnly className="h-9 text-sm bg-gray-50" /></div>
+            <div className="space-y-1"><Label className="text-sm">New Destination <span className="text-red-500">*</span></Label><Input value={newDestination} onChange={(e) => setNewDestination(e.target.value)} placeholder="Enter New Destination" className="h-9 text-sm" /></div>
+            <div className="space-y-1"><Label className="text-sm">Current Vehicle #</Label><Input value={selectedManifest?.vehicleNo || "-"} readOnly className="h-9 text-sm bg-gray-50" /></div>
+            <div className="space-y-1"><Label className="text-sm">New Vehicle #</Label><Input value={newVehicleNo} onChange={(e) => setNewVehicleNo(e.target.value)} placeholder="Enter New Vehicle #" className="h-9 text-sm" /></div>
+            <div className="space-y-1"><Label className="text-sm">Current Driver</Label><Input value={selectedManifest?.driverName || ""} readOnly className="h-9 text-sm bg-gray-50" /></div>
+            <div className="space-y-1"><Label className="text-sm">New Driver</Label><Input value={newDriver} onChange={(e) => setNewDriver(e.target.value)} placeholder="Enter New Driver" className="h-9 text-sm" /></div>
+            <div className="space-y-1"><Label className="text-sm">Current Vendor</Label><Input value={selectedManifest?.vehicleVendor || ""} readOnly className="h-9 text-sm bg-gray-50" /></div>
+            <div className="space-y-1"><Label className="text-sm">New Vendor</Label><Input value={newVendor} onChange={(e) => setNewVendor(e.target.value)} placeholder="Enter New Vendor" className="h-9 text-sm" /></div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setIsUpdateModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveUpdateDestination} className="bg-green-600 hover:bg-green-700" disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Save Changes
-            </Button>
-          </DialogFooter>
+          <DialogFooter className="gap-2"><Button variant="outline" onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button><Button onClick={handleSaveUpdateDestination} className="bg-green-600 hover:bg-green-700" disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save Changes</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Manifest Modal - FIXED POSITIONING */}
+      {/* Edit Manifest Modal - Fixed Structure */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="w-[95vw] max-w-7xl max-h-[90vh] flex flex-col p-0 z-[9999]">
-          <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pb-3 border-b shrink-0">
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Edit className="h-5 w-5 text-blue-600" />
-              Edit Manifest - {currentManifest?.manifestNo}
-            </DialogTitle>
+        <DialogContent className="w-[95vw] max-w-7xl h-[90vh] max-h-[90vh] flex flex-col p-0 z-[9999]">
+          <DialogHeader className="flex-shrink-0 bg-white z-10 px-6 pt-6 pb-3 border-b">
+            <DialogTitle className="text-xl flex items-center gap-2"><Edit className="h-5 w-5 text-blue-600" /> Edit Manifest - {currentManifest?.manifestNo}</DialogTitle>
             <DialogDescription>Manage GRs for this manifest. Select GRs from stock and assign them.</DialogDescription>
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-            {/* Manifest Info Summary */}
             <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <Label className="text-xs text-gray-500">Manifest No</Label>
-                <p className="font-semibold">{currentManifest?.manifestNo}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">Branch</Label>
-                <p className="font-semibold">{currentManifest?.branch}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">To Station</Label>
-                <p className="font-semibold">{currentManifest?.toStation}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">Mode Name</Label>
-                <p className="font-semibold">{currentManifest?.modeName}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">Driver</Label>
-                <p className="font-semibold">{currentManifest?.driverName}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">Loading Person</Label>
-                <p className="font-semibold">{currentManifest?.loadingPerson}</p>
-              </div>
+              <div><Label className="text-xs text-gray-500">Manifest No</Label><p className="font-semibold">{currentManifest?.manifestNo}</p></div>
+              <div><Label className="text-xs text-gray-500">Branch</Label><p className="font-semibold">{currentManifest?.branch}</p></div>
+              <div><Label className="text-xs text-gray-500">To Station</Label><p className="font-semibold">{currentManifest?.toStation}</p></div>
+              <div><Label className="text-xs text-gray-500">Mode Name</Label><p className="font-semibold">{currentManifest?.modeName}</p></div>
+              <div><Label className="text-xs text-gray-500">Driver</Label><p className="font-semibold">{currentManifest?.driverName}</p></div>
+              <div><Label className="text-xs text-gray-500">Loading Person</Label><p className="font-semibold">{currentManifest?.loadingPerson}</p></div>
             </div>
 
             {/* Stock of Despatch Section */}
             <div className="border rounded-lg">
               <div className="bg-green-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-green-700">
-                  <Package className="h-5 w-5" />
-                  STOCK OF DESPATCH
-                </h3>
-                <div className="flex gap-2">
-                  <Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-green-600">
-                    <Search className="h-4 w-4 mr-1" /> SHOW STOCK
-                  </Button>
-                  <Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </div>
+                <h3 className="text-base font-semibold flex items-center gap-2 text-green-700"><Package className="h-5 w-5" /> STOCK OF DESPATCH</h3>
+                <div className="flex gap-2"><Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" /> SHOW STOCK</Button><Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm"><RefreshCw className="h-4 w-4" /></Button></div>
               </div>
               <div className="p-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectAllBranch}
-                        onChange={handleSelectAllBranch}
-                        className="h-4 w-4 rounded"
-                        id="allBranch"
-                      />
-                      <Label htmlFor="allBranch" className="text-sm cursor-pointer">ALL</Label>
-                    </div>
-                    <Label className="text-xs">Branch</Label>
-                    <Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Select Branch" />
-                      </SelectTrigger>
-                      <SelectContent className="z-[99999]">
-                        {branchOptions.map((branch) => (
-                          <SelectItem key={branch.value} value={branch.value}>
-                            {branch.text}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">As On Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="h-9 w-full text-sm justify-start">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(asOnDate, "dd-MM-yyyy")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-[10000]">
-                        <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={selectAllDestination}
-                        onChange={handleSelectAllDestination}
-                        className="h-4 w-4 rounded"
-                        id="allDestination"
-                      />
-                      <Label htmlFor="allDestination" className="text-sm cursor-pointer">ALL</Label>
-                    </div>
-                    <Label className="text-xs">Destination</Label>
-                    <Input
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="Enter Destination"
-                      className="h-9 text-sm"
-                      disabled={selectAllDestination}
-                    />
-                  </div>
+                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllBranch} onChange={handleSelectAllBranch} className="h-4 w-4 rounded" id="allBranch" /><Label htmlFor="allBranch" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Branch</Label><Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent className="z-[99999]">{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
+                  <div className="space-y-1"><Label className="text-xs">As On Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(asOnDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} /></PopoverContent></Popover></div>
+                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllDestination} onChange={handleSelectAllDestination} className="h-4 w-4 rounded" id="allDestination" /><Label htmlFor="allDestination" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Destination</Label><Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Enter Destination" className="h-9 text-sm" disabled={selectAllDestination} /></div>
                 </div>
 
-                {/* Stock Table */}
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="w-8 text-center">
-                          <input
-                            type="checkbox"
-                            checked={selectAll}
-                            onChange={handleSelectAll}
-                            className="h-4 w-4 rounded"
-                          />
-                        </TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[60px] text-center">ToPay</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[60px] text-center">Paid</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[60px] text-center">TBB</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
-                      </TableRow>
+                      <TableRow className="bg-gray-50"><TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded" /></TableHead><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead></TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={14} className="text-center py-12">
-                            <Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" />
-                            <p className="text-gray-500 mt-2">Loading stock items...</p>
-                          </TableCell>
-                        </TableRow>
-                      ) : paginatedStockItems.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={14} className="text-center py-12 text-gray-500">
-                            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                            No stock records found. Click "SHOW STOCK" to search.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedStockItems.map((item, idx) => (
-                          <TableRow key={item.id} className="hover:bg-gray-50">
-                            <TableCell className="text-center">
-                              <input
-                                type="checkbox"
-                                checked={item.selected}
-                                onChange={() => handleSelectItem(item.id)}
-                                className="h-4 w-4 rounded"
-                              />
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">
-                              {(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 font-mono text-sm font-semibold">{item.grNo}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">
-                              {format(new Date(item.grDate), "dd-MM-yyyy")}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{item.destination}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">
-                              {item.consignor}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">
-                              {item.consignee}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{item.toPay}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{item.paid}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{item.tbb}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
+                      {loading ? (<TableRow><TableCell colSpan={14} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" /><p className="text-gray-500 mt-2">Loading stock items...</p></TableCell></TableRow>) : paginatedStockItems.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No stock records found. Click "SHOW STOCK" to search.</TableCell></TableRow>) : (paginatedStockItems.map((item, idx) => (<TableRow key={item.id} className="hover:bg-gray-50"><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell className="py-3 px-2 text-center text-sm">{(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{item.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell><TableCell className="py-3 px-2 text-sm">{item.destination}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignee}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.toPay}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.paid}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.tbb}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100}</TableCell></TableRow>)))}
                     </TableBody>
                   </Table>
                 </div>
 
-                {totalStockPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="text-sm text-gray-500">
-                      Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to{" "}
-                      {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length}{" "}
-                      entries
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToStockPage(stockCurrentPage - 1)}
-                        disabled={stockCurrentPage === 1}
-                        className="h-8 text-sm"
-                      >
-                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                      </Button>
-                      <span className="px-3 py-1 text-sm">
-                        Page {stockCurrentPage} of {totalStockPages}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goToStockPage(stockCurrentPage + 1)}
-                        disabled={stockCurrentPage === totalStockPages}
-                        className="h-8 text-sm"
-                      >
-                        Next <ChevronRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                {totalStockPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage - 1)} disabled={stockCurrentPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {stockCurrentPage} of {totalStockPages}</span><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage + 1)} disabled={stockCurrentPage === totalStockPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
 
-                <div className="flex justify-end gap-3 mt-4">
-                  <Button
-                    onClick={handleAssignGRs}
-                    className="h-9 text-sm bg-blue-600 hover:bg-blue-700"
-                    disabled={stockStats.selected === 0 || loading}
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                    ADD TO MANIFEST ({stockStats.selected})
-                  </Button>
-                </div>
+                <div className="flex justify-end gap-3 mt-4"><Button onClick={handleAssignGRs} className="h-9 text-sm bg-blue-600 hover:bg-blue-700" disabled={stockStats.selected === 0 || loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}ADD TO MANIFEST ({stockStats.selected})</Button></div>
               </div>
             </div>
 
             {/* Assigned GRs Section */}
             <div className="border rounded-lg">
               <div className="bg-blue-50 px-4 py-3 border-b flex justify-between items-center">
-                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-700">
-                  <CheckCircle className="h-5 w-5" />
-                  ASSIGNED GRs TO THIS MANIFEST
-                </h3>
-                <div className="text-sm font-medium">
-                  Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg
-                </div>
+                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-700"><CheckCircle className="h-5 w-5" /> ASSIGNED GRs TO THIS MANIFEST</h3>
+                <div className="text-sm font-medium">Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg</div>
               </div>
               <div className="p-4">
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead>
-                        <TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">ToPay</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Paid</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">TBB</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-center">Despatch Pckgs</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead>
-                      </TableRow>
+                      <TableRow className="bg-gray-50"><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[100px] text-center">Despatch Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead><TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead></TableRow>
                     </TableHeader>
                     <TableBody>
-                      {assignedGRs.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={14} className="text-center py-12 text-gray-500">
-                            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                            No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        assignedGRs.map((gr, idx) => (
-                          <TableRow key={idx} className="hover:bg-gray-50">
-                            <TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell>
-                            <TableCell className="py-3 px-2 font-mono text-sm font-semibold">{gr.grNo}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">
-                              {format(new Date(gr.grDate), "dd-MM-yyyy")}
-                            </TableCell>
-                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{gr.consignor}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{gr.consignee}</TableCell>
-                            <TableCell className="py-3 px-2 text-sm">{gr.destination}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">₹{gr.toPay.toFixed(2)}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">₹{gr.paid.toFixed(2)}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">₹{gr.tbb.toFixed(2)}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{gr.bookedPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{gr.stockPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-center text-sm">{gr.dispatchedPckgs}</TableCell>
-                            <TableCell className="py-3 px-2 text-right text-sm">{gr.weight}</TableCell>
-                            <TableCell className="py-3 px-2 text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveAssignedGR(idx)}
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                title="Remove from manifest"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
+                      {assignedGRs.length === 0 ? (<TableRow><TableCell colSpan={13} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".</TableCell></TableRow>) : (assignedGRs.map((gr, idx) => { const isEditing = editingDispatchedPckgs[gr.id] !== undefined; const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs; const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0; return (<TableRow key={idx} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{gr.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell><TableCell className="py-3 px-2 text-sm">{gr.destination}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.toPay?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.paid?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.tbb?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{gr.bookedPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1">{isEditing ? (<><Input type="number" value={currentValue} onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)} className="h-8 w-20 text-sm text-center" min="0" max={maxPckgs} autoFocus /><Button variant="ghost" size="sm" onClick={() => handleSaveDispatchedPckgs(idx)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700" title="Save"><CheckCircle className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleCancelEditDispatchedPckgs(gr.id)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700" title="Cancel"><X className="h-4 w-4" /></Button></>) : (<><span className="text-sm font-medium">{gr.dispatchedPckgs}</span><Button variant="ghost" size="sm" onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700" title="Edit Dispatched Packages"><Edit className="h-4 w-4" /></Button></>)}</div></TableCell><TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0}</TableCell><TableCell className="py-3 px-2 text-center"><Button variant="ghost" size="sm" onClick={() => handleRemoveAssignedGR(idx)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from manifest"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>); }))}
                     </TableBody>
                   </Table>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Footer Buttons - Fixed positioning */}
-            <div className="sticky bottom-0 bg-white pt-4 pb-2 border-t flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="h-9">
-                <X className="mr-1 h-4 w-4" /> Cancel
-              </Button>
-              <Button onClick={handleSaveManifestWithGRs} disabled={loading} className="h-9 bg-blue-600 hover:bg-blue-700">
-                {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
-                UPDATE MANIFEST
-              </Button>
-            </div>
+          <div className="flex-shrink-0 bg-white pt-3 pb-4 px-6 border-t flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="h-9"><X className="mr-1 h-4 w-4" /> Cancel</Button>
+            <Button onClick={handleSaveManifestWithGRs} disabled={loading} className="h-9 bg-blue-600 hover:bg-blue-700">{loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}UPDATE MANIFEST</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Create New Manifest Modal */}
+      {/* Create New Manifest Modal - Fixed Structure with Auto-Load */}
       <Dialog open={isEntryModalOpen} onOpenChange={setIsEntryModalOpen}>
-        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto z-[9999]">
-          <DialogHeader className="sticky top-0 bg-white z-10 pb-3 border-b">
-            <DialogTitle className="text-xl flex items-center gap-2">
-              {editMode ? (
-                <>
-                  <Edit className="h-5 w-5 text-blue-600" />
-                  Edit Manifest
-                </>
-              ) : (
-                <>
-                  <Plus className="h-5 w-5 text-blue-600" />
-                  Create New Manifest
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>Fill in all manifest details below.</DialogDescription>
+        <DialogContent className="w-[95vw] max-w-7xl h-[90vh] max-h-[90vh] flex flex-col p-0 z-[9999]">
+          <DialogHeader className="flex-shrink-0 bg-white z-10 px-6 pt-6 pb-3 border-b">
+            <DialogTitle className="text-xl flex items-center gap-2"><Plus className="h-5 w-5 text-blue-600" /> Create New Manifest</DialogTitle>
+            <DialogDescription>Fill in manifest details and assign GRs from stock.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm">
-                  Branch <span className="text-red-500">*</span>
-                </Label>
-                <Select value={branch} onValueChange={setBranch}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select Branch" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[99999]">
-                    {branchOptions.length === 0 ? (
-                      <SelectItem value="" disabled>Loading branches...</SelectItem>
-                    ) : (
-                      branchOptions.map((branch) => (
-                        <SelectItem key={branch.value} value={branch.value}>
-                          {branch.text}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+            {/* Basic Information */}
+            <div className="border rounded-lg p-4">
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-600"><FileText className="h-5 w-5" /> Basic Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="space-y-1"><Label className="text-sm">Branch <span className="text-red-500">*</span></Label><Select value={branch} onValueChange={setBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent className="z-[99999]">{branchOptions.length === 0 ? (<SelectItem value="" disabled>Loading branches...</SelectItem>) : (branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>)))}</SelectContent></Select></div>
+                <div className="space-y-1"><Label className="text-sm">To Station <span className="text-red-500">*</span></Label><Select value={toStation} onValueChange={setToStation}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select To Station" /></SelectTrigger><SelectContent className="z-[99999]">{destinationOptions.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}</SelectContent></Select></div>
+                <div className="space-y-1"><Label className="text-sm">Manifest #</Label><div className="flex gap-2"><Input value={manifestNo} onChange={(e) => setManifestNo(e.target.value)} readOnly={autoManifest} className={cn("h-9 text-sm flex-1", autoManifest && "bg-gray-50")} placeholder={autoManifest ? "Auto-generated" : "Enter Manifest No"} /><div className="flex items-center gap-2"><input type="checkbox" checked={autoManifest} onChange={(e) => setAutoManifest(e.target.checked)} className="h-4 w-4 rounded" id="auto" /><Label htmlFor="auto" className="text-sm cursor-pointer">Auto</Label></div></div></div>
+                <div className="space-y-1"><Label className="text-sm">Despatch Date/Time</Label><div className="flex gap-2"><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 flex-1 text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(despatchDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={despatchDate} onSelect={(d) => d && setDespatchDate(d)} /></PopoverContent></Popover><Input type="time" value={despatchTime} onChange={(e) => setDespatchTime(e.target.value)} className="h-9 w-28 text-sm" /></div></div>
+                <div className="space-y-1"><Label className="text-sm">Mode Name <span className="text-red-500">*</span></Label><Input value={modeName} onChange={(e) => setModeName(e.target.value)} placeholder="Enter Mode Name (e.g., Vehicle No)" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-sm">Driver Name <span className="text-red-500">*</span></Label><Input value={driverName} onChange={(e) => setDriverName(e.target.value)} placeholder="Enter Driver Name" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-sm">Driver Mobile</Label><Input value={driverMobile} onChange={(e) => setDriverMobile(e.target.value)} placeholder="Enter Mobile Number" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-sm">Vehicle Vendor</Label><Input value={vehicleVendor} onChange={(e) => setVehicleVendor(e.target.value)} placeholder="Enter Vehicle Vendor" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-sm">Loading Person <span className="text-red-500">*</span></Label><Input value={loadingPerson} onChange={(e) => setLoadingPerson(e.target.value)} placeholder="Enter Loading Person" className="h-9 text-sm" /></div>
+                <div className="space-y-1"><Label className="text-sm">Vendor CD #</Label><Input value={vendorCDNo} onChange={(e) => setVendorCDNo(e.target.value)} placeholder="Enter Vendor CD #" className="h-9 text-sm" /></div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-sm">
-                  To Station <span className="text-red-500">*</span>
-                </Label>
-                <Select value={toStation} onValueChange={setToStation}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Select To Station" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[99999]">
-                    {destinationOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="mt-3"><Label className="text-sm">Remarks</Label><Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2} className="text-sm mt-1" placeholder="Enter remarks..." /></div>
+            </div>
+
+            {/* STOCK OF DESPATCH SECTION - Auto loads when modal opens */}
+            <div className="border rounded-lg">
+              <div className="bg-green-50 px-4 py-3 border-b flex justify-between items-center">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-green-700"><Package className="h-5 w-5" /> STOCK OF DESPATCH</h3>
+                <div className="flex gap-2"><Button onClick={handleStockSearch} size="sm" className="h-8 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" /> SHOW STOCK</Button><Button onClick={handleClearStockSearch} variant="outline" size="sm" className="h-8 text-sm"><RefreshCw className="h-4 w-4" /></Button></div>
+              </div>
+              <div className="p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllBranch} onChange={handleSelectAllBranch} className="h-4 w-4 rounded" id="allBranchCreate" /><Label htmlFor="allBranchCreate" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Branch</Label><Select value={stockBranch} onValueChange={setStockBranch} disabled={selectAllBranch}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent className="z-[99999]">{branchOptions.map((branch) => (<SelectItem key={branch.value} value={branch.value}>{branch.text}</SelectItem>))}</SelectContent></Select></div>
+                  <div className="space-y-1"><Label className="text-xs">As On Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(asOnDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="w-auto p-0 z-[10000]"><Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} /></PopoverContent></Popover></div>
+                  <div className="space-y-1"><div className="flex items-center gap-2"><input type="checkbox" checked={selectAllDestination} onChange={handleSelectAllDestination} className="h-4 w-4 rounded" id="allDestinationCreate" /><Label htmlFor="allDestinationCreate" className="text-sm cursor-pointer">ALL</Label></div><Label className="text-xs">Destination</Label><Input value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="Enter Destination" className="h-9 text-sm" disabled={selectAllDestination} /></div>
+                </div>
+
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50"><TableHead className="w-8 text-center"><input type="checkbox" checked={selectAll} onChange={handleSelectAll} className="h-4 w-4 rounded" /></TableHead><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[100px]">Origin</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[60px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Stock Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead></TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (<TableRow><TableCell colSpan={14} className="text-center py-12"><Loader2 className="h-8 w-8 mx-auto animate-spin text-green-500" /><p className="text-gray-500 mt-2">Loading stock items...</p></TableCell></TableRow>) : paginatedStockItems.length === 0 ? (<TableRow><TableCell colSpan={14} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No stock records found. Click "SHOW STOCK" to search.</TableCell></TableRow>) : (paginatedStockItems.map((item, idx) => (<TableRow key={item.id} className="hover:bg-gray-50"><TableCell className="text-center"><input type="checkbox" checked={item.selected} onChange={() => handleSelectItem(item.id)} className="h-4 w-4 rounded" /></TableCell><TableCell className="py-3 px-2 text-center text-sm">{(stockCurrentPage - 1) * stockItemsPerPage + idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{item.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(item.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm">{item.origin}</TableCell><TableCell className="py-3 px-2 text-sm">{item.destination}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]">{item.consignee}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.toPay}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.paid}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.tbb}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{item.stockPckgs}</TableCell><TableCell className="py-3 px-2 text-right text-sm">{item.stockPckgs * 100}</TableCell></TableRow>)))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {totalStockPages > 1 && (<div className="flex items-center justify-between mt-4"><div className="text-sm text-gray-500">Showing {((stockCurrentPage - 1) * stockItemsPerPage) + 1} to {Math.min(stockCurrentPage * stockItemsPerPage, stockItems.length)} of {stockItems.length} entries</div><div className="flex gap-1"><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage - 1)} disabled={stockCurrentPage === 1} className="h-8 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button><span className="px-3 py-1 text-sm">Page {stockCurrentPage} of {totalStockPages}</span><Button variant="outline" size="sm" onClick={() => goToStockPage(stockCurrentPage + 1)} disabled={stockCurrentPage === totalStockPages} className="h-8 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button></div></div>)}
+
+                <div className="flex justify-end gap-3 mt-4"><Button onClick={handleAssignGRs} className="h-9 text-sm bg-blue-600 hover:bg-blue-700" disabled={stockStats.selected === 0 || loading}>{loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}ADD TO MANIFEST ({stockStats.selected})</Button></div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm">Manifest #</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={manifestNo}
-                    onChange={(e) => setManifestNo(e.target.value)}
-                    readOnly={autoManifest}
-                    className={cn("h-9 text-sm flex-1", autoManifest && "bg-gray-50")}
-                    placeholder={autoManifest ? "Auto-generated" : "Enter Manifest No"}
-                  />
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={autoManifest}
-                      onChange={(e) => setAutoManifest(e.target.checked)}
-                      className="h-4 w-4 rounded"
-                      id="auto"
-                    />
-                    <Label htmlFor="auto" className="text-sm cursor-pointer">
-                      Auto
-                    </Label>
-                  </div>
+            {/* ASSIGNED GRs SECTION */}
+            <div className="border rounded-lg">
+              <div className="bg-blue-50 px-4 py-3 border-b flex justify-between items-center">
+                <h3 className="text-base font-semibold flex items-center gap-2 text-blue-700"><CheckCircle className="h-5 w-5" /> ASSIGNED GRs TO THIS MANIFEST</h3>
+                <div className="text-sm font-medium">Total: {assignedGRs.length} GRs | Packages: {assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0)} | Weight: {assignedGRs.reduce((sum, gr) => sum + gr.weight, 0)} kg</div>
+              </div>
+              <div className="p-4">
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50"><TableHead className="text-xs py-3 px-2 w-12 text-center">S#</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR #</TableHead><TableHead className="text-xs py-3 px-2 min-w-[80px]">GR Date</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignor</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Consignee</TableHead><TableHead className="text-xs py-3 px-2 min-w-[120px]">Destination</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">ToPay</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Paid</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">TBB</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-center">Booked Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[100px] text-center">Despatch Pckgs</TableHead><TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead><TableHead className="text-xs py-3 px-2 w-16 text-center">Action</TableHead></TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {assignedGRs.length === 0 ? (<TableRow><TableCell colSpan={13} className="text-center py-12 text-gray-500"><Package className="h-12 w-12 mx-auto mb-3 opacity-30" />No GRs assigned to this manifest yet. Select GRs from Stock of Despatch and click "ADD TO MANIFEST".</TableCell></TableRow>) : (assignedGRs.map((gr, idx) => { const isEditing = editingDispatchedPckgs[gr.id] !== undefined; const currentValue = isEditing ? editingDispatchedPckgs[gr.id] : gr.dispatchedPckgs; const maxPckgs = gr.bookedPckgs || gr.stockPckgs || 0; return (<TableRow key={idx} className="hover:bg-gray-50"><TableCell className="py-3 px-2 text-center text-sm">{idx + 1}</TableCell><TableCell className="py-3 px-2 font-mono text-sm font-semibold">{gr.grNo}</TableCell><TableCell className="py-3 px-2 text-sm">{format(new Date(gr.grDate), "dd-MM-yyyy")}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignor}>{gr.consignor}</TableCell><TableCell className="py-3 px-2 text-sm truncate max-w-[150px]" title={gr.consignee}>{gr.consignee}</TableCell><TableCell className="py-3 px-2 text-sm">{gr.destination}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.toPay?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.paid?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">₹{gr.tbb?.toFixed(2) || '0'}</TableCell><TableCell className="py-3 px-2 text-center text-sm">{gr.bookedPckgs || 0}</TableCell><TableCell className="py-3 px-2 text-center"><div className="flex items-center justify-center gap-1">{isEditing ? (<><Input type="number" value={currentValue} onChange={(e) => handleDispatchedPckgsChange(gr.id, parseInt(e.target.value) || 0, maxPckgs)} className="h-8 w-20 text-sm text-center" min="0" max={maxPckgs} autoFocus /><Button variant="ghost" size="sm" onClick={() => handleSaveDispatchedPckgs(idx)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700" title="Save"><CheckCircle className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleCancelEditDispatchedPckgs(gr.id)} className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700" title="Cancel"><X className="h-4 w-4" /></Button></>) : (<><span className="text-sm font-medium">{gr.dispatchedPckgs}</span><Button variant="ghost" size="sm" onClick={() => setEditingDispatchedPckgs(prev => ({ ...prev, [gr.id]: gr.dispatchedPckgs }))} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700" title="Edit Dispatched Packages"><Edit className="h-4 w-4" /></Button></>)}</div></TableCell><TableCell className="py-3 px-2 text-right text-sm">{gr.weight || 0}</TableCell><TableCell className="py-3 px-2 text-center"><Button variant="ghost" size="sm" onClick={() => handleRemoveAssignedGR(idx)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" title="Remove from manifest"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>); }))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-sm">Despatch Date/Time</Label>
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9 flex-1 text-sm justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(despatchDate, "dd-MM-yyyy")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-[10000]">
-                      <Calendar
-                        mode="single"
-                        selected={despatchDate}
-                        onSelect={(d) => d && setDespatchDate(d)}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Input
-                    type="time"
-                    value={despatchTime}
-                    onChange={(e) => setDespatchTime(e.target.value)}
-                    className="h-9 w-28 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm">
-                  Mode Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={modeName}
-                  onChange={(e) => setModeName(e.target.value)}
-                  placeholder="Enter Mode Name (e.g., Vehicle No)"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm">
-                  Driver Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={driverName}
-                  onChange={(e) => setDriverName(e.target.value)}
-                  placeholder="Enter Driver Name"
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm">Driver Mobile</Label>
-                <Input
-                  value={driverMobile}
-                  onChange={(e) => setDriverMobile(e.target.value)}
-                  placeholder="Enter Mobile Number"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm">Vehicle Vendor</Label>
-                <Input
-                  value={vehicleVendor}
-                  onChange={(e) => setVehicleVendor(e.target.value)}
-                  placeholder="Enter Vehicle Vendor"
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label className="text-sm">
-                  Loading Person <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  value={loadingPerson}
-                  onChange={(e) => setLoadingPerson(e.target.value)}
-                  placeholder="Enter Loading Person"
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm">Vendor CD #</Label>
-                <Input
-                  value={vendorCDNo}
-                  onChange={(e) => setVendorCDNo(e.target.value)}
-                  placeholder="Enter Vendor CD #"
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-sm">Remarks</Label>
-              <Textarea
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                rows={2}
-                className="text-sm"
-                placeholder="Enter remarks..."
-              />
             </div>
           </div>
 
-          <DialogFooter className="sticky bottom-0 bg-white pt-3 border-t gap-2">
-            <Button variant="outline" onClick={() => setIsEntryModalOpen(false)} className="h-9">
-              <X className="mr-1 h-4 w-4" /> Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={loading} className="h-9 bg-blue-600 hover:bg-blue-700">
-              {loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
-              {editMode ? "Update" : "Save"}
-            </Button>
-          </DialogFooter>
+          <div className="flex-shrink-0 bg-white pt-3 pb-4 px-6 border-t flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setIsEntryModalOpen(false)} className="h-9"><X className="mr-1 h-4 w-4" /> Cancel</Button>
+            <Button onClick={handleSave} disabled={loading} className="h-9 bg-blue-600 hover:bg-blue-700">{loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}{editMode ? "Update" : "Save"}</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
