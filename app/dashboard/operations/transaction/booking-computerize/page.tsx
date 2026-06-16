@@ -213,8 +213,9 @@ interface BookingRecord {
 
 const bookingTypeOptions = [
   { value: "TOPAY", label: "TO PAY" },
-  { value: "PREPAID", label: "PREPAID" },
-  { value: "FREIGHT_COLLECT", label: "FREIGHT COLLECT" },
+  { value: "PAID", label: "PAID" },
+  { value: "TBB", label: "TBB" },
+  { value: "TOC", label: "TOC" },
 ];
 
 const serviceProductOptions = [
