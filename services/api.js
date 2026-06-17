@@ -137,7 +137,9 @@ export const getAuthToken = () => {
 
 
 export const getPendingManifests = async (params) => {
+  console.log("📤 getPendingManifests called with:", params);
   const response = await api.get('/goods-arrival/pending', { params });
+  console.log("📥 getPendingManifests response:", response.data);
   return response.data;
 };
 
@@ -183,6 +185,52 @@ export const deleteGoodsArrival = async (id) => {
   return response.data;
 };
 
+export const searchManifestByGR = async (grNo) => {
+  const response = await api.get('/goods-arrival/search-by-gr', { 
+    params: { grNo } 
+  });
+  return response.data;
+};
+
+// ✅ Search any manifest (including arrived)
+export const searchAnyManifest = async (query) => {
+  const response = await api.get('/goods-arrival/search-any-manifest', { 
+    params: { query } 
+  });
+  return response.data;
+};
+
+// ============================================
+// 🔥 UPDATED: autoFetchManifest using Search API
+// ============================================
+const autoFetchManifest = async (manifestNo) => {
+  if (!manifestNo || manifestNo.trim() === "") {
+    return;
+  }
+
+  setIsAutoFetching(true);
+  try {
+    console.log("🔍 Searching for manifest:", manifestNo.trim());
+    
+    // ✅ Use search API
+    const response = await searchManifest(manifestNo.trim());
+    
+    console.log("📦 Search response:", response);
+    
+    if (response.success && response.data && response.data.length > 0) {
+      const manifest = response.data[0];
+      toast.success(`Manifest ${manifest.manifestNo} found! Auto-filling details...`);
+      handleSelectManifest(manifest);
+    } else {
+      toast.error(`Manifest "${manifestNo}" not found. Please check the number.`);
+    }
+  } catch (error) {
+    console.error("❌ Error auto-fetching manifest:", error);
+    toast.error(error.response?.data?.message || "Failed to fetch manifest");
+  } finally {
+    setIsAutoFetching(false);
+  }
+};
 
 
 // ==================== BOOKING APIs ====================
