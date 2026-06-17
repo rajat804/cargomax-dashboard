@@ -57,6 +57,7 @@ import {
   Mic,
   MicOff,
   CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -76,6 +77,8 @@ import {
   cancelGoodsArrival,
   restoreGoodsArrival,
   deleteGoodsArrival,
+  searchAnyManifest,
+  searchManifestByGR,
 } from "@/services/api";
 
 // ============================================
@@ -136,6 +139,7 @@ interface AssignedGR {
   bookingType: string;
 }
 
+// ✅ UPDATED GRItem with per-GR issue tracking
 interface GRItem {
   grNo: string;
   grDate: Date;
@@ -147,9 +151,14 @@ interface GRItem {
   despWt: number;
   receivePckgs: number;
   receiveWt: number;
+  // ✅ PER-GR ISSUE FIELDS
+  issueType: "damage" | "short" | "excess" | "missing" | "none";
   damagePcs: number;
   short: number;
   excess: number;
+  missingPcs: number;
+  issueReason: string;
+  issueDescription: string;
   godown: string;
   remarks: string;
 }
@@ -176,6 +185,23 @@ const damageReasonOptions = [
   "Other (specify)"
 ];
 
+// ✅ Issue type colors
+const issueTypeColors = {
+  damage: "bg-red-100 text-red-700 border-red-300",
+  short: "bg-orange-100 text-orange-700 border-orange-300",
+  excess: "bg-green-100 text-green-700 border-green-300",
+  missing: "bg-purple-100 text-purple-700 border-purple-300",
+  none: "bg-gray-100 text-gray-500 border-gray-300",
+};
+
+const issueTypeLabels = {
+  damage: "⚠️ Damage",
+  short: "📉 Short",
+  excess: "📈 Excess",
+  missing: "❓ Missing",
+  none: "✅ OK",
+};
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -187,7 +213,8 @@ export default function GoodsArrival() {
   const [submitting, setSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveMessage, setSaveMessage] = useState("");
-  
+  const [isAutoFetching, setIsAutoFetching] = useState(false);
+
   // Data State
   const [arrivedResults, setArrivedResults] = useState<ArrivedRecord[]>([]);
   const [pendingResults, setPendingResults] = useState<PendingManifest[]>([]);
@@ -198,21 +225,21 @@ export default function GoodsArrival() {
     cancelled: { count: 0, totalFreight: 0 },
     damage: { totalDamagePackages: 0, totalShort: 0, totalExcess: 0 }
   });
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const itemsPerPage = 10;
-  
-  // Filters - ✅ NULL values for dates
+
+  // Filters
   const [filters, setFilters] = useState({
     branch: "ALL",
     fromDate: null as Date | null,
     toDate: null as Date | null,
     manifestNo: "",
   });
-  
+
   // Form State
   const [formData, setFormData] = useState({
     branch: "",
@@ -243,7 +270,7 @@ export default function GoodsArrival() {
     remarks: "",
     linkedManifestId: ""
   });
-  
+
   // ========== DAMAGE/SHORT SECTION STATES ==========
   const [damageType, setDamageType] = useState<("damaged" | "missing")[]>([]);
   const [shortExcessType, setShortExcessType] = useState<("short" | "excess")[]>([]);
@@ -256,38 +283,39 @@ export default function GoodsArrival() {
   const [shortDetails, setShortDetails] = useState<string>("");
   const [excessDetails, setExcessDetails] = useState<string>("");
   const [damageValidationErrors, setDamageValidationErrors] = useState<{ [key: string]: string }>({});
-  
+
   // ========== VOICE NOTE STATES ==========
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | null>(null);
   const [voiceNoteDuration, setVoiceNoteDuration] = useState<number | null>(null);
   const [voiceNoteBase64, setVoiceNoteBase64] = useState<string | null>(null);
-  
+
   // Refs for recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const finalDurationRef = useRef<number>(0);
-  
+
   // GR Items
   const [grItems, setGrItems] = useState<GRItem[]>([]);
-  
+
   // Totals
   const [manifestTotals, setManifestTotals] = useState({
     noOfGR: 0,
     totalPckgs: 0,
     totalWeight: 0
   });
-  
+
   const [arrivalTotals, setArrivalTotals] = useState({
     noOfGR: 0,
     totalPckgs: 0,
     totalWeight: 0,
     damagePckgs: 0,
     totalShort: 0,
-    totalExcess: 0
+    totalExcess: 0,
+    totalMissing: 0
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -438,32 +466,8 @@ export default function GoodsArrival() {
   }, [voiceNoteUrl]);
 
   // ============================================
-  // DAMAGE/SHORT HANDLERS
+  // ✅ FIXED: DAMAGE TYPE HANDLERS
   // ============================================
-  const validateDamagePackageCount = (count: number) => {
-    if (damageType.length > 0) {
-      if (count < 1) {
-        setDamagePackageError("Number of damaged/missing packages must be at least 1");
-        return false;
-      }
-      const totalPckgs = grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0);
-      if (count > totalPckgs) {
-        setDamagePackageError(`Cannot exceed total received packages (${totalPckgs})`);
-        return false;
-      }
-      setDamagePackageError("");
-      return true;
-    }
-    setDamagePackageError("");
-    return true;
-  };
-
-  const handleDamagePackageCountChange = (value: string) => {
-    const count = parseInt(value) || 0;
-    setDamagePackageCount(count);
-    validateDamagePackageCount(count);
-  };
-
   const handleDamageTypeChange = (type: "damaged" | "missing") => {
     setDamageType(prev => {
       if (prev.includes(type)) {
@@ -501,6 +505,30 @@ export default function GoodsArrival() {
     }
   };
 
+  const handleDamagePackageCountChange = (value: string) => {
+    const count = parseInt(value) || 0;
+    setDamagePackageCount(count);
+    validateDamagePackageCount(count);
+  };
+
+  const validateDamagePackageCount = (count: number) => {
+    if (damageType.length > 0) {
+      if (count < 1) {
+        setDamagePackageError("Number of damaged/missing packages must be at least 1");
+        return false;
+      }
+      const totalPckgs = grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0);
+      if (count > totalPckgs) {
+        setDamagePackageError(`Cannot exceed total received packages (${totalPckgs})`);
+        return false;
+      }
+      setDamagePackageError("");
+      return true;
+    }
+    setDamagePackageError("");
+    return true;
+  };
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (damagePhotos.length + files.length > 10) {
@@ -535,7 +563,7 @@ export default function GoodsArrival() {
 
   const validateDamageSection = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (damageType.length > 0) {
       if (!damageReason) {
         errors.damageReason = "Please select a damage/missing reason";
@@ -560,20 +588,20 @@ export default function GoodsArrival() {
         errors.voiceNote = "Please record a voice note describing the damage";
       }
     }
-    
+
     if (shortExcessType.includes("short") && !shortDetails.trim()) {
       errors.shortDetails = "Please enter details about short packages";
     }
     if (shortExcessType.includes("excess") && !excessDetails.trim()) {
       errors.excessDetails = "Please enter details about excess packages";
     }
-    
+
     setDamageValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   // ============================================
-  // API CALLS - Imported from API service
+  // API CALLS
   // ============================================
   const loadBranches = async () => {
     try {
@@ -586,7 +614,7 @@ export default function GoodsArrival() {
       toast.error("Failed to load branches");
     }
   };
-  
+
   const loadStats = async () => {
     try {
       const response = await getGoodsArrivalStats();
@@ -597,9 +625,67 @@ export default function GoodsArrival() {
       console.error("Error loading stats:", error);
     }
   };
-  
+
   // ============================================
-  // FIXED: fetchPendingManifests - with null check
+  // AUTO FETCH MANIFEST
+  // ============================================
+  const autoFetchManifest = async (searchValue: string) => {
+  if (!searchValue || searchValue.trim() === "") {
+    return;
+  }
+
+  setIsAutoFetching(true);
+  try {
+    const trimmedValue = searchValue.trim();
+    console.log("🔍 Searching for:", trimmedValue);
+    
+    // ✅ Use generic search parameter
+    const response = await getPendingManifests({ 
+      search: trimmedValue,  // ✅ NEW: Generic search
+      page: 1,
+      limit: 1 
+    });
+    
+    console.log("📦 Search response:", response);
+    
+    if (response.success && response.data && response.data.length > 0) {
+      const manifest = response.data[0];
+      toast.success(`✅ Manifest ${manifest.manifestNo} found!`);
+      handleSelectManifest(manifest);
+    } else {
+      // ✅ Try searching in all manifests (including arrived)
+      try {
+        const responseAll = await searchAnyManifest(trimmedValue);
+        
+        if (responseAll.success && responseAll.data && responseAll.data.length > 0) {
+          const manifest = responseAll.data[0];
+          
+          if (manifest.isArrived) {
+            toast(`⚠️ Manifest ${manifest.manifestNo} is already arrived!`, {
+              icon: '⚠️',
+              duration: 4000,
+            });
+            handleSelectManifest(manifest);
+            setIsAutoFetching(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log("⚠️ Not found in all manifests");
+      }
+      
+      toast.error(`❌ No manifest found for "${trimmedValue}"`);
+    }
+  } catch (error: any) {
+    console.error("❌ Error auto-fetching manifest:", error);
+    toast.error(error.response?.data?.message || "Failed to fetch manifest");
+  } finally {
+    setIsAutoFetching(false);
+  }
+};
+
+  // ============================================
+  // fetchPendingManifests
   // ============================================
   const fetchPendingManifests = async () => {
     setLoading(true);
@@ -608,26 +694,24 @@ export default function GoodsArrival() {
         page: currentPage,
         limit: itemsPerPage
       };
-      
+
       if (filters.branch && filters.branch !== "ALL") {
         params.branch = filters.branch;
       }
-      
+
       if (filters.manifestNo && filters.manifestNo.trim() !== "") {
         params.manifestNo = filters.manifestNo;
       }
-      
+
       if (filters.fromDate) {
         params.fromDate = format(filters.fromDate, "yyyy-MM-dd");
       }
       if (filters.toDate) {
         params.toDate = format(filters.toDate, "yyyy-MM-dd");
       }
-      
-      console.log("🔍 Fetching pending manifests with params:", params);
-      
+
       const response = await getPendingManifests(params);
-      
+
       if (response.success) {
         setPendingResults(response.data || []);
         setTotalRecords(response.pagination?.total || 0);
@@ -640,9 +724,9 @@ export default function GoodsArrival() {
       setLoading(false);
     }
   };
-  
+
   // ============================================
-  // FIXED: fetchArrivedGoods - with null check
+  // fetchArrivedGoods
   // ============================================
   const fetchArrivedGoods = async () => {
     setLoading(true);
@@ -651,56 +735,49 @@ export default function GoodsArrival() {
         page: currentPage,
         limit: itemsPerPage
       };
-      
+
       if (filters.branch && filters.branch !== "ALL") {
         params.branch = filters.branch;
       }
-      
+
       if (filters.manifestNo && filters.manifestNo.trim() !== "") {
         params.manifestNo = filters.manifestNo;
       }
-      
+
       if (filters.fromDate) {
         params.fromDate = format(filters.fromDate, "yyyy-MM-dd");
       }
       if (filters.toDate) {
         params.toDate = format(filters.toDate, "yyyy-MM-dd");
       }
-      
-      console.log("🔍 Fetching arrived goods with params:", params);
-      
+
       const response = await getGoodsArrivals(params);
-      
-      console.log("📦 Arrived goods response:", response);
-      
+
       if (response.success) {
-        console.log("✅ Data received:", response.data);
-        console.log("📊 Total records:", response.pagination?.total);
-        
         setArrivedResults(response.data || []);
         setTotalRecords(response.pagination?.total || 0);
         setTotalPages(response.pagination?.pages || 1);
-        
+
         if (response.data && response.data.length === 0) {
           toast("No arrived goods found");
         }
       } else {
-        console.error("❌ Response success false:", response);
         toast.error(response.message || "Failed to fetch arrived goods");
       }
     } catch (error: any) {
       console.error("❌ Error fetching arrived goods:", error);
-      console.error("❌ Error response:", error.response);
-      console.error("❌ Error data:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to fetch arrived goods");
     } finally {
       setLoading(false);
     }
   };
-  
+
+  // ============================================
+  // handleSelectManifest
+  // ============================================
   const handleSelectManifest = (manifest: PendingManifest) => {
     setSelectedManifest(manifest);
-    
+
     const mappedGRItems: GRItem[] = (manifest.assignedGRs || []).map((gr) => ({
       grNo: gr.grNo,
       grDate: gr.grDate,
@@ -712,13 +789,17 @@ export default function GoodsArrival() {
       despWt: gr.weight || 0,
       receivePckgs: 0,
       receiveWt: 0,
+      issueType: "none",
       damagePcs: 0,
       short: 0,
       excess: 0,
+      missingPcs: 0,
+      issueReason: "",
+      issueDescription: "",
       godown: "",
       remarks: ""
     }));
-    
+
     if (mappedGRItems.length === 0) {
       mappedGRItems.push({
         grNo: manifest.manifestNo,
@@ -731,16 +812,20 @@ export default function GoodsArrival() {
         despWt: manifest.grossWeight || 0,
         receivePckgs: 0,
         receiveWt: 0,
+        issueType: "none",
         damagePcs: 0,
         short: 0,
         excess: 0,
+        missingPcs: 0,
+        issueReason: "",
+        issueDescription: "",
         godown: "",
         remarks: ""
       });
     }
-    
+
     setGrItems(mappedGRItems);
-    
+
     setFormData({
       ...formData,
       branch: manifest.branch,
@@ -757,7 +842,7 @@ export default function GoodsArrival() {
       receiveTime: "",
       linkedManifestId: manifest._id
     });
-    
+
     setDamageType([]);
     setShortExcessType([]);
     setDamageReason("");
@@ -772,13 +857,70 @@ export default function GoodsArrival() {
     deleteVoiceNote();
     setSaveStatus("idle");
     setSaveMessage("");
-    
+
     setViewMode("form");
   };
-  
+
+  // ============================================
+  // PER-GR ISSUE HANDLERS
+  // ============================================
+  const handleGRIssueTypeChange = (index: number, value: string) => {
+    const updated = [...grItems];
+    updated[index] = {
+      ...updated[index],
+      issueType: value as any,
+      damagePcs: 0,
+      short: 0,
+      excess: 0,
+      missingPcs: 0,
+    };
+    setGrItems(updated);
+    calculateTotals();
+  };
+
+  const handleGRDamageChange = (index: number, value: number) => {
+    const updated = [...grItems];
+    updated[index].damagePcs = value;
+    if (value > 0 && updated[index].issueType === "none") {
+      updated[index].issueType = "damage";
+    }
+    setGrItems(updated);
+    calculateTotals();
+  };
+
+  const handleGRShortChange = (index: number, value: number) => {
+    const updated = [...grItems];
+    updated[index].short = value;
+    if (value > 0 && updated[index].issueType === "none") {
+      updated[index].issueType = "short";
+    }
+    setGrItems(updated);
+    calculateTotals();
+  };
+
+  const handleGRExcessChange = (index: number, value: number) => {
+    const updated = [...grItems];
+    updated[index].excess = value;
+    if (value > 0 && updated[index].issueType === "none") {
+      updated[index].issueType = "excess";
+    }
+    setGrItems(updated);
+    calculateTotals();
+  };
+
+  const handleGRMissingChange = (index: number, value: number) => {
+    const updated = [...grItems];
+    updated[index].missingPcs = value;
+    if (value > 0 && updated[index].issueType === "none") {
+      updated[index].issueType = "missing";
+    }
+    setGrItems(updated);
+    calculateTotals();
+  };
+
   const handleCancelArrival = async (id: string) => {
     if (!confirm("Are you sure you want to cancel this arrival?")) return;
-    
+
     setLoading(true);
     try {
       const response = await cancelGoodsArrival(id);
@@ -793,10 +935,10 @@ export default function GoodsArrival() {
       setLoading(false);
     }
   };
-  
+
   const handleRestoreArrival = async (id: string) => {
     if (!confirm("Are you sure you want to restore this arrival?")) return;
-    
+
     setLoading(true);
     try {
       const response = await restoreGoodsArrival(id);
@@ -811,10 +953,10 @@ export default function GoodsArrival() {
       setLoading(false);
     }
   };
-  
+
   const handleDeleteArrival = async (id: string) => {
     if (!confirm("Are you sure you want to permanently delete this arrival?")) return;
-    
+
     setLoading(true);
     try {
       const response = await deleteGoodsArrival(id);
@@ -829,13 +971,13 @@ export default function GoodsArrival() {
       setLoading(false);
     }
   };
-  
+
   // ============================================
   // HANDLE SUBMIT
   // ============================================
   const handleSubmit = async () => {
     console.log("🚀 Save button clicked!");
-    
+
     // Validation
     if (!formData.branch) {
       toast.error("Please select branch");
@@ -853,20 +995,70 @@ export default function GoodsArrival() {
       toast.error("Unloading person is required");
       return;
     }
-    
-    if (!validateDamageSection()) {
-      const firstError = Object.values(damageValidationErrors)[0];
-      if (firstError) toast.error(firstError);
+
+    // ✅ Validate per-GR issues
+    const invalidGRs = grItems.filter(item =>
+      item.issueType !== "none" &&
+      item.issueType !== "damage" &&
+      item.issueType !== "short" &&
+      item.issueType !== "excess" &&
+      item.issueType !== "missing"
+    );
+
+    if (invalidGRs.length > 0) {
+      toast.error("Please select valid issue type for all GRs");
       return;
     }
-    
+
+    // ✅ Validate damage section
+    if (damageType.length > 0) {
+      if (!damageReason) {
+        toast.error("Please select damage/missing reason");
+        return;
+      }
+      if (damageReason === "Other (specify)" && !damageOtherRemark.trim()) {
+        toast.error("Please specify the reason");
+        return;
+      }
+      if (!damageRemarks.trim()) {
+        toast.error("Please add damage/missing remarks");
+        return;
+      }
+      if (damagePackageCount < 1) {
+        toast.error("Number of damaged/missing packages must be at least 1");
+        return;
+      }
+      const totalPckgs = grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0);
+      if (damagePackageCount > totalPckgs) {
+        toast.error(`Cannot exceed total received packages (${totalPckgs})`);
+        return;
+      }
+      if (damagePhotos.length === 0) {
+        toast.error("Please upload at least 1 damage photo");
+        return;
+      }
+      if (!voiceNoteBase64 && !voiceNoteUrl) {
+        toast.error("Please record a voice note describing the damage");
+        return;
+      }
+    }
+
+    if (shortExcessType.includes("short") && !shortDetails.trim()) {
+      toast.error("Please enter details about short packages");
+      return;
+    }
+    if (shortExcessType.includes("excess") && !excessDetails.trim()) {
+      toast.error("Please enter details about excess packages");
+      return;
+    }
+
     setSaveStatus("saving");
     setSubmitting(true);
     setSaveMessage("Saving goods arrival...");
-    
+
     try {
       calculateTotals();
-      
+
       const payload = {
         ...formData,
         grItems: grItems.filter(item => item.grNo),
@@ -879,6 +1071,7 @@ export default function GoodsArrival() {
         serArrivalNo: formData.autoArrival ? undefined : formData.serArrivalNo,
         arrivalTotals,
         manifestTotals,
+        // ✅ GLOBAL DAMAGE/MISSING FIELDS
         damageType: damageType.length > 0 ? damageType : undefined,
         damageReason: damageReason || undefined,
         damageOtherRemark: damageOtherRemark || undefined,
@@ -891,18 +1084,18 @@ export default function GoodsArrival() {
         voiceNoteUrl: voiceNoteBase64 || voiceNoteUrl || "",
         voiceNoteDuration: voiceNoteDuration || undefined,
       };
-      
+
       console.log("📤 Submitting payload:", JSON.stringify(payload, null, 2));
-      
+
       const response = await createGoodsArrival(payload);
-      
+
       console.log("✅ Response:", response);
-      
+
       if (response.success) {
         setSaveStatus("success");
         setSaveMessage("✅ Goods arrival recorded successfully!");
         toast.success("Goods arrival recorded successfully!");
-        
+
         setTimeout(() => {
           resetForm();
           setViewMode("list");
@@ -927,7 +1120,7 @@ export default function GoodsArrival() {
       setSubmitting(false);
     }
   };
-  
+
   const handlePrintArrival = async (id: string) => {
     try {
       const response = await printGoodsArrival(id);
@@ -964,27 +1157,24 @@ export default function GoodsArrival() {
       toast.error("Failed to generate print report");
     }
   };
-  
-  // ============================================
-  // FIXED: handleExportToExcel - with null check
-  // ============================================
+
   const handleExportToExcel = async () => {
     try {
       const params: any = {};
-      
+
       if (filters.branch && filters.branch !== "ALL") {
         params.branch = filters.branch;
       }
-      
+
       if (filters.fromDate) {
         params.fromDate = format(filters.fromDate, "yyyy-MM-dd");
       }
       if (filters.toDate) {
         params.toDate = format(filters.toDate, "yyyy-MM-dd");
       }
-      
+
       const response = await exportGoodsArrivals(params);
-      
+
       if (response.success && response.data) {
         const csvRows = [];
         const headers = Object.keys(response.data[0] || {});
@@ -997,7 +1187,7 @@ export default function GoodsArrival() {
           });
           csvRows.push(values.join(','));
         }
-        
+
         const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1005,14 +1195,14 @@ export default function GoodsArrival() {
         a.download = `goods-arrival-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
-        
+
         toast.success("Export completed successfully");
       }
     } catch (error) {
       toast.error("Failed to export data");
     }
   };
-  
+
   // ============================================
   // HANDLERS
   // ============================================
@@ -1023,68 +1213,85 @@ export default function GoodsArrival() {
       totalWeight: grItems.reduce((sum, item) => sum + (item.despWt || 0), 0)
     };
     setManifestTotals(manifestTotal);
-    
+
     const arrivalTotal = {
       noOfGR: grItems.length,
       totalPckgs: grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0),
       totalWeight: grItems.reduce((sum, item) => sum + (item.receiveWt || 0), 0),
       damagePckgs: grItems.reduce((sum, item) => sum + (item.damagePcs || 0), 0),
       totalShort: grItems.reduce((sum, item) => sum + (item.short || 0), 0),
-      totalExcess: grItems.reduce((sum, item) => sum + (item.excess || 0), 0)
+      totalExcess: grItems.reduce((sum, item) => sum + (item.excess || 0), 0),
+      totalMissing: grItems.reduce((sum, item) => sum + (item.missingPcs || 0), 0)
     };
     setArrivalTotals(arrivalTotal);
   };
-  
+
   const addGRItem = () => {
     setGrItems([...grItems, {
-      grNo: "", grDate: new Date(), origin: "", destination: "", consignor: "", consignee: "",
-      despPckgs: 0, despWt: 0, receivePckgs: 0, receiveWt: 0, damagePcs: 0,
-      short: 0, excess: 0, godown: "", remarks: ""
+      grNo: "",
+      grDate: new Date(),
+      origin: "",
+      destination: "",
+      consignor: "",
+      consignee: "",
+      despPckgs: 0,
+      despWt: 0,
+      receivePckgs: 0,
+      receiveWt: 0,
+      issueType: "none",
+      damagePcs: 0,
+      short: 0,
+      excess: 0,
+      missingPcs: 0,
+      issueReason: "",
+      issueDescription: "",
+      godown: "",
+      remarks: ""
     }]);
   };
-  
+
   const updateGRItem = (index: number, field: keyof GRItem, value: any) => {
     const updated = [...grItems];
     updated[index] = { ...updated[index], [field]: value };
     setGrItems(updated);
     calculateTotals();
   };
-  
+
   const removeGRItem = (index: number) => {
     if (grItems.length > 1) {
       setGrItems(grItems.filter((_, i) => i !== index));
       calculateTotals();
     }
   };
-  
+
   const resetForm = () => {
     setFormData({
-      branch: "", 
-      selectGodown: "", 
-      manifestNo: "", 
-      despatchOn: new Date(), 
+      branch: "",
+      selectGodown: "",
+      manifestNo: "",
+      despatchOn: new Date(),
       despatchTime: "",
-      fromStation: "", 
-      modeType: "", 
-      modeName: "", 
-      driver: "", 
-      mobile: "", 
+      fromStation: "",
+      modeType: "",
+      modeName: "",
+      driver: "",
+      mobile: "",
       unloadingPerson: "",
-      serArrivalNo: "", 
-      autoArrival: true, 
-      receiveDate: new Date(), 
+      serArrivalNo: "",
+      autoArrival: true,
+      receiveDate: new Date(),
       receiveTime: "",
-      unloadingHours: 0, 
-      unloadingMinutes: 0, 
-      route: "", 
-      tat: 0, 
+      unloadingHours: 0,
+      unloadingMinutes: 0,
+      route: "",
+      tat: 0,
       scheduleArrivalDateTime: new Date(),
-      vehicleArrivalDateTime: new Date(), 
-      unloadingDateTime: new Date(), 
-      sealNo: "", 
+      vehicleArrivalDateTime: new Date(),
+      unloadingDateTime: new Date(),
+      sealNo: "",
       sealOk: true,
-      dharamKantaWeight: 0, 
-      remarks: "", 
+      dharamKantaWeight: 0,
+      remarks: "",
       linkedManifestId: ""
     });
     setGrItems([]);
@@ -1102,11 +1309,11 @@ export default function GoodsArrival() {
     setDamageValidationErrors({});
     deleteVoiceNote();
     setManifestTotals({ noOfGR: 0, totalPckgs: 0, totalWeight: 0 });
-    setArrivalTotals({ noOfGR: 0, totalPckgs: 0, totalWeight: 0, damagePckgs: 0, totalShort: 0, totalExcess: 0 });
+    setArrivalTotals({ noOfGR: 0, totalPckgs: 0, totalWeight: 0, damagePckgs: 0, totalShort: 0, totalExcess: 0, totalMissing: 0 });
     setSaveStatus("idle");
     setSaveMessage("");
   };
-  
+
   const handleSearch = () => {
     setCurrentPage(1);
     if (activeTab === "pending") {
@@ -1115,11 +1322,11 @@ export default function GoodsArrival() {
       fetchArrivedGoods();
     }
   };
-  
+
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
-  
+
   const renderGodownOptions = () => {
     return godownOptions.map((opt) => (
       <SelectItem key={opt.value} value={opt.value}>
@@ -1127,7 +1334,7 @@ export default function GoodsArrival() {
       </SelectItem>
     ));
   };
-  
+
   // ============================================
   // EFFECTS
   // ============================================
@@ -1135,7 +1342,7 @@ export default function GoodsArrival() {
     loadBranches();
     loadStats();
   }, []);
-  
+
   useEffect(() => {
     if (activeTab === "pending") {
       fetchPendingManifests();
@@ -1145,9 +1352,8 @@ export default function GoodsArrival() {
   }, [activeTab, currentPage]);
 
   // ============================================
-  // RENDER FUNCTIONS
+  // RENDER: PENDING MANIFESTS
   // ============================================
-  
   const renderPendingManifests = () => (
     <Card>
       <CardHeader className="pb-3">
@@ -1165,7 +1371,7 @@ export default function GoodsArrival() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">Branch</Label>
-            <Select value={filters.branch} onValueChange={(v) => setFilters({...filters, branch: v})}>
+            <Select value={filters.branch} onValueChange={(v) => setFilters({ ...filters, branch: v })}>
               <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="ALL" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">ALL</SelectItem>
@@ -1177,7 +1383,7 @@ export default function GoodsArrival() {
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">Manifest #</Label>
-            <Input value={filters.manifestNo} onChange={(e) => setFilters({...filters, manifestNo: e.target.value})} placeholder="Enter Manifest #" className="h-8 text-xs" />
+            <Input value={filters.manifestNo} onChange={(e) => setFilters({ ...filters, manifestNo: e.target.value })} placeholder="Enter Manifest #" className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">From Date</Label>
@@ -1189,10 +1395,10 @@ export default function GoodsArrival() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent>
-                <Calendar 
-                  mode="single" 
-                  selected={filters.fromDate || undefined} 
-                  onSelect={(d) => setFilters({...filters, fromDate: d || null})} 
+                <Calendar
+                  mode="single"
+                  selected={filters.fromDate || undefined}
+                  onSelect={(d) => setFilters({ ...filters, fromDate: d || null })}
                 />
               </PopoverContent>
             </Popover>
@@ -1201,20 +1407,20 @@ export default function GoodsArrival() {
             <Button onClick={handleSearch} size="sm" className="h-8 text-xs bg-yellow-600 hover:bg-yellow-700">
               <Search className="mr-1 h-3 w-3" /> Search
             </Button>
-            <Button 
-              onClick={() => { 
-                setFilters({branch: "ALL", fromDate: null, toDate: null, manifestNo: ""}); 
-                fetchPendingManifests(); 
-              }} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={() => {
+                setFilters({ branch: "ALL", fromDate: null, toDate: null, manifestNo: "" });
+                fetchPendingManifests();
+              }}
+              variant="outline"
+              size="sm"
               className="h-8 text-xs"
             >
               <RefreshCw className="h-3 w-3" />
             </Button>
           </div>
         </div>
-        
+
         <div className="rounded-md border overflow-x-auto">
           <div className="min-w-[1000px]">
             <Table>
@@ -1261,7 +1467,7 @@ export default function GoodsArrival() {
             </Table>
           </div>
         </div>
-        
+
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <div className="text-xs text-gray-500">Total {totalRecords} records</div>
@@ -1279,7 +1485,10 @@ export default function GoodsArrival() {
       </CardContent>
     </Card>
   );
-  
+
+  // ============================================
+  // RENDER: ARRIVED GOODS
+  // ============================================
   const renderArrivedGoods = () => (
     <Card>
       <CardHeader className="pb-3">
@@ -1289,10 +1498,10 @@ export default function GoodsArrival() {
             Arrived Goods List
           </CardTitle>
           <div className="flex gap-2">
-            <Button 
-              onClick={() => fetchArrivedGoods()} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={() => fetchArrivedGoods()}
+              variant="outline"
+              size="sm"
               className="h-8 text-xs"
               disabled={loading}
             >
@@ -1309,7 +1518,7 @@ export default function GoodsArrival() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">Branch</Label>
-            <Select value={filters.branch} onValueChange={(v) => setFilters({...filters, branch: v})}>
+            <Select value={filters.branch} onValueChange={(v) => setFilters({ ...filters, branch: v })}>
               <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="ALL" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">ALL</SelectItem>
@@ -1321,7 +1530,7 @@ export default function GoodsArrival() {
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">Manifest #</Label>
-            <Input value={filters.manifestNo} onChange={(e) => setFilters({...filters, manifestNo: e.target.value})} placeholder="Enter Manifest #" className="h-8 text-xs" />
+            <Input value={filters.manifestNo} onChange={(e) => setFilters({ ...filters, manifestNo: e.target.value })} placeholder="Enter Manifest #" className="h-8 text-xs" />
           </div>
           <div className="space-y-1">
             <Label className="text-[10px] font-medium">From Date</Label>
@@ -1333,10 +1542,10 @@ export default function GoodsArrival() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent>
-                <Calendar 
-                  mode="single" 
-                  selected={filters.fromDate || undefined} 
-                  onSelect={(d) => setFilters({...filters, fromDate: d || null})} 
+                <Calendar
+                  mode="single"
+                  selected={filters.fromDate || undefined}
+                  onSelect={(d) => setFilters({ ...filters, fromDate: d || null })}
                 />
               </PopoverContent>
             </Popover>
@@ -1345,20 +1554,20 @@ export default function GoodsArrival() {
             <Button onClick={handleSearch} size="sm" className="h-8 text-xs bg-green-600 hover:bg-green-700">
               <Search className="mr-1 h-3 w-3" /> Search
             </Button>
-            <Button 
-              onClick={() => { 
-                setFilters({branch: "ALL", fromDate: null, toDate: null, manifestNo: ""}); 
-                fetchArrivedGoods(); 
-              }} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={() => {
+                setFilters({ branch: "ALL", fromDate: null, toDate: null, manifestNo: "" });
+                fetchArrivedGoods();
+              }}
+              variant="outline"
+              size="sm"
               className="h-8 text-xs"
             >
               <RefreshCw className="h-3 w-3" />
             </Button>
           </div>
         </div>
-        
+
         <div className="rounded-md border overflow-x-auto">
           <div className="min-w-[1000px]">
             <Table>
@@ -1406,49 +1615,49 @@ export default function GoodsArrival() {
                         <Badge className={cn(
                           "text-[10px]",
                           record.arrivalStatus === 'CANCELLED' ? "bg-red-100 text-red-700" :
-                          record.arrivalStatus === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
-                          "bg-green-100 text-green-700"
+                            record.arrivalStatus === 'COMPLETED' ? "bg-blue-100 text-blue-700" :
+                              "bg-green-100 text-green-700"
                         )}>
                           {record.arrivalStatus || 'ARRIVED'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex gap-1 justify-center">
-                          <Button 
-                            onClick={() => handlePrintArrival(record._id)} 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0 text-blue-500 hover:text-blue-700" 
+                          <Button
+                            onClick={() => handlePrintArrival(record._id)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-blue-500 hover:text-blue-700"
                             title="Print"
                           >
                             <Printer className="h-3.5 w-3.5" />
                           </Button>
                           {record.status === 'active' ? (
-                            <Button 
-                              onClick={() => handleCancelArrival(record._id)} 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 w-7 p-0 text-orange-500 hover:text-orange-700" 
+                            <Button
+                              onClick={() => handleCancelArrival(record._id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-orange-500 hover:text-orange-700"
                               title="Cancel"
                             >
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           ) : (
-                            <Button 
-                              onClick={() => handleRestoreArrival(record._id)} 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-7 w-7 p-0 text-green-500 hover:text-green-700" 
+                            <Button
+                              onClick={() => handleRestoreArrival(record._id)}
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-green-500 hover:text-green-700"
                               title="Restore"
                             >
                               <RefreshCw className="h-3.5 w-3.5" />
                             </Button>
                           )}
-                          <Button 
-                            onClick={() => handleDeleteArrival(record._id)} 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700" 
+                          <Button
+                            onClick={() => handleDeleteArrival(record._id)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1462,18 +1671,18 @@ export default function GoodsArrival() {
             </Table>
           </div>
         </div>
-        
+
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4">
             <div className="text-xs text-gray-500">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalRecords)} of {totalRecords} records
             </div>
             <div className="flex gap-1">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => goToPage(currentPage - 1)} 
-                disabled={currentPage === 1} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
                 className="h-7 text-xs"
               >
                 <ChevronLeft className="h-3 w-3 mr-1" /> Previous
@@ -1481,11 +1690,11 @@ export default function GoodsArrival() {
               <span className="px-3 py-1 text-xs flex items-center">
                 Page {currentPage} of {totalPages}
               </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => goToPage(currentPage + 1)} 
-                disabled={currentPage === totalPages} 
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
                 className="h-7 text-xs"
               >
                 Next <ChevronRight className="h-3 w-3 ml-1" />
@@ -1496,12 +1705,12 @@ export default function GoodsArrival() {
       </CardContent>
     </Card>
   );
-  
+
   // ============================================
-  // FORM VIEW
+  // FORM VIEW WITH COMPLETE DAMAGE/MISSING SECTION
   // ============================================
   const renderFormView = () => (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <Card>
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex justify-between items-center">
@@ -1509,10 +1718,10 @@ export default function GoodsArrival() {
               <Truck className="h-5 w-5 text-blue-600" />
               Goods Arrival - {selectedManifest?.manifestNo || "New Entry"}
             </CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => { setViewMode("list"); resetForm(); }} 
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setViewMode("list"); resetForm(); }}
               className="h-8"
               disabled={submitting}
             >
@@ -1528,7 +1737,7 @@ export default function GoodsArrival() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Branch *</Label>
-                  <Select value={formData.branch} onValueChange={(v) => setFormData({...formData, branch: v})}>
+                  <Select value={formData.branch} onValueChange={(v) => setFormData({ ...formData, branch: v })}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger>
                     <SelectContent>
                       {branchOptions.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.text}</SelectItem>))}
@@ -1537,19 +1746,33 @@ export default function GoodsArrival() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Select Godown *</Label>
-                  <Select value={formData.selectGodown} onValueChange={(v) => setFormData({...formData, selectGodown: v})}>
+                  <Select value={formData.selectGodown} onValueChange={(v) => setFormData({ ...formData, selectGodown: v })}>
                     <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Godown" /></SelectTrigger>
                     <SelectContent>{renderGodownOptions()}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Manifest # *</Label>
-                  <Input 
-                    value={formData.manifestNo} 
-                    onChange={(e) => setFormData({...formData, manifestNo: e.target.value})}
-                    className="h-8 text-sm"
-                    placeholder="Enter Manifest Number"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={formData.manifestNo}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({ ...formData, manifestNo: val });
+                        if (val.length >= 3) {
+                          const timeoutId = setTimeout(() => {
+                            autoFetchManifest(val);
+                          }, 500);
+                          return () => clearTimeout(timeoutId);
+                        }
+                      }}
+                      className="h-8 text-sm flex-1"
+                      placeholder="Enter Manifest Number (Auto-fetch)"
+                      disabled={isAutoFetching}
+                    />
+                    {isAutoFetching && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
+                  </div>
+                  <p className="text-xs text-gray-500">Enter manifest number to auto-fetch details</p>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Receive Date *</Label>
@@ -1562,97 +1785,257 @@ export default function GoodsArrival() {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent>
-                        <Calendar mode="single" selected={formData.receiveDate} onSelect={(d) => d && setFormData({...formData, receiveDate: d})} />
+                        <Calendar mode="single" selected={formData.receiveDate} onSelect={(d) => d && setFormData({ ...formData, receiveDate: d })} />
                       </PopoverContent>
                     </Popover>
-                    <Input type="time" value={formData.receiveTime} onChange={(e) => setFormData({...formData, receiveTime: e.target.value})} className="h-8 w-28 text-sm" />
+                    <Input type="time" value={formData.receiveTime} onChange={(e) => setFormData({ ...formData, receiveTime: e.target.value })} className="h-8 w-28 text-sm" />
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* Transport Details */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Navigation className="h-4 w-4" /> Transport Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">From Station</Label>
-                  <Input value={formData.fromStation} onChange={(e) => setFormData({...formData, fromStation: e.target.value})} className="h-8 text-sm" placeholder="Enter from station" />
+                  <Input value={formData.fromStation} onChange={(e) => setFormData({ ...formData, fromStation: e.target.value })} className="h-8 text-sm" placeholder="Enter from station" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Mode Name</Label>
-                  <Input value={formData.modeName} onChange={(e) => setFormData({...formData, modeName: e.target.value})} className="h-8 text-sm" placeholder="Enter mode name" />
+                  <Input value={formData.modeName} onChange={(e) => setFormData({ ...formData, modeName: e.target.value })} className="h-8 text-sm" placeholder="Enter mode name" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Driver</Label>
-                  <Input value={formData.driver} onChange={(e) => setFormData({...formData, driver: e.target.value})} className="h-8 text-sm" placeholder="Enter driver name" />
+                  <Input value={formData.driver} onChange={(e) => setFormData({ ...formData, driver: e.target.value })} className="h-8 text-sm" placeholder="Enter driver name" />
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Unloading Person *</Label>
-                  <Input value={formData.unloadingPerson} onChange={(e) => setFormData({...formData, unloadingPerson: e.target.value})} className="h-8 text-sm" placeholder="Enter unloading person" />
+                  <Input value={formData.unloadingPerson} onChange={(e) => setFormData({ ...formData, unloadingPerson: e.target.value })} className="h-8 text-sm" placeholder="Enter unloading person" />
                 </div>
               </div>
             </div>
-            
-            {/* GR Items Table */}
+
+            {/* GR Items Table with Per-GR Issues */}
             <div className="rounded-md border">
               <div className="bg-gray-50 px-3 py-2 border-b flex justify-between items-center">
-                <h3 className="text-sm font-semibold flex items-center gap-2"><Package className="h-4 w-4" /> GR Details</h3>
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <Package className="h-4 w-4" /> GR Details - Per GR Issue Tracking
+                </h3>
                 <Button onClick={addGRItem} variant="ghost" size="sm" className="h-7 text-xs text-blue-600">
                   <PlusCircle className="mr-1 h-3 w-3" /> Add GR
                 </Button>
               </div>
               <div className="overflow-x-auto p-3">
-                <div className="min-w-[1200px]">
+                <div className="min-w-[1600px]">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50">
-                        <TableHead className="text-xs">GR #</TableHead>
-                        <TableHead className="text-xs">Origin</TableHead>
-                        <TableHead className="text-xs">Destination</TableHead>
-                        <TableHead className="text-xs text-center">Desp Pckgs</TableHead>
-                        <TableHead className="text-xs text-center">Desp Wt</TableHead>
-                        <TableHead className="text-xs text-center">Rec Pckgs</TableHead>
-                        <TableHead className="text-xs text-center">Rec Wt</TableHead>
-                        <TableHead className="text-xs text-center bg-red-50">Damage</TableHead>
-                        <TableHead className="text-xs text-center bg-orange-50">Short</TableHead>
-                        <TableHead className="text-xs text-center bg-green-50">Excess</TableHead>
-                        <TableHead className="text-xs">Godown</TableHead>
+                        <TableHead className="text-xs min-w-[80px]">GR #</TableHead>
+                        <TableHead className="text-xs min-w-[80px]">Origin</TableHead>
+                        <TableHead className="text-xs min-w-[80px]">Destination</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px]">Desp Pckgs</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px]">Desp Wt</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px]">Rec Pckgs</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px]">Rec Wt</TableHead>
+                        <TableHead className="text-xs text-center min-w-[120px] bg-red-50">Issue Type</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px] bg-red-100">Damage</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px] bg-orange-100">Short</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px] bg-green-100">Excess</TableHead>
+                        <TableHead className="text-xs text-center min-w-[70px] bg-purple-100">Missing</TableHead>
+                        <TableHead className="text-xs min-w-[120px]">Issue Remarks</TableHead>
+                        <TableHead className="text-xs min-w-[100px]">Godown</TableHead>
                         <TableHead className="w-8"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {grItems.map((item, idx) => (
-                        <TableRow key={idx}>
-                          <TableCell><Input value={item.grNo} onChange={(e) => updateGRItem(idx, "grNo", e.target.value)} className="h-7 w-28 text-xs" /></TableCell>
-                          <TableCell><Input value={item.origin} onChange={(e) => updateGRItem(idx, "origin", e.target.value)} className="h-7 w-28 text-xs" /></TableCell>
-                          <TableCell><Input value={item.destination} onChange={(e) => updateGRItem(idx, "destination", e.target.value)} className="h-7 w-28 text-xs" /></TableCell>
-                          <TableCell><Input type="number" value={item.despPckgs} onChange={(e) => updateGRItem(idx, "despPckgs", Number(e.target.value))} className="h-7 w-20 text-xs text-right" /></TableCell>
-                          <TableCell><Input type="number" value={item.despWt} onChange={(e) => updateGRItem(idx, "despWt", Number(e.target.value))} className="h-7 w-20 text-xs text-right" /></TableCell>
-                          <TableCell><Input type="number" value={item.receivePckgs} onChange={(e) => updateGRItem(idx, "receivePckgs", Number(e.target.value))} className="h-7 w-20 text-xs text-right" /></TableCell>
-                          <TableCell><Input type="number" value={item.receiveWt} onChange={(e) => updateGRItem(idx, "receiveWt", Number(e.target.value))} className="h-7 w-20 text-xs text-right" /></TableCell>
-                          <TableCell className="bg-red-50"><Input type="number" value={item.damagePcs} onChange={(e) => updateGRItem(idx, "damagePcs", Number(e.target.value))} className="h-7 w-20 text-xs text-right border-red-200" min="0" /></TableCell>
-                          <TableCell className="bg-orange-50"><Input type="number" value={item.short} onChange={(e) => updateGRItem(idx, "short", Number(e.target.value))} className="h-7 w-20 text-xs text-right border-orange-200" min="0" /></TableCell>
-                          <TableCell className="bg-green-50"><Input type="number" value={item.excess} onChange={(e) => updateGRItem(idx, "excess", Number(e.target.value))} className="h-7 w-20 text-xs text-right border-green-200" min="0" /></TableCell>
-                          <TableCell>
-                            <Select value={item.godown} onValueChange={(v) => updateGRItem(idx, "godown", v)}>
-                              <SelectTrigger className="h-7 w-28 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                              <SelectContent>{renderGodownOptions()}</SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => removeGRItem(idx)} className="h-6 w-6 p-0 text-red-500">
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {grItems.map((item, idx) => {
+                        const hasIssue = item.issueType !== "none";
+                        return (
+                          <TableRow
+                            key={idx}
+                            className={cn(
+                              hasIssue && "bg-red-50/20",
+                              hasIssue && "border-l-4 border-red-400"
+                            )}
+                          >
+                            <TableCell>
+                              <Input
+                                value={item.grNo}
+                                onChange={(e) => updateGRItem(idx, "grNo", e.target.value)}
+                                className="h-7 w-28 text-xs"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={item.origin}
+                                onChange={(e) => updateGRItem(idx, "origin", e.target.value)}
+                                className="h-7 w-28 text-xs"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={item.destination}
+                                onChange={(e) => updateGRItem(idx, "destination", e.target.value)}
+                                className="h-7 w-28 text-xs"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.despPckgs}
+                                onChange={(e) => updateGRItem(idx, "despPckgs", Number(e.target.value))}
+                                className="h-7 w-20 text-xs text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.despWt}
+                                onChange={(e) => updateGRItem(idx, "despWt", Number(e.target.value))}
+                                className="h-7 w-20 text-xs text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.receivePckgs}
+                                onChange={(e) => updateGRItem(idx, "receivePckgs", Number(e.target.value))}
+                                className="h-7 w-20 text-xs text-right"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.receiveWt}
+                                onChange={(e) => updateGRItem(idx, "receiveWt", Number(e.target.value))}
+                                className="h-7 w-20 text-xs text-right"
+                              />
+                            </TableCell>
+                            <TableCell className="bg-red-50/30">
+                              <Select
+                                value={item.issueType}
+                                onValueChange={(v) => handleGRIssueTypeChange(idx, v)}
+                              >
+                                <SelectTrigger className={cn(
+                                  "h-7 w-28 text-xs",
+                                  item.issueType !== "none" && "border-red-300"
+                                )}>
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">✅ OK</SelectItem>
+                                  <SelectItem value="damage" className="text-red-600">⚠️ Damage</SelectItem>
+                                  <SelectItem value="short" className="text-orange-600">📉 Short</SelectItem>
+                                  <SelectItem value="excess" className="text-green-600">📈 Excess</SelectItem>
+                                  <SelectItem value="missing" className="text-purple-600">❓ Missing</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              {item.issueType !== "none" && (
+                                <Badge className={cn(
+                                  "text-[8px] mt-1",
+                                  issueTypeColors[item.issueType]
+                                )}>
+                                  {issueTypeLabels[item.issueType]}
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="bg-red-50">
+                              <Input
+                                type="number"
+                                value={item.damagePcs || 0}
+                                onChange={(e) => handleGRDamageChange(idx, Number(e.target.value))}
+                                className={cn(
+                                  "h-7 w-20 text-xs text-right",
+                                  item.issueType === "damage" ? "border-red-500 bg-red-50" : "border-gray-200"
+                                )}
+                                min="0"
+                                disabled={item.issueType !== "damage" && item.issueType !== "none"}
+                              />
+                            </TableCell>
+                            <TableCell className="bg-orange-50">
+                              <Input
+                                type="number"
+                                value={item.short || 0}
+                                onChange={(e) => handleGRShortChange(idx, Number(e.target.value))}
+                                className={cn(
+                                  "h-7 w-20 text-xs text-right",
+                                  item.issueType === "short" ? "border-orange-500 bg-orange-50" : "border-gray-200"
+                                )}
+                                min="0"
+                                disabled={item.issueType !== "short" && item.issueType !== "none"}
+                              />
+                            </TableCell>
+                            <TableCell className="bg-green-50">
+                              <Input
+                                type="number"
+                                value={item.excess || 0}
+                                onChange={(e) => handleGRExcessChange(idx, Number(e.target.value))}
+                                className={cn(
+                                  "h-7 w-20 text-xs text-right",
+                                  item.issueType === "excess" ? "border-green-500 bg-green-50" : "border-gray-200"
+                                )}
+                                min="0"
+                                disabled={item.issueType !== "excess" && item.issueType !== "none"}
+                              />
+                            </TableCell>
+                            <TableCell className="bg-purple-50">
+                              <Input
+                                type="number"
+                                value={item.missingPcs || 0}
+                                onChange={(e) => handleGRMissingChange(idx, Number(e.target.value))}
+                                className={cn(
+                                  "h-7 w-20 text-xs text-right",
+                                  item.issueType === "missing" ? "border-purple-500 bg-purple-50" : "border-gray-200"
+                                )}
+                                min="0"
+                                disabled={item.issueType !== "missing" && item.issueType !== "none"}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={item.issueDescription || ""}
+                                onChange={(e) => updateGRItem(idx, "issueDescription", e.target.value)}
+                                className={cn(
+                                  "h-7 text-xs",
+                                  item.issueType !== "none" && "border-red-300 bg-red-50/30"
+                                )}
+                                placeholder="Describe issue..."
+                                disabled={item.issueType === "none"}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={item.godown}
+                                onValueChange={(v) => updateGRItem(idx, "godown", v)}
+                              >
+                                <SelectTrigger className="h-7 w-28 text-xs">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>{renderGodownOptions()}</SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeGRItem(idx)}
+                                className="h-6 w-6 p-0 text-red-500"
+                                disabled={grItems.length <= 1}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
               </div>
             </div>
-            
+
             {/* Totals Display */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="border rounded-lg p-3 bg-blue-50">
@@ -1672,64 +2055,70 @@ export default function GoodsArrival() {
                   {arrivalTotals.damagePckgs > 0 && <span className="text-red-600">Damage: {arrivalTotals.damagePckgs}</span>}
                   {arrivalTotals.totalShort > 0 && <span className="text-orange-600">Short: {arrivalTotals.totalShort}</span>}
                   {arrivalTotals.totalExcess > 0 && <span className="text-green-600">Excess: {arrivalTotals.totalExcess}</span>}
+                  {arrivalTotals.totalMissing > 0 && <span className="text-purple-600">Missing: {arrivalTotals.totalMissing}</span>}
                 </div>
               </div>
             </div>
 
-            {/* Damage/Short Section */}
+            {/* ============================================
+            🔥 COMPLETE DAMAGE/MISSING SECTION
+            ============================================ */}
             <div className="border rounded-lg p-4 bg-red-50/20">
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
                 <AlertCircle className="h-5 w-5" /> Damage / Missing / Short / Excess Details
               </h3>
 
+              {/* Row 1: Damage & Missing */}
               <div className="mb-4">
                 <Label className="text-sm font-medium mb-2 block">Select Damage/Missing Type:</Label>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={damageType.includes("damaged")} 
-                      onChange={() => handleDamageTypeChange("damaged")} 
-                      className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500" 
+                    <input
+                      type="checkbox"
+                      checked={damageType.includes("damaged")}
+                      onChange={() => handleDamageTypeChange("damaged")}
+                      className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
                     />
                     <span className="text-sm font-medium text-red-700">Damaged</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={damageType.includes("missing")} 
-                      onChange={() => handleDamageTypeChange("missing")} 
-                      className="h-4 w-4 rounded border-orange-300 text-orange-600 focus:ring-orange-500" 
+                    <input
+                      type="checkbox"
+                      checked={damageType.includes("missing")}
+                      onChange={() => handleDamageTypeChange("missing")}
+                      className="h-4 w-4 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
                     />
                     <span className="text-sm font-medium text-orange-700">Missing</span>
                   </label>
                 </div>
               </div>
 
+              {/* Row 2: Short & Excess */}
               <div className="mb-4">
                 <Label className="text-sm font-medium mb-2 block">Select Short/Excess Type:</Label>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={shortExcessType.includes("short")} 
-                      onChange={() => handleShortExcessTypeChange("short")} 
-                      className="h-4 w-4 rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500" 
+                    <input
+                      type="checkbox"
+                      checked={shortExcessType.includes("short")}
+                      onChange={() => handleShortExcessTypeChange("short")}
+                      className="h-4 w-4 rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500"
                     />
                     <span className="text-sm font-medium text-yellow-700">Short</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={shortExcessType.includes("excess")} 
-                      onChange={() => handleShortExcessTypeChange("excess")} 
-                      className="h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500" 
+                    <input
+                      type="checkbox"
+                      checked={shortExcessType.includes("excess")}
+                      onChange={() => handleShortExcessTypeChange("excess")}
+                      className="h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
                     />
                     <span className="text-sm font-medium text-green-700">Excess</span>
                   </label>
                 </div>
               </div>
 
+              {/* Damage/Missing Details */}
               {damageType.length > 0 && (
                 <div className="space-y-4 border-t border-dashed border-red-200 pt-4 mt-2">
                   <div>
@@ -1746,14 +2135,27 @@ export default function GoodsArrival() {
                   {damageReason === "Other (specify)" && (
                     <div>
                       <Label className="text-sm font-medium">Please specify <span className="text-red-500">*</span></Label>
-                      <Textarea value={damageOtherRemark} onChange={(e) => setDamageOtherRemark(e.target.value)} placeholder="Describe the issue in detail..." rows={2} className="mt-1" />
+                      <Textarea
+                        value={damageOtherRemark}
+                        onChange={(e) => setDamageOtherRemark(e.target.value)}
+                        placeholder="Describe the issue in detail..."
+                        rows={2}
+                        className="mt-1"
+                      />
                       {damageValidationErrors.damageOtherRemark && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageOtherRemark}</p>}
                     </div>
                   )}
 
                   <div>
                     <Label className="text-sm font-medium">Number of Damaged/Missing Packages <span className="text-red-500">*</span></Label>
-                    <Input type="number" value={damagePackageCount || ""} onChange={(e) => handleDamagePackageCountChange(e.target.value)} className="mt-1 w-32" min="1" max={grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)} />
+                    <Input
+                      type="number"
+                      value={damagePackageCount || ""}
+                      onChange={(e) => handleDamagePackageCountChange(e.target.value)}
+                      className="mt-1 w-32"
+                      min="1"
+                      max={grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}
+                    />
                     {damagePackageError && <p className="text-red-500 text-xs mt-1">{damagePackageError}</p>}
                     {damageValidationErrors.damagePackageCount && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damagePackageCount}</p>}
                     <p className="text-xs text-gray-500 mt-1">Total received packages: <strong>{grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}</strong></p>
@@ -1761,7 +2163,13 @@ export default function GoodsArrival() {
 
                   <div>
                     <Label className="text-sm font-medium">Damage/Missing Remarks <span className="text-red-500">*</span></Label>
-                    <Textarea value={damageRemarks} onChange={(e) => setDamageRemarks(e.target.value)} placeholder="Enter details about damage/missing condition..." rows={2} className="mt-1" />
+                    <Textarea
+                      value={damageRemarks}
+                      onChange={(e) => setDamageRemarks(e.target.value)}
+                      placeholder="Enter details about damage/missing condition..."
+                      rows={2}
+                      className="mt-1"
+                    />
                     {damageValidationErrors.damageRemarks && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageRemarks}</p>}
                   </div>
 
@@ -1771,14 +2179,25 @@ export default function GoodsArrival() {
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-9">
                         <PlusCircle className="h-4 w-4 mr-2" />Select Photos (JPG, PNG, WEBP)
                       </Button>
-                      <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handlePhotoUpload} className="hidden" />
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
                     </div>
                     {damagePhotos.length > 0 && (
                       <div className="flex flex-wrap gap-3 mt-3">
                         {damagePhotos.map((photo, idx) => (
                           <div key={idx} className="relative w-24 h-24 border rounded-lg overflow-hidden group bg-gray-100">
                             <img src={photo} alt={`Damage ${idx + 1}`} className="w-full h-full object-cover" />
-                            <button type="button" onClick={() => removePhoto(idx)} className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700">
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(idx)}
+                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
+                            >
                               <X className="h-3 w-3" />
                             </button>
                           </div>
@@ -1789,6 +2208,7 @@ export default function GoodsArrival() {
                     <p className="text-xs text-gray-500 mt-1">Supported: JPG, PNG, WEBP. Max 5MB per photo.</p>
                   </div>
 
+                  {/* Voice Note */}
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Voice Note <span className="text-red-500">*</span></Label>
                     {!isRecording && !voiceNoteUrl && (
@@ -1807,7 +2227,12 @@ export default function GoodsArrival() {
                     {voiceNoteUrl && !isRecording && (
                       <div className="space-y-3 p-3 bg-green-50 rounded-lg border border-green-200">
                         <div className="flex items-center gap-3 flex-wrap">
-                          <audio controls src={voiceNoteUrl} className="h-10 flex-1 min-w-[200px]" onError={() => { toast.error("Audio playback error"); deleteVoiceNote(); }} />
+                          <audio
+                            controls
+                            src={voiceNoteUrl}
+                            className="h-10 flex-1 min-w-[200px]"
+                            onError={() => { toast.error("Audio playback error"); deleteVoiceNote(); }}
+                          />
                           <div className="flex gap-2">
                             <Button type="button" onClick={() => { deleteVoiceNote(); startRecording(); }} variant="outline" size="sm" className="h-8">
                               <Mic className="h-3 w-3 mr-1" />Re-record
@@ -1828,25 +2253,39 @@ export default function GoodsArrival() {
                 </div>
               )}
 
+              {/* Short & Excess Details */}
               {shortExcessType.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-dashed border-yellow-200 pt-4">
                   {shortExcessType.includes("short") && (
                     <div>
                       <Label className="text-sm font-medium">Short Details <span className="text-red-500">*</span></Label>
-                      <Textarea value={shortDetails} onChange={(e) => setShortDetails(e.target.value)} placeholder="Enter details about short packages..." rows={2} className="mt-1" />
+                      <Textarea
+                        value={shortDetails}
+                        onChange={(e) => setShortDetails(e.target.value)}
+                        placeholder="Enter details about short packages..."
+                        rows={2}
+                        className="mt-1"
+                      />
                       {damageValidationErrors.shortDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.shortDetails}</p>}
                     </div>
                   )}
                   {shortExcessType.includes("excess") && (
                     <div>
                       <Label className="text-sm font-medium">Excess Details <span className="text-red-500">*</span></Label>
-                      <Textarea value={excessDetails} onChange={(e) => setExcessDetails(e.target.value)} placeholder="Enter details about excess packages..." rows={2} className="mt-1" />
+                      <Textarea
+                        value={excessDetails}
+                        onChange={(e) => setExcessDetails(e.target.value)}
+                        placeholder="Enter details about excess packages..."
+                        rows={2}
+                        className="mt-1"
+                      />
                       {damageValidationErrors.excessDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.excessDetails}</p>}
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Summary of selected options */}
               {(damageType.length > 0 || shortExcessType.length > 0) && (
                 <div className="mt-4 p-3 bg-white rounded-lg border">
                   <p className="text-xs font-medium text-gray-600">Selected Options:</p>
@@ -1859,12 +2298,20 @@ export default function GoodsArrival() {
                 </div>
               )}
             </div>
-            
+
+            {/* General Remarks */}
             <div className="space-y-1">
               <Label className="text-sm font-medium">General Remarks</Label>
-              <Textarea value={formData.remarks} onChange={(e) => setFormData({...formData, remarks: e.target.value})} rows={2} className="text-sm" placeholder="Additional remarks..." />
+              <Textarea
+                value={formData.remarks}
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                rows={2}
+                className="text-sm"
+                placeholder="Additional remarks..."
+              />
             </div>
-            
+
+            {/* Save Status */}
             {saveStatus !== "idle" && (
               <div className={cn(
                 "p-3 rounded-lg border flex items-center gap-2",
@@ -1878,27 +2325,28 @@ export default function GoodsArrival() {
                 <span className="text-sm">{saveMessage}</span>
               </div>
             )}
-            
+
+            {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-3 border-t">
-              <Button 
-                variant="outline" 
-                onClick={() => { setViewMode("list"); resetForm(); setSaveStatus("idle"); }} 
+              <Button
+                variant="outline"
+                onClick={() => { setViewMode("list"); resetForm(); setSaveStatus("idle"); }}
                 className="h-8"
                 disabled={submitting}
               >
                 <X className="mr-1 h-3 w-3" /> Cancel
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => { resetForm(); setSaveStatus("idle"); setSaveMessage(""); }} 
+              <Button
+                variant="outline"
+                onClick={() => { resetForm(); setSaveStatus("idle"); setSaveMessage(""); }}
                 className="h-8"
                 disabled={submitting}
               >
                 <RefreshCw className="mr-1 h-3 w-3" /> Clear
               </Button>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={submitting || saveStatus === "saving"} 
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || saveStatus === "saving"}
                 className="h-8 min-w-[120px] bg-green-600 hover:bg-green-700"
               >
                 {submitting || saveStatus === "saving" ? (
@@ -1924,7 +2372,7 @@ export default function GoodsArrival() {
       </Card>
     </div>
   );
-  
+
   // ============================================
   // MAIN RENDER
   // ============================================
@@ -1950,20 +2398,20 @@ export default function GoodsArrival() {
           )}
         </div>
       </div>
-      
+
       {viewMode === "list" && (
         <div className="flex border-b bg-white rounded-t-lg">
-          <button 
-            onClick={() => { setActiveTab("pending"); setCurrentPage(1); }} 
-            className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg", 
+          <button
+            onClick={() => { setActiveTab("pending"); setCurrentPage(1); }}
+            className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg",
               activeTab === "pending" ? "bg-yellow-600 text-white" : "text-gray-600 hover:bg-gray-100"
             )}
           >
             Pending Arrival
           </button>
-          <button 
-            onClick={() => { setActiveTab("arrived"); setCurrentPage(1); }} 
-            className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg", 
+          <button
+            onClick={() => { setActiveTab("arrived"); setCurrentPage(1); }}
+            className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg",
               activeTab === "arrived" ? "bg-green-600 text-white" : "text-gray-600 hover:bg-gray-100"
             )}
           >
@@ -1971,9 +2419,9 @@ export default function GoodsArrival() {
           </button>
         </div>
       )}
-      
-      {viewMode === "list" 
-        ? (activeTab === "pending" ? renderPendingManifests() : renderArrivedGoods()) 
+
+      {viewMode === "list"
+        ? (activeTab === "pending" ? renderPendingManifests() : renderArrivedGoods())
         : renderFormView()
       }
     </div>
