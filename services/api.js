@@ -134,74 +134,56 @@ export const getAuthToken = () => {
 // ==================== GOODS ARRIVAL APIs ====================
 
 // Get all goods arrivals with filters
-export const getGoodsArrivals = async (filters = {}) => {
-  const params = new URLSearchParams();
-  Object.keys(filters).forEach(key => {
-    if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-      params.append(key, filters[key]);
-    }
-  });
-  const response = await api.get(`/goods-arrival?${params.toString()}`);
+
+
+export const getPendingManifests = async (params) => {
+  const response = await api.get('/goods-arrival/pending', { params });
   return response.data;
 };
 
-// Get goods arrival by ID
-export const getGoodsArrivalById = async (id) => {
-  const response = await api.get(`/goods-arrival/${id}`);
+export const createGoodsArrival = async (data) => {
+  console.log('Creating goods arrival with data:', data);
+  const response = await api.post('/goods-arrival', data);
+  console.log('Create response:', response.data);
   return response.data;
 };
 
-// Create new goods arrival
-export const createGoodsArrival = async (arrivalData) => {
-  console.log('Creating goods arrival with data:', arrivalData);
-  const response = await api.post('/goods-arrival', arrivalData);
-  console.log('Create goods arrival response:', response.data);
+export const getGoodsArrivals = async (params) => {
+  const response = await api.get('/goods-arrival', { params });
   return response.data;
 };
 
-// Update goods arrival
-export const updateGoodsArrival = async (id, arrivalData) => {
-  console.log(`Updating goods arrival ${id} with data:`, arrivalData);
-  const response = await api.put(`/goods-arrival/${id}`, arrivalData);
-  return response.data;
-};
-
-// Delete goods arrival
-export const deleteGoodsArrival = async (id) => {
-  console.log(`Deleting goods arrival ${id}`);
-  const response = await api.delete(`/goods-arrival/${id}`);
-  return response.data;
-};
-
-// Print goods arrival report
 export const printGoodsArrival = async (id) => {
   const response = await api.get(`/goods-arrival/${id}/print`);
   return response.data;
 };
 
-// Export goods arrivals to Excel
-export const exportGoodsArrivals = async (filters = {}) => {
-  const params = new URLSearchParams();
-  Object.keys(filters).forEach(key => {
-    if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-      params.append(key, filters[key]);
-    }
-  });
-  const response = await api.get(`/goods-arrival/export?${params.toString()}`);
+export const exportGoodsArrivals = async (params) => {
+  const response = await api.get('/goods-arrival/export', { params });
   return response.data;
 };
 
-// Get pending manifests (for goods arrival)
-export const getPendingManifests = async (filters = {}) => {
-  const params = new URLSearchParams();
-  Object.keys(filters).forEach(key => {
-    if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-      params.append(key, filters[key]);
-    }
-  });
-  const response = await api.get(`/goods-arrival/pending?${params.toString()}`);
+export const getGoodsArrivalStats = async () => {
+  const response = await api.get('/goods-arrival/stats');
   return response.data;
 };
+
+export const cancelGoodsArrival = async (id) => {
+  const response = await api.patch(`/goods-arrival/${id}/cancel`);
+  return response.data;
+};
+
+export const restoreGoodsArrival = async (id) => {
+  const response = await api.patch(`/goods-arrival/${id}/restore`);
+  return response.data;
+};
+
+export const deleteGoodsArrival = async (id) => {
+  const response = await api.delete(`/goods-arrival/${id}`);
+  return response.data;
+};
+
+
 
 // ==================== BOOKING APIs ====================
 
@@ -778,6 +760,8 @@ export const getBranches = async () => {
   { value: "195", text: "YUSUFPUR" },
   { value: "124", text: "ZAKHIRA" },
   { value: "291", text: "ZIRAKPUR" },
+  { value: "292", text: "DELHI" },
+
 ]
     };
   }
