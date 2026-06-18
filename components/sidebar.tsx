@@ -456,6 +456,7 @@ const moduleNavGroups: Record<string, NavGroup[]> = {
           title: "User & Rights",
           icon: ShieldCheck,
           children: [
+            { title: "Users", icon: Users, href: "/dashboard/administrator/master/users" },
             { title: "Right Assignment", icon: ShieldCheck, href: "/administrator/master/user-rights/right-assignment" },
             { title: "Role Master", icon: ShieldCheck, href: "/administrator/master/user-rights/role-master" },
             { title: "User Master", icon: Users, href: "/administrator/master/user-rights/user-master" },

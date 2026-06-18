@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Building2, ChevronRight, Store } from "lucide-react";
+import { Building2, ChevronRight, Store, CheckCircle, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
-import { selectBranch, getCurrentUser } from "@/services/api";
+import { selectBranch, userSelectBranch, getCurrentUser } from "@/services/api";
 
 const locations = [
   { value: "286", text: "AGARTALA" },
@@ -308,19 +308,48 @@ export default function SelectBranchPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checking, setChecking] = useState(true);
 
-  // Check if user is logged in
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const userData = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
-    
-    if (!isLoggedIn || !userData || !token) {
+  // Check if user is logged in and get user data
+   useEffect(() => {
+  const checkUser = async () => {
+    try {
+      // ✅ Token sessionStorage se
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+      
+      // ✅ User data sessionStorage se
+      const userDataStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+      
+      if (!token) {
+        router.push("/auth/login");
+        return;
+      }
+
+      if (userDataStr) {
+        const parsedUser = JSON.parse(userDataStr);
+        setUser(parsedUser);
+        
+        if (parsedUser.role === 'admin' || parsedUser.role === 'superadmin') {
+          setIsAdmin(true);
+        }
+        
+        if (parsedUser.branch && parsedUser.branchCode) {
+          toast.success(`Welcome back to ${parsedUser.branch}!`);
+          router.push("/dashboard/overview");
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking user:", error);
       router.push("/auth/login");
-    } else {
-      setUser(JSON.parse(userData));
+    } finally {
+      setChecking(false);
     }
-  }, [router]);
+  };
+
+  checkUser();
+}, [router]);
 
   // Filter locations based on search
   const filteredLocations = locations.filter((location) =>
@@ -341,10 +370,26 @@ export default function SelectBranchPage() {
     setLoading(true);
     
     try {
-      // Call API to save branch selection
-      const response = await selectBranch(selectedBranchText, selectedBranch);
+      let response;
+      
+      // ✅ Use different API based on user role
+      if (isAdmin) {
+        // Admin uses selectBranch API
+        response = await selectBranch(selectedBranchText, selectedBranch);
+        console.log("Admin branch selection response:", response);
+      } else {
+        // User uses userSelectBranch API
+        response = await userSelectBranch(selectedBranchText, selectedBranch);
+        console.log("User branch selection response:", response);
+      }
       
       if (response.success) {
+        // Update user data in localStorage
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        userData.branch = selectedBranchText;
+        userData.branchCode = selectedBranch;
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("userData", JSON.stringify(userData));
         localStorage.setItem("selectedBranch", selectedBranchText);
         localStorage.setItem("branchCode", selectedBranch);
         
@@ -365,34 +410,67 @@ export default function SelectBranchPage() {
     }
   };
 
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-2xl shadow-xl">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-green-600 p-3 rounded-full">
-              <Store className="h-8 w-8 text-white" />
+          <div className="flex justify-between items-start">
+            <button
+              onClick={() => router.back()}
+              className="text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <div className="flex-1">
+              <div className="flex justify-center mb-4">
+                <div className={`p-3 rounded-full ${isAdmin ? 'bg-blue-600' : 'bg-green-600'}`}>
+                  <Store className="h-8 w-8 text-white" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl font-bold">
+                {isAdmin ? 'Admin - Select Branch' : 'Select Your Branch'}
+              </CardTitle>
+              <CardDescription>
+                Welcome, <span className="font-medium">{user?.name || 'User'}</span>! 
+                {isAdmin ? ' Select the branch you want to manage' : ' Choose the branch you want to work with'}
+                {user?.branch && user?.branchCode && (
+                  <span className="block text-green-600 mt-1">
+                    <CheckCircle className="h-4 w-4 inline mr-1" />
+                    Previously selected: {user.branch}
+                  </span>
+                )}
+              </CardDescription>
             </div>
+            <div className="w-5"></div>
           </div>
-          <CardTitle className="text-2xl font-bold">Select Your Branch</CardTitle>
-          <CardDescription>Welcome, {user?.name || 'User'}! Choose the branch you want to work with</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Search Input */}
           <div className="flex-1">
-            <Label className="text-sm">Search Branch</Label>
+            <Label className="text-sm font-medium">Search Branch</Label>
             <input
               type="text"
               placeholder="Search by branch name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-10 px-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-10 px-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             />
           </div>
 
           {/* Branch Dropdown */}
           <div className="flex-1">
-            <Label className="text-sm">Select Branch</Label>
+            <Label className="text-sm font-medium">Select Branch</Label>
             <select
               value={selectedBranch}
               onChange={(e) => {
@@ -438,7 +516,7 @@ export default function SelectBranchPage() {
           {/* Proceed Button */}
           <Button
             onClick={handleProceed}
-            className="w-full h-11 bg-green-600 hover:bg-green-700"
+            className={`w-full h-11 ${isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
             disabled={!selectedBranch || loading}
           >
             {loading ? (
@@ -453,6 +531,11 @@ export default function SelectBranchPage() {
               </>
             )}
           </Button>
+
+          {/* User Info */}
+          <div className="text-center text-xs text-gray-400 border-t pt-4">
+            Logged in as: {user?.email} ({isAdmin ? 'Admin' : 'User'})
+          </div>
         </CardContent>
       </Card>
     </div>

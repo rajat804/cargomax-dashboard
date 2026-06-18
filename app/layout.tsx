@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ModuleProvider } from "@/contexts/ModuleContext"; // ✅ Add this
+import { Toaster } from "react-hot-toast"; // ✅ Add this (optional)
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +29,11 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
         >
-          {children}
+          {/* ✅ Wrap with ModuleProvider */}
+          <ModuleProvider>
+            {children}
+          </ModuleProvider>
+          <Toaster position="top-right" /> {/* ✅ Optional: For toast notifications */}
         </ThemeProvider>
       </body>
     </html>

@@ -3,19 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
   Settings,
   DollarSign,
   ShieldCheck,
   BoxesIcon,
-  LifeBuoy,
+  Network,
   Menu,
   X,
   Bell,
   User,
   Search,
   ChevronDown,
-  Network,
   LogOut,
 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -24,6 +22,8 @@ import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { logout } from "@/services/api";
+import { getStorageJSON, clearAuthStorage } from "@/utils/storage";
+import { useModules } from "@/contexts/ModuleContext";
 
 interface TopBarProps {
   toggleSidebar: () => void;
@@ -32,8 +32,8 @@ interface TopBarProps {
   onModuleSelect: (module: string) => void;
 }
 
-// Modules for the top bar
-const modules = [
+// ✅ All available modules with icons (STATIC LIST)
+const ALL_MODULES = [
   { id: "Operations", name: "Operations", icon: Settings },
   { id: "Accounts", name: "Accounts", icon: DollarSign },
   { id: "Administrator", name: "Administrator", icon: ShieldCheck },
@@ -43,60 +43,96 @@ const modules = [
 
 export function TopBar({ toggleSidebar, sidebarOpen, selectedModule, onModuleSelect }: TopBarProps) {
   const router = useRouter();
+  const { availableModules, userModules, isAdmin, loading } = useModules();
+  
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [userName, setUserName] = useState<string>("Admin User");
+  const [userName, setUserName] = useState<string>("User");
+  const [userRole, setUserRole] = useState<string>("");
 
   useEffect(() => {
-  if (typeof window !== "undefined") {
-    const user = localStorage.getItem("user");
-
-    if (user) {
-      try {
-        const userData = JSON.parse(user);
-
+    if (typeof window !== "undefined") {
+      const userData = getStorageJSON("user");
+      if (userData) {
         setUserName(
           userData.name ||
           userData.email?.split("@")[0] ||
-          "Admin User"
+          "User"
         );
-      } catch (e) {
-        console.error("Error parsing user data:", e);
+        setUserRole(userData.role || "user");
       }
     }
-  }
-}, []);
+  }, []);
 
-  // If selectedModule is Dashboard or Help & Support, default to Operations
-  const effectiveSelectedModule = selectedModule === "Dashboard" || selectedModule === "Help & Support" 
-    ? "Operations" 
-    : selectedModule;
+  // ✅ DYNAMIC: Filter modules based on user's available modules
+  const filteredModules = ALL_MODULES.filter(module => {
+    // Admin sees all modules
+    if (isAdmin) return true;
+    // User sees only assigned modules
+    return availableModules.includes(module.id);
+  });
+
+  console.log("🔍 User Modules:", availableModules);
+  console.log("📦 Filtered Modules:", filteredModules.map(m => m.id));
+
+  // ✅ Get current module
+  const getEffectiveModule = () => {
+    if (selectedModule === "Dashboard" || selectedModule === "Help & Support") {
+      return filteredModules.length > 0 ? filteredModules[0].id : "Operations";
+    }
+    if (filteredModules.some(m => m.id === selectedModule)) {
+      return selectedModule;
+    }
+    return filteredModules.length > 0 ? filteredModules[0].id : "Operations";
+  };
   
-  const selectedModuleData = modules.find(m => m.id === effectiveSelectedModule) || modules[0];
+  const effectiveSelectedModule = getEffectiveModule();
+  const selectedModuleData = filteredModules.find(m => m.id === effectiveSelectedModule) || filteredModules[0];
 
-  // Update parent if needed
-  if (effectiveSelectedModule !== selectedModule) {
-    onModuleSelect(effectiveSelectedModule);
-  }
+  // ✅ Update parent if needed
+  useEffect(() => {
+    if (effectiveSelectedModule !== selectedModule && filteredModules.length > 0) {
+      onModuleSelect(effectiveSelectedModule);
+    }
+  }, [effectiveSelectedModule, selectedModule, onModuleSelect, filteredModules]);
 
   const handleLogout = async () => {
     try {
-      // Call logout API
       await logout();
       toast.success("Logged out successfully");
-      // Redirect to login page
-      router.push("/auth/login");
+      clearAuthStorage();
+      window.location.href = "/auth/login";
     } catch (error) {
       console.error("Logout error:", error);
-      // Still redirect even if API fails
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("selectedBranch");
-      localStorage.removeItem("branchCode");
-      router.push("/auth/login");
+      clearAuthStorage();
+      window.location.href = "/auth/login";
     }
   };
+
+  const getRoleBadge = (role: string) => {
+    if (role === 'admin' || role === 'superadmin') {
+      return 'bg-blue-100 text-blue-700';
+    }
+    return 'bg-green-100 text-green-700';
+  };
+
+  // ✅ Show module selector only if user has at least one module
+  const showModuleSelector = filteredModules.length > 0;
+
+  if (loading) {
+    return (
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-8 w-8 animate-pulse bg-muted rounded"></div>
+          <div className="h-8 w-32 animate-pulse bg-muted rounded"></div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 animate-pulse bg-muted rounded-full"></div>
+          <div className="h-8 w-8 animate-pulse bg-muted rounded-full"></div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-4 shadow-sm">
@@ -110,59 +146,73 @@ export function TopBar({ toggleSidebar, sidebarOpen, selectedModule, onModuleSel
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
         
-        {/* Desktop Dropdown Module Selector */}
-        <div className="hidden md:block relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all",
-              "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+        {/* ✅ Show module selector only if user has modules */}
+        {showModuleSelector && (
+          <div className="hidden md:block relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all",
+                "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+              )}
+            >
+              {selectedModuleData && (
+                <>
+                  <selectedModuleData.icon className="h-4 w-4" />
+                  <span>{selectedModuleData.name}</span>
+                </>
+              )}
+              <ChevronDown className={cn("h-4 w-4 transition-transform", isDropdownOpen && "rotate-180")} />
+            </button>
+            
+            {isDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                <div className="absolute left-0 top-full mt-2 z-50 w-56 rounded-md border bg-background shadow-lg">
+                  {filteredModules.map((module) => (
+                    <button
+                      key={module.id}
+                      onClick={() => {
+                        onModuleSelect(module.id);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                        effectiveSelectedModule === module.id && "bg-accent text-accent-foreground"
+                      )}
+                    >
+                      <module.icon className="h-4 w-4" />
+                      <span>{module.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
-          >
-            <selectedModuleData.icon className="h-4 w-4" />
-            <span>{selectedModuleData.name}</span>
-            <ChevronDown className={cn("h-4 w-4 transition-transform", isDropdownOpen && "rotate-180")} />
-          </button>
-          
-          {isDropdownOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
-              <div className="absolute left-0 top-full mt-2 z-50 w-56 rounded-md border bg-background shadow-lg">
-                {modules.map((module) => (
-                  <button
-                    key={module.id}
-                    onClick={() => {
-                      onModuleSelect(module.id);
-                      setIsDropdownOpen(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                      effectiveSelectedModule === module.id && "bg-accent text-accent-foreground"
-                    )}
-                  >
-                    <module.icon className="h-4 w-4" />
-                    <span>{module.name}</span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        )}
         
-        {/* Mobile Module Select */}
-        <div className="md:hidden">
-          <select
-            value={effectiveSelectedModule}
-            onChange={(e) => onModuleSelect(e.target.value)}
-            className="flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            {modules.map((module) => (
-              <option key={module.id} value={module.id}>
-                {module.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        {showModuleSelector && (
+          <div className="md:hidden">
+            <select
+              value={effectiveSelectedModule}
+              onChange={(e) => onModuleSelect(e.target.value)}
+              className="flex h-9 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {filteredModules.map((module) => (
+                <option key={module.id} value={module.id}>
+                  {module.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        {/* ✅ Show message if no modules assigned */}
+        {!showModuleSelector && !isAdmin && (
+          <span className="text-sm text-muted-foreground">
+            No modules assigned
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -182,7 +232,6 @@ export function TopBar({ toggleSidebar, sidebarOpen, selectedModule, onModuleSel
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
         </Button>
         
-        {/* Profile Dropdown with Logout */}
         <div className="relative">
           <div 
             className="flex items-center gap-2 cursor-pointer"
@@ -192,6 +241,12 @@ export function TopBar({ toggleSidebar, sidebarOpen, selectedModule, onModuleSel
               <User className="h-4 w-4 text-primary" />
             </div>
             <span className="hidden text-sm font-medium md:inline-block">{userName}</span>
+            <span className={cn(
+              "hidden text-xs px-2 py-0.5 rounded-full md:inline-block",
+              getRoleBadge(userRole)
+            )}>
+              {isAdmin ? 'Admin' : 'User'}
+            </span>
             <ChevronDown className={cn("hidden h-4 w-4 text-muted-foreground md:block transition-transform", isProfileDropdownOpen && "rotate-180")} />
           </div>
           
@@ -201,7 +256,20 @@ export function TopBar({ toggleSidebar, sidebarOpen, selectedModule, onModuleSel
               <div className="absolute right-0 top-full mt-2 z-50 w-56 rounded-md border bg-background shadow-lg">
                 <div className="border-b px-4 py-3">
                   <p className="text-sm font-medium">{userName}</p>
-                  <p className="text-xs text-muted-foreground">Administrator</p>
+                  <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
+                  {userModules.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t">
+                      {userModules.map((module) => (
+                        <span key={module} className="text-xs bg-primary/10 px-2 py-0.5 rounded-full">
+                          {module}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                      No modules assigned
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={handleLogout}

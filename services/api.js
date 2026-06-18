@@ -11,21 +11,22 @@ const api = axios.create({
   },
   timeout: 30000,
 });
+// src/services/api.js
 
-// ✅ FIX: Safely get token only on client-side
+// ✅ FIX: Get token from sessionStorage first
 const getToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
   }
   return null;
 };
 
-// Request interceptor with safe localStorage access
+
+// ✅ UPDATED: Request interceptor with sessionStorage support
 api.interceptors.request.use(
   (config) => {
-    // Only access localStorage on client
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -40,7 +41,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor with safe localStorage access
+// ✅ UPDATED: Response interceptor with sessionStorage support
 api.interceptors.response.use(
   (response) => {
     console.log(`API Response: ${response.status} ${response.config.url}`);
@@ -48,11 +49,12 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Error:', error.response?.data || error.message);
-    console.error('Error Status:', error.response?.status);
-    console.error('Error URL:', error.config?.url);
     
-    // Only handle 401 on client-side
     if (typeof window !== 'undefined' && error.response?.status === 401) {
+      // Clear both sessionStorage and localStorage
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('isLoggedIn');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('isLoggedIn');
@@ -67,47 +69,83 @@ api.interceptors.response.use(
 
 // ==================== AUTH APIs ====================
 
-// Login user
 export const login = async (email, password) => {
   const response = await api.post('/auth/login', { email, password });
-  if (typeof window !== 'undefined' && response.data.data.token) {
-    localStorage.setItem('token', response.data.data.token);
-    localStorage.setItem('user', JSON.stringify(response.data.data));
-    localStorage.setItem('isLoggedIn', 'true');
+  if (response.data.data?.token) {
+    // ✅ Sirf sessionStorage
+    sessionStorage.setItem('token', response.data.data.token);
+    sessionStorage.setItem('user', JSON.stringify(response.data.data));
+    sessionStorage.setItem('isLoggedIn', 'true');
+    
+    // ✅ Branch localStorage mein (shared)
+    if (response.data.data.branch) {
+      localStorage.setItem('selectedBranch', response.data.data.branch);
+      localStorage.setItem('branchCode', response.data.data.branchCode);
+    }
   }
   return response.data;
 };
 
-// Select branch after login
+// ✅ UPDATE: Select branch for USER
+export const userSelectBranch = async (branch, branchCode) => {
+  const response = await api.post('/auth/user-select-branch', { branch, branchCode });
+  if (typeof window !== 'undefined' && response.data.success) {
+    localStorage.setItem('selectedBranch', branch);
+    localStorage.setItem('branchCode', branchCode);
+    
+    // Update user data with branch info
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    userData.branch = branch;
+    userData.branchCode = branchCode;
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('userData', JSON.stringify(userData));
+  }
+  return response.data;
+};
+
+// Admin select branch (existing)
 export const selectBranch = async (branch, branchCode) => {
   const response = await api.post('/auth/select-branch', { branch, branchCode });
-  if (typeof window !== 'undefined' && response.data.data) {
-    localStorage.setItem('selectedBranch', response.data.data.branch);
-    localStorage.setItem('branchCode', response.data.data.branchCode);
+  if (typeof window !== 'undefined' && response.data.success) {
+    localStorage.setItem('selectedBranch', branch);
+    localStorage.setItem('branchCode', branchCode);
+    
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    userData.branch = branch;
+    userData.branchCode = branchCode;
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('userData', JSON.stringify(userData));
   }
   return response.data;
 };
 
-// Get current user with branch info
+// Get current amdin with branch info
 export const getCurrentUser = async () => {
   const response = await api.get('/auth/me');
+  if (typeof window !== 'undefined' && response.data.success) {
+    const userData = response.data.data;
+    if (userData.branch && userData.branchCode) {
+      localStorage.setItem('selectedBranch', userData.branch);
+      localStorage.setItem('branchCode', userData.branchCode);
+      localStorage.setItem('userData', JSON.stringify(userData));
+    }
+  }
   return response.data;
 };
 
-// Logout user
+// Logout admin
+// ✅ Logout - Sirf sessionStorage clear
 export const logout = async () => {
   try {
     await api.post('/auth/logout');
   } catch (error) {
     console.error('Logout error:', error);
   } finally {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('selectedBranch');
-      localStorage.removeItem('branchCode');
-    }
+    // ✅ Sirf sessionStorage clear karo
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('isLoggedIn');
+    // ✅ localStorage REMOVE MAT KARO
   }
 };
 
@@ -126,6 +164,189 @@ export const getAuthToken = () => {
   }
   return null;
 };
+
+
+// ============ USER FUNCTIONS (SIMPLE) ============
+export const register = async (userData) => {
+  try {
+    const response = await api.post("/auth/register", userData);
+    if (response.data.success) {
+      localStorage.setItem("token", response.data.data.token);
+      localStorage.setItem("user", JSON.stringify(response.data.data));
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const userLogin = async (email, password) => {
+  try {
+    const response = await api.post("/auth/user-login", { email, password });
+    if (response.data.success) {
+      const userData = response.data.data;
+      
+      // ✅ Sirf sessionStorage
+      sessionStorage.setItem('token', userData.token);
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('isLoggedIn', 'true');
+      
+      // ✅ Branch localStorage mein (shared)
+      if (userData.branch && userData.branchCode) {
+        localStorage.setItem('selectedBranch', userData.branch);
+        localStorage.setItem('branchCode', userData.branchCode);
+        localStorage.setItem('userData', JSON.stringify(userData));
+      }
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserProfile = async () => {
+  try {
+    const response = await api.get("/auth/profile");
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUserProfile = async (userData) => {
+  try {
+    const response = await api.put("/auth/profile", userData);
+    if (response.data.success) {
+      localStorage.setItem("user", JSON.stringify(response.data.data));
+    }
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changePassword = async (currentPassword, newPassword) => {
+  try {
+    const response = await api.put("/auth/change-password", { currentPassword, newPassword });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadProfileImage = async (imageUrl) => {
+  try {
+    const response = await api.post("/auth/upload-image", { imageUrl });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+// ✅ ADD THIS - Admin updates user profile
+export const updateUserByAdmin = async (userId, userData) => {
+  try {
+    const response = await api.put(`/auth/users/${userId}`, userData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ✅ ADD THIS - Admin updates user modules
+export const updateUserModules = async (userId, moduleData) => {
+  try {
+    // ✅ Ensure moduleData has correct structure
+    const payload = {
+      modules: moduleData.modules || moduleData || []
+    };
+    const response = await api.put(`/auth/users/${userId}/modules`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+// ✅ Get user data from sessionStorage
+const getUserData = () => {
+  if (typeof window !== 'undefined') {
+    const user = sessionStorage.getItem('user');
+    if (user) return JSON.parse(user);
+    const localUser = localStorage.getItem('user');
+    if (localUser) return JSON.parse(localUser);
+    return null;
+  }
+  return null;
+};
+
+// ✅ NEW: Check if user has branch
+export const hasUserBranch = () => {
+  if (typeof window !== 'undefined') {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        return !!(user.branch && user.branchCode);
+      } catch {
+        return false;
+      }
+    }
+  }
+  return false;
+};
+
+// ✅ NEW: Get user branch info
+export const getUserBranch = () => {
+  if (typeof window !== 'undefined') {
+    return {
+      branch: localStorage.getItem('selectedBranch') || '',
+      branchCode: localStorage.getItem('branchCode') || ''
+    };
+  }
+  return { branch: '', branchCode: '' };
+};
+
+// ============ ADMIN MANAGEMENT FUNCTIONS ============
+export const getAllUsers = async (page = 1, limit = 10, search = '') => {
+  try {
+    const response = await api.get(`/auth/users?page=${page}&limit=${limit}&search=${search}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUserById = async (userId) => {
+  try {
+    const response = await api.get(`/auth/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId) => {
+  try {
+    const response = await api.delete(`/auth/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleUserStatus = async (userId) => {
+  try {
+    const response = await api.put(`/auth/users/${userId}/toggle-status`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+
 
 
 

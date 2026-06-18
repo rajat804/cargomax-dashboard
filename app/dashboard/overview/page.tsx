@@ -8,16 +8,25 @@ export default function Overview() {
   const router = useRouter();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const selectedBranch = localStorage.getItem("selectedBranch");
+    // ✅ sessionStorage pehle, phir localStorage
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+    const isLoggedIn = sessionStorage.getItem("isLoggedIn") || localStorage.getItem("isLoggedIn");
+    const selectedBranch = sessionStorage.getItem("selectedBranch") || localStorage.getItem("selectedBranch");
 
-    if (!isLoggedIn) {
-      router.replace("/login");
+    console.log("Overview - Checking auth...");
+    console.log("token:", token ? "Present" : "Missing");
+    console.log("isLoggedIn:", isLoggedIn);
+    console.log("selectedBranch:", selectedBranch);
+
+    if (!token || !isLoggedIn) {
+      console.log("No login found, redirecting to /login");
+      router.replace("/auth/login");
       return;
     }
 
     if (!selectedBranch) {
-      router.replace("/select-branch");
+      console.log("No branch selected, redirecting to /select-branch");
+      router.replace("/auth/select-branch");
       return;
     }
   }, [router]);

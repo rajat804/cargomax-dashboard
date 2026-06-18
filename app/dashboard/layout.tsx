@@ -12,14 +12,17 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const selectedBranch = localStorage.getItem("selectedBranch");
+    // ✅ sessionStorage pehle, phir localStorage
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+    const isLoggedIn = sessionStorage.getItem("isLoggedIn") || localStorage.getItem("isLoggedIn");
+    const selectedBranch = sessionStorage.getItem("selectedBranch") || localStorage.getItem("selectedBranch");
 
     console.log("Dashboard Layout - Checking auth...");
+    console.log("token:", token ? "Present" : "Missing");
     console.log("isLoggedIn:", isLoggedIn);
     console.log("selectedBranch:", selectedBranch);
 
-    if (!isLoggedIn) {
+    if (!token || !isLoggedIn) {
       console.log("No login found, redirecting to /login");
       router.replace("/auth/login");
       return;

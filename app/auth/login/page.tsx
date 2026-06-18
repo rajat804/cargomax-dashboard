@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff, LogIn, Truck } from "lucide-react";
 import toast from "react-hot-toast";
 import { login } from "@/services/api";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -107,6 +108,12 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          <p className="text-center text-sm text-gray-600 mt-4">
+  Are you a user?{" "}
+  <Link href="/auth/user-login" className="text-purple-600 hover:underline font-medium">
+    User Login
+  </Link>
+</p>
         </CardContent>
       </Card>
     </div>
