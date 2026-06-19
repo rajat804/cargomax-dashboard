@@ -316,10 +316,10 @@ export default function SelectBranchPage() {
   const checkUser = async () => {
     try {
       // ✅ Token sessionStorage se
-      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       
       // ✅ User data sessionStorage se
-      const userDataStr = sessionStorage.getItem("user") || localStorage.getItem("user");
+      const userDataStr = sessionStorage.getItem("user");
       
       if (!token) {
         router.push("/auth/login");
