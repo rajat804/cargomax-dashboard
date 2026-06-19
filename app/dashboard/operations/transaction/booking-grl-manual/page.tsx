@@ -202,7 +202,6 @@ interface BookingRecord {
   cancelledReason?: string;
   createdAt: Date;
   updatedAt: Date;
-  // Damage/Missing fields
   damageType?: ("damaged" | "missing" | "both")[];
   damageReason?: string;
   damageOtherRemark?: string;
@@ -218,7 +217,7 @@ interface Branch {
   text: string;
 }
 
-// Destination options (keeping your existing array)
+// Destination options
 const destinationOptions = [
   { value: "AGARTALA", label: "AGARTALA" },
   { value: "AKBERPUR/AMBEDKAR NAGAR", label: "AKBERPUR/AMBEDKAR NAGAR" },
@@ -432,11 +431,12 @@ const destinationOptions = [
   { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
 
+// POINT 5: Booking Type Options - FOC instead of TOC
 const bookingTypeOptions = [
   { value: "TOPAY", label: "TO PAY" },
   { value: "PAID", label: "PAID" },
   { value: "TBB", label: "TBB" },
-  { value: "TOC", label: "TOC" },
+  { value: "FOC", label: "FOC" },
 ];
 
 const serviceProductOptions = [
@@ -445,9 +445,10 @@ const serviceProductOptions = [
   { value: "RAIL", label: "RAIL" },
 ];
 
+// POINT 7: Delivery Type - DOOR DELIVERY instead of PICKUP
 const deliveryTypeOptions = [
   { value: "GODOWN", label: "GODOWN" },
-  { value: "PICKUP", label: "PICKUP" },
+  { value: "DOOR DELIVERY", label: "DOOR DELIVERY" },
 ];
 
 const loadTypeOptions = [
@@ -528,7 +529,7 @@ export default function BookingGRLManual() {
   const [gstPaidBy, setGstPaidBy] = useState<string>("CONSIGNEE");
   const [gstRate, setGstRate] = useState<number>(0);
   const [advanceAmount, setAdvanceAmount] = useState<number>(0);
-  
+
   // Calculation totals
   const [subTotal, setSubTotal] = useState<number>(0);
   const [gstAmount, setGstAmount] = useState<number>(0);
@@ -540,7 +541,7 @@ export default function BookingGRLManual() {
   const [packingTypes, setPackingTypes] = useState<any[]>([]);
   const [branchOptions, setBranchOptions] = useState<Branch[]>([]);
   const [clients, setClients] = useState<ClientData[]>([]);
-  
+
   // Current user data
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedBranch, setSelectedBranch] = useState<string>("");
@@ -571,6 +572,10 @@ export default function BookingGRLManual() {
   const [consignorIec, setConsignorIec] = useState<string>("");
   const [consignorBankAd, setConsignorBankAd] = useState<string>("");
 
+  // POINT 11: Search results for consignor with GST
+  const [consignorSearchResults, setConsignorSearchResults] = useState<ClientData[]>([]);
+  const [showConsignorDropdown, setShowConsignorDropdown] = useState(false);
+
   // Consignee Selection
   const [consigneeIdType, setConsigneeIdType] = useState<string>("");
   const [consigneeIdValue, setConsigneeIdValue] = useState<string>("");
@@ -588,6 +593,15 @@ export default function BookingGRLManual() {
   const [consigneeIec, setConsigneeIec] = useState<string>("");
   const [consigneeBankAd, setConsigneeBankAd] = useState<string>("");
 
+  // Search results for consignee
+  const [consigneeSearchResults, setConsigneeSearchResults] = useState<ClientData[]>([]);
+  const [showConsigneeDropdown, setShowConsigneeDropdown] = useState(false);
+
+  // POINT 12: Content Category search
+  const [contentCategorySearch, setContentCategorySearch] = useState<string>("");
+  const [contentCategoryResults, setContentCategoryResults] = useState<any[]>([]);
+  const [showContentCategoryDropdown, setShowContentCategoryDropdown] = useState(false);
+
   // Basic Info
   const [grNo, setGrNo] = useState<string>("");
   const [bookingFrom, setBookingFrom] = useState<string>("");
@@ -595,12 +609,16 @@ export default function BookingGRLManual() {
   const [destination, setDestination] = useState<string>("");
   const [pickupFrom, setPickupFrom] = useState<string>("");
   const [deliveryPoint, setDeliveryPoint] = useState<string>("");
-  const [bookingType, setBookingType] = useState<string>("");
+  // POINT 2: Booking Type Default "TOPAY"
+  const [bookingType, setBookingType] = useState<string>("TOPAY");
   const [collectionAt, setCollectionAt] = useState<string>("");
   const [pvtMarkaSealNo, setPvtMarkaSealNo] = useState<string>("");
+  // POINT 6: Service Product Default "SURFACE"
   const [serviceProduct, setServiceProduct] = useState<string>("SURFACE");
-  const [deliveryType, setDeliveryType] = useState<string>("");
-  const [loadType, setLoadType] = useState<string>("");
+  // POINT 7: Delivery Type Default "GODOWN"
+  const [deliveryType, setDeliveryType] = useState<string>("GODOWN");
+  // POINT 8: Load Type Default "PART LOAD"
+  const [loadType, setLoadType] = useState<string>("PART LOAD");
   const [mkExecutive, setMkExecutive] = useState<string>("");
   const [freightOn, setFreightOn] = useState<string>("CHARGE WEIGHT");
   const [manualRates, setManualRates] = useState<boolean>(false);
@@ -674,6 +692,147 @@ export default function BookingGRLManual() {
   const streamRef = useRef<MediaStream | null>(null);
   const finalDurationRef = useRef<number>(0);
 
+  // ========== POINT 3 & 4: Booking Type Logic ==========
+  useEffect(() => {
+    // POINT 3: TOPAY → Collection At = Destination
+    if (bookingType === "TOPAY" && destination) {
+      setCollectionAt(destination);
+    }
+    // POINT 4: PAID, TBB, FOC → Collection At = Booking From
+    else if (bookingType === "PAID" || bookingType === "TBB" || bookingType === "FOC") {
+      setCollectionAt(bookingFrom);
+    }
+  }, [bookingType, destination, bookingFrom]);
+
+  // ========== POINT 11: Consignor Name Search with GST ==========
+  const handleConsignorNameSearch = async (value: string) => {
+  setConsignorIdValue(value);
+  setConsignorName(value);
+
+  if (value.length >= 2) {
+    try {
+      // Pass "name" as idType
+      const response = await searchClient("name", value);
+      
+      const data = response?.data || response || [];
+      const results = Array.isArray(data) ? data : [data].filter(Boolean);
+      
+      setConsignorSearchResults(results);
+      setShowConsignorDropdown(results.length > 0);
+    } catch (error) {
+      setConsignorSearchResults([]);
+      setShowConsignorDropdown(false);
+    }
+  } else {
+    setConsignorSearchResults([]);
+    setShowConsignorDropdown(false);
+  }
+};
+
+  const handleConsignorSelect = (client: ClientData) => {
+    setConsignorId(client._id || "");
+    setConsignorName(client.name);
+    setConsignorIdValue(client.name);
+    setConsignorMobile(client.mobile || "");
+    setConsignorGst(client.gstNumber || "");
+    setConsignorAdhaar(client.adhaarNumber || "");
+    setConsignorPan(client.panNumber || "");
+    setConsignorCode(client.dealerCode || "");
+    setConsignorAddress(client.address || "");
+    setConsignorCity(client.city || "");
+    setConsignorState(client.state || "");
+    setConsignorEmail(client.email || "");
+    setConsignorIec(client.iecCode || "");
+    setConsignorBankAd(client.bankAdNo || "");
+    setShowConsignorDropdown(false);
+    toast.success(`Consignor "${client.name}" loaded successfully!`);
+  };
+
+  // ========== Consignee Name Search ==========
+  const handleConsigneeNameSearch = async (value: string) => {
+    setConsigneeIdValue(value);
+    setConsigneeName(value);
+
+    if (value.length >= 2) {
+      try {
+        const response = await searchClient("name", value);
+        if (response.data) {
+          const data = Array.isArray(response.data) ? response.data : [response.data];
+          setConsigneeSearchResults(data);
+          setShowConsigneeDropdown(true);
+        } else {
+          setConsigneeSearchResults([]);
+          setShowConsigneeDropdown(false);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setConsigneeSearchResults([]);
+        setShowConsigneeDropdown(false);
+      }
+    } else {
+      setConsigneeSearchResults([]);
+      setShowConsigneeDropdown(false);
+    }
+  };
+
+  const handleConsigneeSelect = (client: ClientData) => {
+    setConsigneeId(client._id || "");
+    setConsigneeName(client.name);
+    setConsigneeIdValue(client.name);
+    setConsigneeMobile(client.mobile || "");
+    setConsigneeGst(client.gstNumber || "");
+    setConsigneeAdhaar(client.adhaarNumber || "");
+    setConsigneePan(client.panNumber || "");
+    setConsigneeCode(client.dealerCode || "");
+    setConsigneeAddress(client.address || "");
+    setConsigneeCity(client.city || "");
+    setConsigneeState(client.state || "");
+    setConsigneeEmail(client.email || "");
+    setConsigneeIec(client.iecCode || "");
+    setConsigneeBankAd(client.bankAdNo || "");
+    setShowConsigneeDropdown(false);
+    toast.success(`Consignee "${client.name}" loaded successfully!`);
+  };
+
+  // ========== POINT 12: Content Category Search - FIXED ==========
+  const handleContentCategorySearch = (value: string) => {
+    setContentCategorySearch(value);
+    if (value.length >= 1) {
+      const filtered = contentCategories.filter(cat =>
+        cat.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setContentCategoryResults(filtered);
+      setShowContentCategoryDropdown(true);
+    } else {
+      setContentCategoryResults([]);
+      setShowContentCategoryDropdown(false);
+      // Clear the category from goods item when search is empty
+      setGoodsItems(prevItems =>
+        prevItems.map(item => ({
+          ...item,
+          contentCategory: "",
+          content: "",
+          contentSubCategory: ""
+        }))
+      );
+    }
+  };
+
+  const handleContentCategorySelect = (category: any) => {
+    // Update goods item with selected category
+    setGoodsItems(prevItems =>
+      prevItems.map(item => ({
+        ...item,
+        contentCategory: String(category.id),
+        content: category.name,
+        contentSubCategory: ""
+      }))
+    );
+    setContentCategorySearch(category.name);
+    setShowContentCategoryDropdown(false);
+    toast.success(`Category "${category.name}" selected`);
+  };
+
   // ========== HELPER FUNCTIONS ==========
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -681,7 +840,6 @@ export default function BookingGRLManual() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Validate damage package count
   const validateDamagePackageCount = (count: number) => {
     if (damageType.length > 0) {
       if (count < 1) {
@@ -899,10 +1057,10 @@ export default function BookingGRLManual() {
     } else if (freightOn === "PER PACKAGE") {
       freight = totalPckgs * freightRate;
     }
-    
+
     setCalculatedFreight(freight);
     setTotalFreight(freight);
-    
+
     const extraChargesTotal = extraCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
     const subtotal = freight + extraChargesTotal;
     setSubTotal(subtotal);
@@ -915,7 +1073,7 @@ export default function BookingGRLManual() {
   };
 
   const updateExtraCharge = (id: number, rate: number) => {
-    setExtraCharges(prev => 
+    setExtraCharges(prev =>
       prev.map(charge => charge.id === id ? { ...charge, rate, amount: rate } : charge)
     );
   };
@@ -960,7 +1118,7 @@ export default function BookingGRLManual() {
       const userStr = localStorage.getItem('user');
       const selectedBranchStr = localStorage.getItem('selectedBranch');
       const branchCode = localStorage.getItem('branchCode');
-      
+
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
@@ -969,7 +1127,7 @@ export default function BookingGRLManual() {
           console.error('Error parsing user:', e);
         }
       }
-      
+
       if (selectedBranchStr) {
         setSelectedBranch(selectedBranchStr);
         setBookingFrom(selectedBranchStr);
@@ -1045,9 +1203,9 @@ export default function BookingGRLManual() {
     if (packingType && item.chargeWeight > 0 && item.noOfPckgs > 0) {
       const perPackageWeight = item.chargeWeight / item.noOfPckgs;
       if (perPackageWeight > packingType.maxWeight) {
-        return { 
-          isValid: false, 
-          error: `Per package weight (${perPackageWeight.toFixed(2)} kg) exceeds limit for ${packingType.name} (Max: ${packingType.maxWeight} kg/package)` 
+        return {
+          isValid: false,
+          error: `Per package weight (${perPackageWeight.toFixed(2)} kg) exceeds limit for ${packingType.name} (Max: ${packingType.maxWeight} kg/package)`
         };
       }
     }
@@ -1070,15 +1228,10 @@ export default function BookingGRLManual() {
     setGoodsItems(goodsItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
-        if (field === "actualWeight") updated.chargeWeight = Number(value);
+        if (field === "actualWeight") updated.chargeWeight = Number(value) || 0;
         if (field === "contentCategory") {
           updated.contentSubCategory = "";
           updated.content = "";
-        }
-        if (field === "contentSubCategory") {
-          const category = contentCategories.find(c => c.id === Number(item.contentCategory));
-          const subCategory = category?.subCategories?.find((s: any) => s.id === Number(value));
-          updated.content = subCategory?.name || "";
         }
         const validation = validatePackageWeight(updated);
         updated.isWeightValid = validation.isValid;
@@ -1087,6 +1240,16 @@ export default function BookingGRLManual() {
       }
       return item;
     }));
+  };
+
+  // Number input with no leading zero
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, callback: (value: number) => void) => {
+    const value = e.target.value;
+    const cleanedValue = value.replace(/^0+(?=\d)/, '');
+    const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
+    if (!isNaN(numValue)) {
+      callback(numValue);
+    }
   };
 
   const addGoodsRow = () => {
@@ -1123,9 +1286,10 @@ export default function BookingGRLManual() {
   const handleConsignorSearch = async () => {
     if (!consignorIdType) { toast.error("Please select ID type"); return; }
     if (consignorIdType === "Self") {
+      // POINT 10: Self - Name & Mobile Show (Mobile Optional)
       setConsignorId("self");
       setConsignorName(currentUser?.name || "Self");
-      setConsignorMobile("");
+      setConsignorMobile(currentUser?.mobile || ""); // Optional - not mandatory
       setConsignorGst("");
       setConsignorAdhaar("");
       setConsignorPan("");
@@ -1136,11 +1300,12 @@ export default function BookingGRLManual() {
       setConsignorEmail("");
       setConsignorIec("");
       setConsignorBankAd("");
+      setConsignorIdValue("");
       toast.success("Self selected - No ID required");
       return;
     }
     if (!consignorIdValue) { toast.error("Please enter ID value"); return; }
-    
+
     try {
       const response = await searchClient(consignorIdType, consignorIdValue);
       if (response.data) {
@@ -1163,9 +1328,13 @@ export default function BookingGRLManual() {
         toast.error("Client not found. Please add new client.");
         setIsNewConsignorDialogOpen(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
-      toast.error("Error searching client");
+      if (error.response?.status === 400) {
+        toast.error("Invalid search. Please check the ID type and value.");
+      } else {
+        toast.error("Error searching client. Please try again.");
+      }
       setIsNewConsignorDialogOpen(true);
     }
   };
@@ -1175,9 +1344,10 @@ export default function BookingGRLManual() {
   const handleConsigneeSearch = async () => {
     if (!consigneeIdType) { toast.error("Please select ID type"); return; }
     if (consigneeIdType === "Self") {
+      // POINT 10: Self - Name & Mobile Show (Mobile Optional)
       setConsigneeId("self");
       setConsigneeName(currentUser?.name || "Self");
-      setConsigneeMobile("");
+      setConsigneeMobile(currentUser?.mobile || ""); // Optional - not mandatory
       setConsigneeGst("");
       setConsigneeAdhaar("");
       setConsigneePan("");
@@ -1188,11 +1358,12 @@ export default function BookingGRLManual() {
       setConsigneeEmail("");
       setConsigneeIec("");
       setConsigneeBankAd("");
+      setConsigneeIdValue("");
       toast.success("Self selected - No ID required");
       return;
     }
     if (!consigneeIdValue) { toast.error("Please enter ID value"); return; }
-    
+
     try {
       const response = await searchClient(consigneeIdType, consigneeIdValue);
       if (response.data) {
@@ -1215,9 +1386,13 @@ export default function BookingGRLManual() {
         toast.error("Client not found. Please add new client.");
         setIsNewConsigneeDialogOpen(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
-      toast.error("Error searching client");
+      if (error.response?.status === 400) {
+        toast.error("Invalid search. Please check the ID type and value.");
+      } else {
+        toast.error("Error searching client. Please try again.");
+      }
       setIsNewConsigneeDialogOpen(true);
     }
   };
@@ -1226,7 +1401,7 @@ export default function BookingGRLManual() {
 
   const addNewClient = async (type: "consignor" | "consignee") => {
     if (!newClientData.name) { toast.error("Please enter client name"); return; }
-    
+
     try {
       const response = await createClient({
         name: newClientData.name,
@@ -1242,10 +1417,10 @@ export default function BookingGRLManual() {
         iecCode: newClientData.iecCode || "",
         bankAdNo: newClientData.bankAdNo || "",
       });
-      
+
       const newClient = response.data;
       await loadClients();
-      
+
       if (type === "consignor") {
         setConsignorId(newClient._id);
         setConsignorName(newClient.name);
@@ -1306,19 +1481,20 @@ export default function BookingGRLManual() {
     setDestination("");
     setPickupFrom("");
     setDeliveryPoint("");
-    setBookingType("");
+    // POINT 2: Booking Type Default "TOPAY"
+    setBookingType("TOPAY");
     setCollectionAt("");
     setPvtMarkaSealNo("");
     setServiceProduct("SURFACE");
-    setDeliveryType("");
-    setLoadType("");
+    setDeliveryType("GODOWN");
+    setLoadType("PART LOAD");
     setMkExecutive("");
     setFreightOn("CHARGE WEIGHT");
     setManualRates(false);
     setNcv(false);
     setPrintAfterSave(false);
     setCcAttached(false);
-    
+
     setFreightRate(0);
     setCalculatedFreight(0);
     setGstRate(0);
@@ -1329,7 +1505,7 @@ export default function BookingGRLManual() {
     setGstAmount(0);
     setTotalAmount(0);
     setBalanceAmount(0);
-    
+
     setConsignorIdType("");
     setConsignorIdValue("");
     setConsignorId("");
@@ -1345,7 +1521,9 @@ export default function BookingGRLManual() {
     setConsignorEmail("");
     setConsignorIec("");
     setConsignorBankAd("");
-    
+    setConsignorSearchResults([]);
+    setShowConsignorDropdown(false);
+
     setConsigneeIdType("");
     setConsigneeIdValue("");
     setConsigneeId("");
@@ -1361,7 +1539,13 @@ export default function BookingGRLManual() {
     setConsigneeEmail("");
     setConsigneeIec("");
     setConsigneeBankAd("");
-    
+    setConsigneeSearchResults([]);
+    setShowConsigneeDropdown(false);
+
+    setContentCategorySearch("");
+    setContentCategoryResults([]);
+    setShowContentCategoryDropdown(false);
+
     setGoodsItems([{ id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true }]);
     setInvoices([{ id: Date.now(), invoiceNo: "", date: new Date(), value: "0", ewayBillNo: "", ewayBillDate: new Date(), validUpto: "" }]);
     setRemarks("");
@@ -1380,16 +1564,14 @@ export default function BookingGRLManual() {
     setCurrentEditId(null);
     setIsConsignorAddressOpen(false);
     setIsConsigneeAddressOpen(false);
-    
-    // Reset damage states
+
     setDamageType([]);
     setDamageReason("");
     setDamageOtherRemark("");
     setDamagePackageCount(0);
     setDamagePackageError("");
     setDamagePhotos([]);
-    
-    // Reset voice note states
+
     if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) URL.revokeObjectURL(voiceNoteUrl);
     setVoiceNoteUrl(null);
     setVoiceNoteDuration(null);
@@ -1398,7 +1580,7 @@ export default function BookingGRLManual() {
     setRecordingDuration(0);
     finalDurationRef.current = 0;
     audioChunksRef.current = [];
-    
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -1408,14 +1590,14 @@ export default function BookingGRLManual() {
       try { if (isRecording) mediaRecorderRef.current.stop(); } catch (e) { }
       mediaRecorderRef.current = null;
     }
-    
+
     setValidationErrors({});
   };
 
   // Validate required fields
   const validateRequiredFields = () => {
     const errors: { [key: string]: string } = {};
-    
+
     if (!grNo) errors.grNo = "GR Number is required";
     if (!bookingFrom) errors.bookingFrom = "Booking From is required";
     if (!destination) errors.destination = "Destination is required";
@@ -1426,11 +1608,10 @@ export default function BookingGRLManual() {
     if (!serviceProduct) errors.serviceProduct = "Service/Product is required";
     if (!deliveryType) errors.deliveryType = "Delivery Type is required";
     if (!loadType) errors.loadType = "Load Type is required";
-    
+
     const hasWeightError = goodsItems.some(item => !item.isWeightValid);
     if (hasWeightError) errors.weightError = "Please fix weight validation errors";
-    
-    // Damage validation
+
     if (damageType.length > 0) {
       if (!damageReason) errors.damageReason = "Please select a damage/missing reason";
       if (damageReason === "Other (specify)" && !damageOtherRemark.trim()) {
@@ -1442,24 +1623,24 @@ export default function BookingGRLManual() {
       if (damagePhotos.length === 0) errors.damagePhotos = "Please upload at least 1 damage photo";
       if (!voiceNoteBase64 && !voiceNoteUrl) errors.voiceNote = "Please record a voice note describing the damage";
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSave = async () => {
     console.log("=== MANUAL BOOKING SAVE BUTTON CLICKED ===");
-    
+
     if (!validateRequiredFields()) {
       const firstError = Object.values(validationErrors)[0];
       if (firstError) toast.error(firstError);
       return;
     }
-    
+
     setLoading(true);
-    
+
     const finalVoiceNoteUrl = voiceNoteBase64 || voiceNoteUrl || "";
-    
+
     const bookingData = {
       grNo, bookingFrom, bookingDate, destination, pickupFrom: pickupFrom || "", deliveryPoint: deliveryPoint || "",
       bookingType, collectionAt,
@@ -1480,7 +1661,6 @@ export default function BookingGRLManual() {
       insuranceCoveredBy: insuranceCoveredBy || "", insuranceNo: insuranceNo || "", insuranceDate, insuranceCompany: insuranceCompany || "",
       goodsItems: goodsItems.map(({ id, ...rest }) => rest),
       invoices: invoices.map(({ id, ...rest }) => ({ ...rest, date: rest.date, ewayBillDate: rest.ewayBillDate })),
-      // Damage/Missing fields
       damageType: damageType.length > 0 ? damageType : undefined,
       damageReason: damageReason || undefined,
       damageOtherRemark: damageOtherRemark || undefined,
@@ -1500,10 +1680,10 @@ export default function BookingGRLManual() {
         response = await createManualBooking(bookingData);
         toast.success(`Booking created successfully! GR No: ${response.data.grNo}`);
       }
-      
+
       await loadBookings();
       await loadStats();
-      
+
       if (printAfterSave) handlePrint();
       resetForm();
       setIsBookingModalOpen(false);
@@ -1591,7 +1771,7 @@ export default function BookingGRLManual() {
       if (searchFromDate) filters.fromDate = searchFromDate.toISOString();
       if (searchToDate) filters.toDate = searchToDate.toISOString();
       if (searchBranch !== "all") filters.branch = searchBranch;
-      
+
       const response = await getManualBookings(filters);
       setSearchResults(response.data || []);
       setCurrentPage(1);
@@ -1612,7 +1792,7 @@ export default function BookingGRLManual() {
       if (searchFromDate) filters.fromDate = searchFromDate.toISOString();
       if (searchToDate) filters.toDate = searchToDate.toISOString();
       if (searchBranch !== "all") filters.branch = searchBranch;
-      
+
       const response = await getManualBookings(filters);
       setCancelledSearchResults(response.data || []);
       setCancelledCurrentPage(1);
@@ -1656,7 +1836,7 @@ export default function BookingGRLManual() {
     setNcv(record.ncv);
     setPrintAfterSave(record.printAfterSave);
     setCcAttached(record.ccAttached);
-    
+
     setConsignorId(String(record.consignorId));
     setConsignorName(record.consignorName);
     setConsignorMobile(record.consignorMobile || "");
@@ -1670,7 +1850,7 @@ export default function BookingGRLManual() {
     setConsignorEmail(record.consignorEmail);
     setConsignorIec(record.consignorIec);
     setConsignorBankAd(record.consignorBankAd);
-    
+
     setConsigneeId(String(record.consigneeId));
     setConsigneeName(record.consigneeName);
     setConsigneeMobile(record.consigneeMobile || "");
@@ -1684,7 +1864,7 @@ export default function BookingGRLManual() {
     setConsigneeEmail(record.consigneeEmail);
     setConsigneeIec(record.consigneeIec);
     setConsigneeBankAd(record.consigneeBankAd);
-    
+
     setGoodsItems(record.goodsItems.map((item, idx) => ({ ...item, id: Date.now() + idx })));
     setInvoices(record.invoices.map((inv, idx) => ({ ...inv, id: Date.now() + idx })));
     setRemarks(record.remarks);
@@ -1699,23 +1879,22 @@ export default function BookingGRLManual() {
     setTotalActualWeight(record.totalActualWeight);
     setTotalChargeWeight(record.totalChargeWeight);
     setTotalFreight(record.totalFreight);
-    
-    // Load damage data if exists
+
     if (record.damageType && record.damageType.length > 0) setDamageType(record.damageType);
     else setDamageType([]);
-    
+
     if (record.damageReason) setDamageReason(record.damageReason);
     else setDamageReason("");
-    
+
     if (record.damageOtherRemark) setDamageOtherRemark(record.damageOtherRemark);
     else setDamageOtherRemark("");
-    
+
     if (record.damagePackageCount && record.damagePackageCount > 0) setDamagePackageCount(record.damagePackageCount);
     else setDamagePackageCount(0);
-    
+
     if (record.damagePhotos && record.damagePhotos.length > 0) setDamagePhotos(record.damagePhotos);
     else setDamagePhotos([]);
-    
+
     if (record.voiceNoteUrl && record.voiceNoteUrl.trim() !== "") {
       setVoiceNoteUrl(record.voiceNoteUrl);
       setVoiceNoteBase64(record.voiceNoteUrl);
@@ -1725,12 +1904,12 @@ export default function BookingGRLManual() {
       setVoiceNoteBase64(null);
       setVoiceNoteDuration(null);
     }
-    
+
     setIsRecording(false);
     setRecordingDuration(0);
     setDamagePackageError("");
     setValidationErrors({});
-    
+
     setIsBookingModalOpen(true);
   };
 
@@ -1779,16 +1958,16 @@ export default function BookingGRLManual() {
 
       {/* Main Tabs */}
       <div className="flex border-b bg-white rounded-t-lg">
-        <button 
-          onClick={() => { setMainTab("active"); loadBookings(); }} 
-          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors", 
+        <button
+          onClick={() => { setMainTab("active"); loadBookings(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors",
             mainTab === "active" ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100")}
         >
           Active Bookings
         </button>
-        <button 
-          onClick={() => { setMainTab("cancelled"); loadCancelledBookings(); }} 
-          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors", 
+        <button
+          onClick={() => { setMainTab("cancelled"); loadCancelledBookings(); }}
+          className={cn("px-6 py-2.5 text-sm font-medium rounded-t-lg transition-colors",
             mainTab === "cancelled" ? "bg-red-600 text-white" : "text-gray-600 hover:bg-gray-100")}
         >
           Cancelled Bookings
@@ -1913,7 +2092,7 @@ export default function BookingGRLManual() {
                   <TableBody>
                     {paginatedResults.map((r, idx) => (
                       <TableRow key={r._id} className="hover:bg-gray-50">
-                        <TableCell className="text-sm p-3">{(currentPage-1)*itemsPerPage+idx+1}</TableCell>
+                        <TableCell className="text-sm p-3">{(currentPage - 1) * itemsPerPage + idx + 1}</TableCell>
                         <TableCell className="text-sm p-3 font-mono font-bold"><Badge variant="secondary" className="bg-blue-100 text-blue-700">{r.grNo}</Badge></TableCell>
                         <TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell>
                         <TableCell className="text-sm p-3">{r.bookingFrom}</TableCell>
@@ -1961,8 +2140,8 @@ export default function BookingGRLManual() {
 
           {loading ? (<Card><CardContent className="py-12 text-center"><Loader2 className="h-12 w-12 mx-auto text-red-500 animate-spin" /><p className="text-gray-500 mt-2">Loading cancelled bookings...</p></CardContent></Card>
           ) : cancelledSearchResults.length > 0 ? (
-            <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm p-3">#</TableHead><TableHead className="text-sm p-3">GR No.</TableHead><TableHead className="text-sm p-3">Date</TableHead><TableHead className="text-sm p-3">From</TableHead><TableHead className="text-sm p-3">To</TableHead><TableHead className="text-sm p-3">Consignor</TableHead><TableHead className="text-sm p-3">Consignee</TableHead><TableHead className="text-sm p-3 text-right">Freight</TableHead><TableHead className="text-sm p-3">Cancel Date</TableHead><TableHead className="text-sm p-3">Reason</TableHead><TableHead className="text-sm p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{paginatedCancelledResults.map((r, idx) => (<TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50"><TableCell className="text-sm p-3">{(cancelledCurrentPage-1)*itemsPerPage+idx+1}</TableCell><TableCell className="text-sm p-3"><Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge></TableCell><TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell><TableCell className="text-sm p-3">{r.bookingFrom}</TableCell><TableCell className="text-sm p-3">{r.destination}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consignorName}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consigneeName}</TableCell><TableCell className="text-sm p-3 text-right">₹{r.totalFreight.toLocaleString()}</TableCell><TableCell className="text-sm p-3">{r.cancelledDate ? format(new Date(r.cancelledDate), "dd-MM-yyyy") : "-"}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]" title={r.cancelledReason}>{r.cancelledReason}</TableCell><TableCell className="text-sm p-3 text-center"><Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table></div>
-            {cancelledTotalPages > 1 && (<div className="flex justify-center gap-2 p-4 border-t"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage - 1)} disabled={cancelledCurrentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledCurrentPage} of {cancelledTotalPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage + 1)} disabled={cancelledCurrentPage === cancelledTotalPages}>Next</Button></div>)}
+            <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm p-3">#</TableHead><TableHead className="text-sm p-3">GR No.</TableHead><TableHead className="text-sm p-3">Date</TableHead><TableHead className="text-sm p-3">From</TableHead><TableHead className="text-sm p-3">To</TableHead><TableHead className="text-sm p-3">Consignor</TableHead><TableHead className="text-sm p-3">Consignee</TableHead><TableHead className="text-sm p-3 text-right">Freight</TableHead><TableHead className="text-sm p-3">Cancel Date</TableHead><TableHead className="text-sm p-3">Reason</TableHead><TableHead className="text-sm p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{paginatedCancelledResults.map((r, idx) => (<TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50"><TableCell className="text-sm p-3">{(cancelledCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="text-sm p-3"><Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge></TableCell><TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell><TableCell className="text-sm p-3">{r.bookingFrom}</TableCell><TableCell className="text-sm p-3">{r.destination}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consignorName}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consigneeName}</TableCell><TableCell className="text-sm p-3 text-right">₹{r.totalFreight.toLocaleString()}</TableCell><TableCell className="text-sm p-3">{r.cancelledDate ? format(new Date(r.cancelledDate), "dd-MM-yyyy") : "-"}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]" title={r.cancelledReason}>{r.cancelledReason}</TableCell><TableCell className="text-sm p-3 text-center"><Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table></div>
+              {cancelledTotalPages > 1 && (<div className="flex justify-center gap-2 p-4 border-t"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage - 1)} disabled={cancelledCurrentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledCurrentPage} of {cancelledTotalPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage + 1)} disabled={cancelledCurrentPage === cancelledTotalPages}>Next</Button></div>)}
             </CardContent></Card>
           ) : (<Card><CardContent className="py-12 text-center"><X className="h-12 w-12 mx-auto text-gray-400" /><p className="text-gray-500 mt-2">No cancelled bookings found</p></CardContent></Card>)}
         </>
@@ -1971,22 +2150,22 @@ export default function BookingGRLManual() {
       {/* Cancel Dialog */}
       <Dialog open={isCancelledDialogOpen} onOpenChange={setIsCancelledDialogOpen}>
         <DialogContent className="z-[9999]"><DialogHeader><DialogTitle className="text-red-600 flex items-center gap-2"><X className="h-5 w-5" />Cancel Booking</DialogTitle><DialogDescription>Are you sure you want to cancel {cancellingBooking?.grNo}?</DialogDescription></DialogHeader>
-        <div className="py-4"><Label className="text-sm font-semibold">Cancellation Reason *</Label><Select value={cancelledReason} onValueChange={setCancelledReason}><SelectTrigger className="mt-2"><SelectValue placeholder="Select cancellation reason" /></SelectTrigger><SelectContent>{cancelledReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select></div>
-        <DialogFooter><Button variant="outline" onClick={() => setIsCancelledDialogOpen(false)}>No, Keep</Button><Button variant="destructive" onClick={handleCancelBooking} disabled={loading}>{loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}Yes, Cancel</Button></DialogFooter></DialogContent>
+          <div className="py-4"><Label className="text-sm font-semibold">Cancellation Reason *</Label><Select value={cancelledReason} onValueChange={setCancelledReason}><SelectTrigger className="mt-2"><SelectValue placeholder="Select cancellation reason" /></SelectTrigger><SelectContent>{cancelledReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select></div>
+          <DialogFooter><Button variant="outline" onClick={() => setIsCancelledDialogOpen(false)}>No, Keep</Button><Button variant="destructive" onClick={handleCancelBooking} disabled={loading}>{loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}Yes, Cancel</Button></DialogFooter></DialogContent>
       </Dialog>
 
       {/* New Consignor Dialog */}
       <Dialog open={isNewConsignorDialogOpen} onOpenChange={setIsNewConsignorDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto z-[9999]"><DialogHeader><DialogTitle>Add New Consignor</DialogTitle><DialogDescription>Enter consignor details below</DialogDescription></DialogHeader>
-        <div className="space-y-3 py-4"><div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({...newClientData, name: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({...newClientData, mobile: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({...newClientData, gstNumber: e.target.value})} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({...newClientData, adhaarNumber: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({...newClientData, panNumber: e.target.value})} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({...newClientData, email: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({...newClientData, address: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({...newClientData, city: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({...newClientData, state: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({...newClientData, dealerCode: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({...newClientData, iecCode: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Bank AD No.</Label><Input value={newClientData.bankAdNo || ""} onChange={(e) => setNewClientData({...newClientData, bankAdNo: e.target.value})} className="h-9 text-sm" /></div></div>
-        <DialogFooter><Button variant="outline" onClick={() => setIsNewConsignorDialogOpen(false)}>Cancel</Button><Button onClick={() => addNewClient("consignor")} className="bg-blue-600" disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Add Consignor</Button></DialogFooter></DialogContent>
+          <div className="space-y-3 py-4"><div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({ ...newClientData, mobile: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, gstNumber: e.target.value })} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, adhaarNumber: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, panNumber: e.target.value })} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({ ...newClientData, city: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({ ...newClientData, state: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({ ...newClientData, dealerCode: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({ ...newClientData, iecCode: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Bank AD No.</Label><Input value={newClientData.bankAdNo || ""} onChange={(e) => setNewClientData({ ...newClientData, bankAdNo: e.target.value })} className="h-9 text-sm" /></div></div>
+          <DialogFooter><Button variant="outline" onClick={() => setIsNewConsignorDialogOpen(false)}>Cancel</Button><Button onClick={() => addNewClient("consignor")} className="bg-blue-600" disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Add Consignor</Button></DialogFooter></DialogContent>
       </Dialog>
 
       {/* New Consignee Dialog */}
       <Dialog open={isNewConsigneeDialogOpen} onOpenChange={setIsNewConsigneeDialogOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto z-[9999]"><DialogHeader><DialogTitle>Add New Consignee</DialogTitle><DialogDescription>Enter consignee details below</DialogDescription></DialogHeader>
-        <div className="space-y-3 py-4"><div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({...newClientData, name: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({...newClientData, mobile: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({...newClientData, gstNumber: e.target.value})} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({...newClientData, adhaarNumber: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({...newClientData, panNumber: e.target.value})} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({...newClientData, email: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({...newClientData, address: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({...newClientData, city: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({...newClientData, state: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({...newClientData, dealerCode: e.target.value})} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({...newClientData, iecCode: e.target.value})} className="h-9 text-sm" /></div></div>
-        <DialogFooter><Button variant="outline" onClick={() => setIsNewConsigneeDialogOpen(false)}>Cancel</Button><Button onClick={() => addNewClient("consignee")} className="bg-blue-600" disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Add Consignee</Button></DialogFooter></DialogContent>
+          <div className="space-y-3 py-4"><div><Label className="text-sm">Name *</Label><Input value={newClientData.name || ""} onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Mobile No.</Label><Input value={newClientData.mobile || ""} onChange={(e) => setNewClientData({ ...newClientData, mobile: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">GST Number</Label><Input value={newClientData.gstNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, gstNumber: e.target.value })} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Adhaar Number</Label><Input value={newClientData.adhaarNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, adhaarNumber: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">PAN Number</Label><Input value={newClientData.panNumber || ""} onChange={(e) => setNewClientData({ ...newClientData, panNumber: e.target.value })} className="h-9 text-sm uppercase" /></div><div><Label className="text-sm">Email</Label><Input value={newClientData.email || ""} onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Address</Label><Input value={newClientData.address || ""} onChange={(e) => setNewClientData({ ...newClientData, address: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={newClientData.city || ""} onChange={(e) => setNewClientData({ ...newClientData, city: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={newClientData.state || ""} onChange={(e) => setNewClientData({ ...newClientData, state: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={newClientData.dealerCode || ""} onChange={(e) => setNewClientData({ ...newClientData, dealerCode: e.target.value })} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={newClientData.iecCode || ""} onChange={(e) => setNewClientData({ ...newClientData, iecCode: e.target.value })} className="h-9 text-sm" /></div></div>
+          <DialogFooter><Button variant="outline" onClick={() => setIsNewConsigneeDialogOpen(false)}>Cancel</Button><Button onClick={() => addNewClient("consignee")} className="bg-blue-600" disabled={loading}>{loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Add Consignee</Button></DialogFooter></DialogContent>
       </Dialog>
 
       {/* Main Booking Modal */}
@@ -1998,7 +2177,7 @@ export default function BookingGRLManual() {
           </DialogHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-            {/* Basic Information - Same as before */}
+            {/* Basic Information */}
             <div className="border rounded-lg p-4">
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-600"><FileText className="h-5 w-5" /> Basic Information</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -2006,70 +2185,424 @@ export default function BookingGRLManual() {
                 <div><Label className="text-sm">Booking From <span className="text-red-500">*</span></Label><Input value={bookingFrom} onChange={(e) => setBookingFrom(e.target.value)} className="h-9 text-sm bg-gray-100" readOnly disabled /></div>
                 <div><Label className="text-sm">Booking Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="h-9 w-full text-sm justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(bookingDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent className="z-[10000]"><Calendar mode="single" selected={bookingDate} onSelect={(d) => d && setBookingDate(d)} /></PopoverContent></Popover></div>
                 <div><Label className="text-sm">Destination <span className="text-red-500">*</span></Label><Select value={destination} onValueChange={setDestination}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Select Destination" /></SelectTrigger><SelectContent>{destinationOptions.map((option) => (<SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>))}</SelectContent></Select></div>
-                <div><Label className="text-sm">Pickup From</Label><Input value={pickupFrom} onChange={(e) => setPickupFrom(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Delivery Point</Label><Input value={deliveryPoint} onChange={(e) => setDeliveryPoint(e.target.value)} className="h-9 text-sm" /></div>
+                {/* POINT 1: Pickup From Disabled */}
+                <div><Label className="text-sm">Pickup From</Label><Input value={pickupFrom} onChange={(e) => setPickupFrom(e.target.value)} className="h-9 text-sm bg-gray-100" disabled /></div>
+                {/* POINT 1: Delivery Point Disabled */}
+                <div><Label className="text-sm">Delivery Point</Label><Input value={deliveryPoint} onChange={(e) => setDeliveryPoint(e.target.value)} className="h-9 text-sm bg-gray-100" disabled /></div>
+                {/* POINT 2: Booking Type Default "TOPAY" */}
                 <div><Label className="text-sm">Booking Type <span className="text-red-500">*</span></Label><Select value={bookingType} onValueChange={setBookingType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{bookingTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
                 <div><Label className="text-sm">Collection At <span className="text-red-500">*</span></Label><Input value={collectionAt} onChange={(e) => setCollectionAt(e.target.value)} className="h-9 text-sm" /></div>
                 <div><Label className="text-sm">Pvt Marka/Seal No</Label><Input value={pvtMarkaSealNo} onChange={(e) => setPvtMarkaSealNo(e.target.value)} className="h-9 text-sm" /></div>
-                <div><Label className="text-sm">Service/Product <span className="text-red-500">*</span></Label><Select value={serviceProduct} onValueChange={setServiceProduct}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{serviceProductOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
+                {/* POINT 6: Service Product LOCKED - SURFACE Default */}
+                <div><Label className="text-sm">Service/Product <span className="text-red-500">*</span></Label>
+                  <Select value={serviceProduct} onValueChange={setServiceProduct} disabled>
+                    <SelectTrigger className="h-9 text-sm bg-gray-100">
+                      <SelectValue placeholder="SURFACE" />
+                    </SelectTrigger>
+                    <SelectContent>{serviceProductOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                {/* POINT 7: Delivery Type - GODOWN Default, DOOR DELIVERY instead of PICKUP */}
                 <div><Label className="text-sm">Delivery Type <span className="text-red-500">*</span></Label><Select value={deliveryType} onValueChange={setDeliveryType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{deliveryTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
+                {/* POINT 8: Load Type Default "PART LOAD" */}
                 <div><Label className="text-sm">Load Type <span className="text-red-500">*</span></Label><Select value={loadType} onValueChange={setLoadType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{loadTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label className="text-sm">MKT. Executive</Label><Input value={mkExecutive} onChange={(e) => setMkExecutive(e.target.value)} className="h-9 text-sm" /></div>
+                {/* POINT 9: MKT Executive LOCKED */}
+                <div><Label className="text-sm">MKT. Executive</Label><Input value={mkExecutive} onChange={(e) => setMkExecutive(e.target.value)} className="h-9 text-sm bg-gray-100" disabled /></div>
                 <div><Label className="text-sm">Freight On</Label><Select value={freightOn} onValueChange={setFreightOn}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{freightOnOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select></div>
               </div>
             </div>
 
-            {/* Consignor Details - Same as before */}
+            {/* Consignor Details */}
             <div className="border rounded-lg p-4 bg-blue-50/30">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-700"><Building className="h-5 w-5" /> Consignor Details</h3>
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-700">
+                <Building className="h-5 w-5" /> Consignor Details
+              </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <div><Label className="text-sm">Select ID Type</Label><Select value={consignorIdType} onValueChange={setConsignorIdType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent></Select></div>
-                {consignorIdType !== "Self" && consignorIdType !== "" && (<div><Label className="text-sm">Enter ID Value</Label><Input value={consignorIdValue} onChange={(e) => setConsignorIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" /></div>)}
-                <div className="flex gap-2 items-end"><Button onClick={handleConsignorSearch} className="h-9 text-sm bg-blue-600"><Search className="h-4 w-4 mr-1" />Search</Button><Button onClick={handleConsignorAdd} variant="outline" className="h-9 text-sm"><Plus className="h-4 w-4 mr-1" />Add</Button></div>
+                <div>
+                  <Label className="text-sm">Select ID Type</Label>
+                  <Select value={consignorIdType} onValueChange={setConsignorIdType}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="SELECT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {idTypeOptions.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {consignorIdType !== "Self" && consignorIdType !== "" && (
+                  <div className="relative">
+                    <Label className="text-sm">Enter ID Value / Name</Label>
+                    <Input
+                      value={consignorIdValue}
+                      onChange={(e) => handleConsignorNameSearch(e.target.value)}
+                      placeholder="Enter GST/Adhaar/PAN or Name"
+                      className="h-9 text-sm"
+                    />
+                    {/* Dropdown for search results */}
+                    {showConsignorDropdown && consignorSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {consignorSearchResults.map((client) => (
+                          <div
+                            key={client._id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            onClick={() => handleConsignorSelect(client)}
+                          >
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {client.gstNumber && `GST: ${client.gstNumber}`}
+                              {client.mobile && ` | 📱 ${client.mobile}`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 items-end">
+                  <Button onClick={handleConsignorSearch} className="h-9 text-sm bg-blue-600">
+                    <Search className="h-4 w-4 mr-1" />Search
+                  </Button>
+                  <Button onClick={handleConsignorAdd} variant="outline" className="h-9 text-sm">
+                    <Plus className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3"><div><Label className="text-sm">Name</Label><Input value={consignorName} onChange={(e) => setConsignorName(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} /></div>{consignorIdType !== "Self" && (<div><Label className="text-sm">Mobile No.</Label><Input value={consignorMobile} onChange={(e) => setConsignorMobile(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} /></div>)}</div>
-              {consignorName === "Self" && (<div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>)}
-              <button onClick={() => setIsConsignorAddressOpen(!isConsignorAddressOpen)} className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">{isConsignorAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}{isConsignorAddressOpen ? "Hide Address Details" : "Show Address Details"}</button>
-              {isConsignorAddressOpen && (<div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border"><div><Label className="text-sm">Address</Label><Input value={consignorAddress} onChange={(e) => setConsignorAddress(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={consignorCity} onChange={(e) => setConsignorCity(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={consignorState} onChange={(e) => setConsignorState(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={consignorCode} onChange={(e) => setConsignorCode(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={consignorIec} onChange={(e) => setConsignorIec(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">Bank AD No.</Label><Input value={consignorBankAd} onChange={(e) => setConsignorBankAd(e.target.value)} className="h-9 text-sm" /></div></div>)}
+
+              {/* Name and Mobile - Both always visible */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label className="text-sm">Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={consignorName}
+                    onChange={(e) => setConsignorName(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Mobile No.</Label>
+                  <Input
+                    value={consignorMobile}
+                    onChange={(e) => setConsignorMobile(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Mobile Number"
+                  />
+                </div>
+              </div>
+
+              {consignorName === "Self" && (
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                  ✓ Self Selected
+                </div>
+              )}
+
+              {/* Address Toggle */}
+              <button
+                onClick={() => setIsConsignorAddressOpen(!isConsignorAddressOpen)}
+                className="mt-3 flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                {isConsignorAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
+                {isConsignorAddressOpen ? "Hide Address Details" : "Show Address Details"}
+              </button>
+
+              {isConsignorAddressOpen && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
+                  <div><Label className="text-sm">Address</Label><Input value={consignorAddress} onChange={(e) => setConsignorAddress(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">City</Label><Input value={consignorCity} onChange={(e) => setConsignorCity(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">State</Label><Input value={consignorState} onChange={(e) => setConsignorState(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Dealer Code</Label><Input value={consignorCode} onChange={(e) => setConsignorCode(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">IEC Code</Label><Input value={consignorIec} onChange={(e) => setConsignorIec(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Bank AD No.</Label><Input value={consignorBankAd} onChange={(e) => setConsignorBankAd(e.target.value)} className="h-9 text-sm" /></div>
+                </div>
+              )}
             </div>
 
-            {/* Consignee Details - Same as before */}
+
+            {/* Consignee Details */}
             <div className="border rounded-lg p-4 bg-green-50/30">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-green-700"><Users className="h-5 w-5" /> Consignee Details</h3>
+              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-green-700">
+                <Users className="h-5 w-5" /> Consignee Details
+              </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
-                <div><Label className="text-sm">Select ID Type</Label><Select value={consigneeIdType} onValueChange={setConsigneeIdType}><SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger><SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent></Select></div>
-                {consigneeIdType !== "Self" && consigneeIdType !== "" && (<div><Label className="text-sm">Enter ID Value</Label><Input value={consigneeIdValue} onChange={(e) => setConsigneeIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" /></div>)}
-                <div className="flex gap-2 items-end"><Button onClick={handleConsigneeSearch} className="h-9 text-sm bg-green-600"><Search className="h-4 w-4 mr-1" />Search</Button><Button onClick={handleConsigneeAdd} variant="outline" className="h-9 text-sm"><Plus className="h-4 w-4 mr-1" />Add</Button></div>
+                <div>
+                  <Label className="text-sm">Select ID Type</Label>
+                  <Select value={consigneeIdType} onValueChange={setConsigneeIdType}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="SELECT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {idTypeOptions.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {consigneeIdType !== "Self" && consigneeIdType !== "" && (
+                  <div className="relative">
+                    <Label className="text-sm">Enter ID Value / Name</Label>
+                    <Input
+                      value={consigneeIdValue}
+                      onChange={(e) => handleConsigneeNameSearch(e.target.value)}
+                      placeholder="Enter GST/Adhaar/PAN or Name"
+                      className="h-9 text-sm"
+                    />
+                    {/* Dropdown for search results */}
+                    {showConsigneeDropdown && consigneeSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {consigneeSearchResults.map((client) => (
+                          <div
+                            key={client._id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            onClick={() => handleConsigneeSelect(client)}
+                          >
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {client.gstNumber && `GST: ${client.gstNumber}`}
+                              {client.mobile && ` | 📱 ${client.mobile}`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 items-end">
+                  <Button onClick={handleConsigneeSearch} className="h-9 text-sm bg-green-600">
+                    <Search className="h-4 w-4 mr-1" />Search
+                  </Button>
+                  <Button onClick={handleConsigneeAdd} variant="outline" className="h-9 text-sm">
+                    <Plus className="h-4 w-4 mr-1" />Add
+                  </Button>
+                </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3"><div><Label className="text-sm">Name</Label><Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} /></div>{consigneeIdType !== "Self" && (<div><Label className="text-sm">Mobile No.</Label><Input value={consigneeMobile} onChange={(e) => setConsigneeMobile(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} /></div>)}</div>
-              {consigneeName === "Self" && (<div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>)}
-              <button onClick={() => setIsConsigneeAddressOpen(!isConsigneeAddressOpen)} className="mt-3 flex items-center gap-1 text-sm text-green-600 hover:text-green-800">{isConsigneeAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}{isConsigneeAddressOpen ? "Hide Address Details" : "Show Address Details"}</button>
-              {isConsigneeAddressOpen && (<div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border"><div><Label className="text-sm">Address</Label><Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">City</Label><Input value={consigneeCity} onChange={(e) => setConsigneeCity(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">State</Label><Input value={consigneeState} onChange={(e) => setConsigneeState(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">Dealer Code</Label><Input value={consigneeCode} onChange={(e) => setConsigneeCode(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">IEC Code</Label><Input value={consigneeIec} onChange={(e) => setConsigneeIec(e.target.value)} className="h-9 text-sm" /></div><div><Label className="text-sm">Bank AD No.</Label><Input value={consigneeBankAd} onChange={(e) => setConsigneeBankAd(e.target.value)} className="h-9 text-sm" /></div></div>)}
+
+              {/* Name and Mobile - Both always visible for Self and others */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <Label className="text-sm">Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={consigneeName}
+                    onChange={(e) => setConsigneeName(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Mobile No.</Label>
+                  <Input
+                    value={consigneeMobile}
+                    onChange={(e) => setConsigneeMobile(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Mobile Number"
+                  />
+                </div>
+              </div>
+
+              {consigneeName === "Self" && (
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                  ✓ Self Selected
+                </div>
+              )}
+
+              {/* Address Toggle */}
+              <button
+                onClick={() => setIsConsigneeAddressOpen(!isConsigneeAddressOpen)}
+                className="mt-3 flex items-center gap-1 text-sm text-green-600 hover:text-green-800"
+              >
+                {isConsigneeAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
+                {isConsigneeAddressOpen ? "Hide Address Details" : "Show Address Details"}
+              </button>
+
+              {isConsigneeAddressOpen && (
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
+                  <div><Label className="text-sm">Address</Label><Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">City</Label><Input value={consigneeCity} onChange={(e) => setConsigneeCity(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">State</Label><Input value={consigneeState} onChange={(e) => setConsigneeState(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Dealer Code</Label><Input value={consigneeCode} onChange={(e) => setConsigneeCode(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">IEC Code</Label><Input value={consigneeIec} onChange={(e) => setConsigneeIec(e.target.value)} className="h-9 text-sm" /></div>
+                  <div><Label className="text-sm">Bank AD No.</Label><Input value={consigneeBankAd} onChange={(e) => setConsigneeBankAd(e.target.value)} className="h-9 text-sm" /></div>
+                </div>
+              )}
             </div>
 
-            {/* Goods Details Section - Same as before */}
+            {/* Goods Details Section */}
             <div className="border rounded-lg overflow-hidden">
               <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="text-base font-semibold flex items-center gap-2"><Package className="h-5 w-5" /> GOODS DETAILS</h3><Button onClick={addGoodsRow} variant="ghost" size="sm" className="h-8 text-sm"><Plus className="mr-1 h-4 w-4" />ADD GOODS</Button></div>
               <div className="overflow-x-auto p-4">
                 <Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">#</TableHead><TableHead className="text-sm">No Of Pckgs</TableHead><TableHead className="text-sm">Content Category</TableHead><TableHead className="text-sm">Content (Sub)</TableHead><TableHead className="text-sm">Packing</TableHead><TableHead className="text-sm">Actual Weight</TableHead><TableHead className="text-sm">Charge Weight</TableHead><TableHead className="text-sm">Status</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
-                  <TableBody>{goodsItems.map((item, idx) => { const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory)); return (<TableRow key={item.id} className={!item.isWeightValid ? "bg-red-50" : ""}><TableCell className="text-sm">{idx + 1}</TableCell><TableCell><Input type="number" value={item.noOfPckgs} onChange={(e) => updateGoodsItem(item.id, "noOfPckgs", Number(e.target.value))} className="h-8 w-24 text-sm" min="0" /></TableCell><TableCell><Select value={item.contentCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentCategory", val)}><SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Category" /></SelectTrigger><SelectContent>{contentCategories.map(cat => (<SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>))}</SelectContent></Select></TableCell><TableCell><Select value={item.contentSubCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)} disabled={!item.contentCategory}><SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Sub Category" /></SelectTrigger><SelectContent>{selectedCategory?.subCategories?.map((sub: any) => (<SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>))}</SelectContent></Select></TableCell><TableCell><Select value={item.packing} onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}><SelectTrigger className="h-8 w-28 text-sm"><SelectValue /></SelectTrigger><SelectContent>{packingTypes.map(opt => (<SelectItem key={opt.name} value={opt.name}>{opt.name} ({opt.maxWeight}kg max/pkg)</SelectItem>))}</SelectContent></Select></TableCell><TableCell><Input type="number" value={item.actualWeight} onChange={(e) => updateGoodsItem(item.id, "actualWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" min="0" /></TableCell><TableCell><Input type="number" value={item.chargeWeight} onChange={(e) => updateGoodsItem(item.id, "chargeWeight", Number(e.target.value))} className="h-8 w-24 text-sm" step="0.01" min="0" /></TableCell><TableCell>{!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}{item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}</TableCell><TableCell><Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell></TableRow>);})}</TableBody>
+                  <TableBody>{goodsItems.map((item, idx) => {
+                    const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory));
+                    return (
+                      <TableRow key={item.id} className={!item.isWeightValid ? "bg-red-50" : ""}>
+                        <TableCell className="text-sm">{idx + 1}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.noOfPckgs || ""}
+                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "noOfPckgs", val))}
+                            className="h-8 w-24 text-sm"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        {/* POINT 12: Content Category with Search */}
+                        {/* Content Category with Search - COMPLETE FIXED */}
+                        <TableCell className="relative min-w-[180px]">
+                          <div className="relative">
+                            <Input
+                              value={contentCategorySearch || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setContentCategorySearch(value);
+                                if (value.length >= 1) {
+                                  const filtered = contentCategories.filter(cat =>
+                                    cat.name.toLowerCase().includes(value.toLowerCase())
+                                  );
+                                  setContentCategoryResults(filtered);
+                                  setShowContentCategoryDropdown(true);
+                                } else {
+                                  setContentCategoryResults([]);
+                                  setShowContentCategoryDropdown(false);
+                                  // Clear the category from goods item when search is empty
+                                  setGoodsItems(prevItems =>
+                                    prevItems.map(item => ({
+                                      ...item,
+                                      contentCategory: "",
+                                      content: "",
+                                      contentSubCategory: ""
+                                    }))
+                                  );
+                                }
+                              }}
+                              className="h-8 w-32 text-sm pr-7"
+                              placeholder="Search category..."
+                            />
+                            {/* Clear button */}
+                            {contentCategorySearch && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setContentCategorySearch("");
+                                  setContentCategoryResults([]);
+                                  setShowContentCategoryDropdown(false);
+                                  // Clear the category from goods item
+                                  setGoodsItems(prevItems =>
+                                    prevItems.map(item => ({
+                                      ...item,
+                                      contentCategory: "",
+                                      content: "",
+                                      contentSubCategory: ""
+                                    }))
+                                  );
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          {showContentCategoryDropdown && contentCategoryResults.length > 0 && (
+                            <div className="absolute z-50 mt-1 w-64 bg-white border rounded-md shadow-lg max-h-40 overflow-auto">
+                              {contentCategoryResults.map((cat) => (
+                                <div
+                                  key={cat.id}
+                                  className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm"
+                                  onClick={() => handleContentCategorySelect(cat)}
+                                >
+                                  {cat.name}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+                        {/* POINT 13: Content (Sub) LOCKED */}
+                        <TableCell>
+                          <Select
+                            value={item.contentSubCategory}
+                            onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)}
+                            disabled
+                          >
+                            <SelectTrigger className="h-8 w-32 text-sm bg-gray-100">
+                              <SelectValue placeholder="Locked" />
+                            </SelectTrigger>
+                          </Select>
+                        </TableCell>
+                        {/* POINT 14: Packing LOCKED */}
+                        <TableCell>
+                          <Select
+                            value={item.packing}
+                            onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}
+                            disabled
+                          >
+                            <SelectTrigger className="h-8 w-28 text-sm bg-gray-100">
+                              <SelectValue placeholder="Locked" />
+                            </SelectTrigger>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.actualWeight || ""}
+                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "actualWeight", val))}
+                            className="h-8 w-24 text-sm"
+                            step="0.01"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.chargeWeight || ""}
+                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "chargeWeight", val))}
+                            className="h-8 w-24 text-sm"
+                            step="0.01"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>{!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}{item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}</TableCell>
+                        <TableCell><Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                      </TableRow>
+                    );
+                  })}</TableBody>
                 </Table>
               </div>
               <div className="p-3 bg-gray-50 flex flex-wrap gap-4 justify-between items-center border-t"><div className="flex flex-wrap gap-4 items-center"><span className="text-sm font-medium">Total Pckgs: <strong className="text-blue-600">{totalPckgs}</strong></span><span className="text-sm font-medium">Total Actual Weight: <strong className="text-blue-600">{totalActualWeight.toFixed(2)} kg</strong></span><span className="text-sm font-medium">Total Charge Weight: <strong className="text-blue-600">{totalChargeWeight.toFixed(2)} kg</strong></span>{!manualRates && (<span className="text-sm font-medium">Total Freight: <strong className="text-green-600">₹{(totalChargeWeight * 5).toFixed(2)}</strong></span>)}</div><div className="flex items-center gap-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={manualRates} onChange={(e) => setManualRates(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm font-medium">Manual Rates</span></label></div></div>
             </div>
 
-            {/* Manual Rates Section */}
+            {/* POINT 15: Manual Rates Section - Only show when manualRates is true */}
             {manualRates && (
               <div className="border rounded-lg p-3 bg-yellow-50/30">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2"><div className="flex items-center gap-2"><Label className="text-xs font-medium">Rate (per kg/pkg):</Label><Input type="number" value={freightRate} onChange={(e) => setFreightRate(Number(e.target.value))} className="h-7 text-xs w-28" step="0.01" /><Button onClick={handleClearFreight} variant="outline" size="sm" className="h-7 text-xs px-2">CLEAR</Button></div><div className="flex items-center gap-2"><Label className="text-xs font-medium">Charge Wt:</Label><Input type="number" value={totalChargeWeight} readOnly className="h-7 text-xs w-28 bg-gray-50" /></div><div className="flex items-center gap-2"><Label className="text-xs font-medium">Freight:</Label><Input type="number" value={calculatedFreight} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" /></div></div>
-                  <div className="col-span-1"><Table className="text-xs"><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-xs p-1">Charges</TableHead><TableHead className="text-xs p-1 text-center w-16">Rate</TableHead><TableHead className="text-xs p-1 text-right w-20">Amount</TableHead></TableRow></TableHeader><TableBody>{extraCharges.map((charge) => (<TableRow key={charge.id} className="text-xs"><TableCell className="text-xs p-1">{charge.name}</TableCell><TableCell className="p-1"><Input type="number" value={charge.rate} onChange={(e) => updateExtraCharge(charge.id, Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" /></TableCell><TableCell className="text-xs p-1 text-right">₹{charge.amount.toFixed(0)}</TableCell></TableRow>))}</TableBody></Table></div>
-                  <div className="space-y-1"><div className="flex items-center justify-between"><Label className="text-xs">GST Paid By:</Label><Select value={gstPaidBy} onValueChange={setGstPaidBy}><SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger><SelectContent>{gstPaidByOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select></div><div className="flex items-center justify-between"><Label className="text-xs">GST Rate (%):</Label><Input type="number" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" /></div><div className="border-t pt-1 mt-1"><div className="flex justify-between text-xs"><span>SubTotal:</span><span className="font-semibold">₹{subTotal.toFixed(0)}</span></div><div className="flex justify-between text-xs"><span>GST ({gstRate}%):</span><span>₹{gstAmount.toFixed(0)}</span></div><div className="flex justify-between text-xs font-bold text-green-600"><span>Total:</span><span>₹{totalAmount.toFixed(0)}</span></div><div className="flex justify-between items-center text-xs mt-1"><span>Advance:</span><Input type="number" value={advanceAmount} onChange={(e) => setAdvanceAmount(Number(e.target.value))} className="h-7 w-24 text-xs text-right" step="0.01" /></div><div className="flex justify-between text-xs font-bold text-blue-600 border-t pt-1 mt-1"><span>Balance:</span><span>₹{balanceAmount.toFixed(0)}</span></div></div></div>
+                  <div className="space-y-2"><div className="flex items-center gap-2"><Label className="text-xs font-medium">Rate (per kg/pkg):</Label><Input type="number" value={freightRate || ""} onChange={(e) => handleNumberChange(e, setFreightRate)} className="h-7 text-xs w-28" step="0.01" placeholder="0" /><Button onClick={handleClearFreight} variant="outline" size="sm" className="h-7 text-xs px-2">CLEAR</Button></div><div className="flex items-center gap-2"><Label className="text-xs font-medium">Charge Wt:</Label><Input type="number" value={totalChargeWeight || ""} readOnly className="h-7 text-xs w-28 bg-gray-50" /></div><div className="flex items-center gap-2"><Label className="text-xs font-medium">Freight:</Label><Input type="number" value={calculatedFreight || ""} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" /></div></div>
+                  <div className="col-span-1"><Table className="text-xs"><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-xs p-1">Charges</TableHead><TableHead className="text-xs p-1 text-center w-16">Rate</TableHead><TableHead className="text-xs p-1 text-right w-20">Amount</TableHead></TableRow></TableHeader><TableBody>{extraCharges.map((charge) => (<TableRow key={charge.id} className="text-xs"><TableCell className="text-xs p-1">{charge.name}</TableCell><TableCell className="p-1"><Input type="number" value={charge.rate || ""} onChange={(e) => handleNumberChange(e, (val) => updateExtraCharge(charge.id, val))} className="h-7 w-20 text-xs" step="0.01" placeholder="0" /></TableCell><TableCell className="text-xs p-1 text-right">₹{charge.amount.toFixed(0)}</TableCell></TableRow>))}</TableBody></Table></div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between"><Label className="text-xs">GST Paid By:</Label><Select value={gstPaidBy} onValueChange={setGstPaidBy}><SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger><SelectContent>{gstPaidByOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select></div>
+                    <div className="flex items-center justify-between"><Label className="text-xs">GST Rate (%):</Label><Input type="number" value={gstRate || ""} onChange={(e) => handleNumberChange(e, setGstRate)} className="h-7 w-20 text-xs" step="0.01" placeholder="0" /></div>
+                    <div className="border-t pt-1 mt-1">
+                      <div className="flex justify-between text-xs"><span>SubTotal:</span><span className="font-semibold">₹{subTotal.toFixed(0)}</span></div>
+                      <div className="flex justify-between text-xs"><span>GST ({gstRate}%):</span><span>₹{gstAmount.toFixed(0)}</span></div>
+                      {/* POINT 15: Total Amount Show Only in Manual Rates */}
+                      <div className="flex justify-between text-xs font-bold text-green-600"><span>Total:</span><span>₹{totalAmount.toFixed(0)}</span></div>
+                      <div className="flex justify-between items-center text-xs mt-1"><span>Advance:</span><Input type="number" value={advanceAmount || ""} onChange={(e) => handleNumberChange(e, setAdvanceAmount)} className="h-7 w-24 text-xs text-right" step="0.01" placeholder="0" /></div>
+                      <div className="flex justify-between text-xs font-bold text-blue-600 border-t pt-1 mt-1"><span>Balance:</span><span>₹{balanceAmount.toFixed(0)}</span></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* ========== DAMAGE/MISSING SECTION (NEW - ADDED) ========== */}
+            {/* Damage/Missing Section */}
             <div className="border rounded-lg p-4 bg-red-50/20">
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
                 <AlertCircle className="h-5 w-5" /> Damage/Missing at the time of booking
@@ -2139,7 +2672,6 @@ export default function BookingGRLManual() {
                     <p className="text-xs text-gray-500 mt-1">Supported: JPG, PNG, WEBP. Max 5MB per photo. Click X to remove.</p>
                   </div>
 
-                  {/* Voice Note Recording Section */}
                   <div className="mb-4">
                     <Label className="text-sm font-medium mb-2 block">Voice Note <span className="text-red-500">*</span></Label>
                     {!isRecording && !voiceNoteUrl && (<Button type="button" onClick={startRecording} variant="outline" className="h-10 bg-blue-50 hover:bg-blue-100 border-blue-300"><Mic className="h-4 w-4 mr-2" />Start Recording (Max 2 min)</Button>)}
