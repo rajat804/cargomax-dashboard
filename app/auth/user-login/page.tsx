@@ -10,41 +10,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Eye, EyeOff, LogIn, User, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { userLogin, getCurrentUser } from "@/services/api";
+import { useModules } from "@/contexts/ModuleContext";
 
 export default function UserLoginPage() {
+
   const router = useRouter();
+const { refreshModules } = useModules();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(false); // ✅ Default false
 
-  // ✅ REMOVE - Automatic login check
-  // useEffect(() => {
-  //   const checkUserBranch = async () => {
-  //     try {
-  //       const token = localStorage.getItem("user");
-  //       if (token) {
-  //         const response = await getCurrentUser();
-  //         if (response.success && response.data) {
-  //           const userData = response.data;
-  //           if (userData.branch && userData.branchCode) {
-  //             localStorage.setItem("user", JSON.stringify(userData));
-  //             localStorage.setItem("userData", JSON.stringify(userData));
-  //             toast.success(`Welcome back to ${userData.branch}!`);
-  //             router.push("/dashboard/overview");
-  //             return;
-  //           }
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Error checking user branch:", error);
-  //     } finally {
-  //       setChecking(false);
-  //     }
-  //   };
-  //   checkUserBranch();
-  // }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,24 +37,21 @@ export default function UserLoginPage() {
       const response = await userLogin(email, password);
       if (response.success) {
         const userData = response.data;
+        console.log(userData);
         
         // ✅ Store in sessionStorage (multi-tab support)
         sessionStorage.setItem("token", userData.token);
         sessionStorage.setItem("user", JSON.stringify(userData));
         sessionStorage.setItem("isLoggedIn", "true");
         
-        // ✅ Also store in localStorage for backup
-        localStorage.setItem("token", userData.token);
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("isLoggedIn", "true");
-        
         toast.success("Login successful!");
         
         // Check if user already has a branch
         if (userData.branch && userData.branchCode) {
-          localStorage.setItem("userData", JSON.stringify(userData));
-          localStorage.setItem("selectedBranch", userData.branch);
-          localStorage.setItem("branchCode", userData.branchCode);
+          sessionStorage.setItem("userData", JSON.stringify(userData));
+          sessionStorage.setItem("selectedBranch", userData.branch);
+          sessionStorage.setItem("branchCode", userData.branchCode);
+          refreshModules();
           router.push("/dashboard/overview");
         } else {
           router.push("/auth/select-branch");
