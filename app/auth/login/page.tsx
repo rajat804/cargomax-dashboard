@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
@@ -31,9 +31,25 @@ export default function LoginPage() {
     try {
       const response = await login(email, password);
       if (response.success) {
-        localStorage.setItem("isLoggedIn", "true");
+        const userData = response.data;
+        console.log(userData);
+
+        // Session Storage
+        sessionStorage.setItem("token", userData.token);
+        sessionStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("isLoggedIn", "true");
+
+
         toast.success("Login successful!");
-        router.push("/auth/select-branch");
+        if (userData.branch && userData.branchCode) {
+          sessionStorage.setItem("selectedBranch", userData.branch);
+          sessionStorage.setItem("branchCode", userData.branchCode);
+
+          router.push("/dashboard/overview");
+        } else {
+          router.push("/auth/select-branch");
+        }
+
       } else {
         toast.error(response.message || "Login failed");
       }
@@ -109,11 +125,11 @@ export default function LoginPage() {
             </Button>
           </form>
           <p className="text-center text-sm text-gray-600 mt-4">
-  Are you a user?{" "}
-  <Link href="/auth/user-login" className="text-purple-600 hover:underline font-medium">
-    User Login
-  </Link>
-</p>
+            Are you a user?{" "}
+            <Link href="/auth/user-login" className="text-purple-600 hover:underline font-medium">
+              User Login
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>
