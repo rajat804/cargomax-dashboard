@@ -211,11 +211,14 @@ interface BookingRecord {
   voiceNoteDuration?: number;
 }
 
+// POINT 1: In GPL → Pickup from disabled, and delivery point also disabled.
+// POINT 2: by default → Too pay (TOPAY)
+// POINT 5: FOC instead of TOC
 const bookingTypeOptions = [
   { value: "TOPAY", label: "TO PAY" },
   { value: "PAID", label: "PAID" },
   { value: "TBB", label: "TBB" },
-  { value: "TOC", label: "TOC" },
+  { value: "FOC", label: "FOC" },
 ];
 
 const serviceProductOptions = [
@@ -224,12 +227,13 @@ const serviceProductOptions = [
   { value: "RAIL", label: "RAIL" },
 ];
 
+// POINT 7: Delivery Type - GODOWN Default, DOOR DELIVERY instead of PICKUP
 const deliveryTypeOptions = [
   { value: "GODOWN", label: "GODOWN" },
-  { value: "DOOR_DELIVERY", label: "DOOR_DELIVERY" },
-  { value: "PICKUP", label: "PICKUP" },
+  { value: "DOOR DELIVERY", label: "DOOR DELIVERY" },
 ];
 
+// POINT 8: Part Load by default
 const loadTypeOptions = [
   { value: "PART LOAD", label: "PART LOAD" },
   { value: "FULL LOAD", label: "FULL LOAD" },
@@ -544,6 +548,8 @@ export default function BookingComputerizedGRL() {
   const [isNewConsigneeDialogOpen, setIsNewConsigneeDialogOpen] = useState(false);
   const [newClientData, setNewClientData] = useState<Partial<ClientData>>({});
 
+  // POINT 10: Self - Self locked with mobile Number but not mandatory
+  // POINT 11: GST → Filter with Name then show GST No.
   const [consignorIdType, setConsignorIdType] = useState<string>("");
   const [consignorIdValue, setConsignorIdValue] = useState<string>("");
   const [consignorId, setConsignorId] = useState<string>("");
@@ -559,6 +565,10 @@ export default function BookingComputerizedGRL() {
   const [consignorEmail, setConsignorEmail] = useState<string>("");
   const [consignorIec, setConsignorIec] = useState<string>("");
   const [consignorBankAd, setConsignorBankAd] = useState<string>("");
+
+  // POINT 11: Search results for consignor with GST
+  const [consignorSearchResults, setConsignorSearchResults] = useState<ClientData[]>([]);
+  const [showConsignorDropdown, setShowConsignorDropdown] = useState(false);
 
   const [consigneeIdType, setConsigneeIdType] = useState<string>("");
   const [consigneeIdValue, setConsigneeIdValue] = useState<string>("");
@@ -576,18 +586,34 @@ export default function BookingComputerizedGRL() {
   const [consigneeIec, setConsigneeIec] = useState<string>("");
   const [consigneeEximCode, setConsigneeEximCode] = useState<string>("");
 
+  // Search results for consignee
+  const [consigneeSearchResults, setConsigneeSearchResults] = useState<ClientData[]>([]);
+  const [showConsigneeDropdown, setShowConsigneeDropdown] = useState(false);
+
+  // POINT 12: Content Category Blank → After entering values should show
+  const [contentCategorySearch, setContentCategorySearch] = useState<string>("");
+  const [contentCategoryResults, setContentCategoryResults] = useState<any[]>([]);
+  const [showContentCategoryDropdown, setShowContentCategoryDropdown] = useState(false);
+
+  // POINT 2: by default → Too pay (TOPAY)
   const [grNo, setGrNo] = useState<string>("");
   const [bookingFrom, setBookingFrom] = useState<string>("");
   const [bookingDate, setBookingDate] = useState<Date>(new Date());
   const [destination, setDestination] = useState<string>("");
+  // POINT 1: In GPL → Pickup from disabled, and delivery point also disabled.
   const [pickupFrom, setPickupFrom] = useState<string>("");
   const [deliveryPoint, setDeliveryPoint] = useState<string>("");
-  const [bookingType, setBookingType] = useState<string>("");
+  // POINT 2: by default → Too pay (TOPAY)
+  const [bookingType, setBookingType] = useState<string>("TOPAY");
   const [collectionAt, setCollectionAt] = useState<string>("");
   const [pvtMarkaSealNo, setPvtMarkaSealNo] = useState<string>("");
+  // POINT 6: SURFACE → Lock
   const [serviceProduct, setServiceProduct] = useState<string>("SURFACE");
-  const [deliveryType, setDeliveryType] = useState<string>("");
-  const [loadType, setLoadType] = useState<string>("");
+  // POINT 7: Default GODOWN, add door delivery remove pickup.
+  const [deliveryType, setDeliveryType] = useState<string>("GODOWN");
+  // POINT 8: Part Load by default
+  const [loadType, setLoadType] = useState<string>("PART LOAD");
+  // POINT 9: MKT Executive → Lock
   const [mkExecutive, setMkExecutive] = useState<string>("");
   const [freightOn, setFreightOn] = useState<string>("CHARGE WEIGHT");
   const [manualRates, setManualRates] = useState<boolean>(false);
@@ -595,6 +621,8 @@ export default function BookingComputerizedGRL() {
   const [printAfterSave, setPrintAfterSave] = useState<boolean>(false);
   const [ccAttached, setCcAttached] = useState<boolean>(false);
 
+  // POINT 13: Content Sub (Free) Lock → Locked
+  // POINT 14: Packing (Free) Lock → Locked
   const [goodsItems, setGoodsItems] = useState<GoodsItem[]>([
     { id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true },
   ]);
@@ -658,6 +686,143 @@ export default function BookingComputerizedGRL() {
   const streamRef = useRef<MediaStream | null>(null);
   const finalDurationRef = useRef<number>(0);
 
+  // ========== POINT 3 & 4: Booking Type Logic ==========
+  useEffect(() => {
+    // POINT 3: TOPAY → Collection At = Destination
+    if (bookingType === "TOPAY" && destination) {
+      setCollectionAt(destination);
+    }
+    // POINT 4: PAID, TBB, FOC → Collection At = Booking From
+    else if (bookingType === "PAID" || bookingType === "TBB" || bookingType === "FOC") {
+      setCollectionAt(bookingFrom);
+    }
+  }, [bookingType, destination, bookingFrom]);
+
+  // ========== POINT 11: Consignor Name Search with GST ==========
+  const handleConsignorNameSearch = async (value: string) => {
+    setConsignorIdValue(value);
+    setConsignorName(value);
+
+    if (value.length >= 2) {
+      try {
+        const response = await searchClient("name", value);
+        const data = response?.data || response || [];
+        const results = Array.isArray(data) ? data : [data].filter(Boolean);
+        setConsignorSearchResults(results);
+        setShowConsignorDropdown(results.length > 0);
+      } catch (error) {
+        setConsignorSearchResults([]);
+        setShowConsignorDropdown(false);
+      }
+    } else {
+      setConsignorSearchResults([]);
+      setShowConsignorDropdown(false);
+    }
+  };
+
+  const handleConsignorSelect = (client: ClientData) => {
+    setConsignorId(client._id || "");
+    setConsignorName(client.name);
+    setConsignorIdValue(client.name);
+    setConsignorMobile(client.mobile || "");
+    setConsignorGst(client.gstNumber || "");
+    setConsignorAdhaar(client.adhaarNumber || "");
+    setConsignorPan(client.panNumber || "");
+    setConsignorDealerCode(client.dealerCode || "");
+    setConsignorAddress(client.address || "");
+    setConsignorCity(client.city || "");
+    setConsignorState(client.state || "");
+    setConsignorEmail(client.email || "");
+    setConsignorIec(client.iecCode || "");
+    setConsignorBankAd(client.bankAdNo || "");
+    setShowConsignorDropdown(false);
+    toast.success(`Consignor "${client.name}" loaded successfully!`);
+  };
+
+  // ========== Consignee Name Search ==========
+  const handleConsigneeNameSearch = async (value: string) => {
+    setConsigneeIdValue(value);
+    setConsigneeName(value);
+
+    if (value.length >= 2) {
+      try {
+        const response = await searchClient("name", value);
+        if (response.data) {
+          const data = Array.isArray(response.data) ? response.data : [response.data];
+          setConsigneeSearchResults(data);
+          setShowConsigneeDropdown(true);
+        } else {
+          setConsigneeSearchResults([]);
+          setShowConsigneeDropdown(false);
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        setConsigneeSearchResults([]);
+        setShowConsigneeDropdown(false);
+      }
+    } else {
+      setConsigneeSearchResults([]);
+      setShowConsigneeDropdown(false);
+    }
+  };
+
+  const handleConsigneeSelect = (client: ClientData) => {
+    setConsigneeId(client._id || "");
+    setConsigneeName(client.name);
+    setConsigneeIdValue(client.name);
+    setConsigneeMobile(client.mobile || "");
+    setConsigneeGst(client.gstNumber || "");
+    setConsigneeAdhaar(client.adhaarNumber || "");
+    setConsigneePan(client.panNumber || "");
+    setConsigneeDealerCode(client.dealerCode || "");
+    setConsigneeAddress(client.address || "");
+    setConsigneeCity(client.city || "");
+    setConsigneeState(client.state || "");
+    setConsigneeEmail(client.email || "");
+    setConsigneeIec(client.iecCode || "");
+    setConsigneeEximCode(client.bankAdNo || "");
+    setShowConsigneeDropdown(false);
+    toast.success(`Consignee "${client.name}" loaded successfully!`);
+  };
+
+  // ========== POINT 12: Content Category Search ==========
+  const handleContentCategorySearch = (value: string) => {
+    setContentCategorySearch(value);
+    if (value.length >= 1) {
+      const filtered = contentCategories.filter(cat =>
+        cat.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setContentCategoryResults(filtered);
+      setShowContentCategoryDropdown(true);
+    } else {
+      setContentCategoryResults([]);
+      setShowContentCategoryDropdown(false);
+      setGoodsItems(prevItems =>
+        prevItems.map(item => ({
+          ...item,
+          contentCategory: "",
+          content: "",
+          contentSubCategory: ""
+        }))
+      );
+    }
+  };
+
+  const handleContentCategorySelect = (category: any) => {
+    setGoodsItems(prevItems =>
+      prevItems.map(item => ({
+        ...item,
+        contentCategory: String(category.id),
+        content: category.name,
+        contentSubCategory: ""
+      }))
+    );
+    setContentCategorySearch(category.name);
+    setShowContentCategoryDropdown(false);
+    toast.success(`Category "${category.name}" selected`);
+  };
+
+  // ========== CALCULATION FUNCTIONS ==========
   const calculateAllTotals = () => {
     let freight = 0;
     if (freightOn === "CHARGE WEIGHT") {
@@ -684,9 +849,7 @@ export default function BookingComputerizedGRL() {
 
   const updateExtraCharge = (id: number, rate: number) => {
     setExtraCharges(prev =>
-      prev.map(charge =>
-        charge.id === id ? { ...charge, rate, amount: rate } : charge
-      )
+      prev.map(charge => charge.id === id ? { ...charge, rate, amount: rate } : charge)
     );
   };
 
@@ -695,6 +858,7 @@ export default function BookingComputerizedGRL() {
     toast.success("Freight rate cleared");
   };
 
+  // ========== DATA LOADING FUNCTIONS ==========
   useEffect(() => {
     loadStaticData();
     loadBookings();
@@ -708,233 +872,20 @@ export default function BookingComputerizedGRL() {
   }, [goodsItems]);
 
   useEffect(() => {
-    if (manualRates) {
-      calculateAllTotals();
-    }
+    if (manualRates) calculateAllTotals();
   }, [totalChargeWeight, totalActualWeight, totalPckgs, freightRate, freightOn, extraCharges, gstRate, advanceAmount, manualRates]);
 
   useEffect(() => {
-    if (!manualRates) {
-      const freight = totalChargeWeight * 5;
-      setTotalFreight(freight);
-    }
+    if (!manualRates) setTotalFreight(totalChargeWeight * 5);
   }, [totalChargeWeight, manualRates]);
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-      if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(voiceNoteUrl);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+      if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) URL.revokeObjectURL(voiceNoteUrl);
     };
   }, [voiceNoteUrl]);
-
-  // Validate damage package count
-  const validateDamagePackageCount = (count: number) => {
-    if (damageType.length > 0) {
-      if (count < 1) {
-        setDamagePackageError("Number of damaged/missing packages must be at least 1");
-        return false;
-      }
-      if (count > totalPckgs) {
-        setDamagePackageError(`Cannot exceed total packages (${totalPckgs})`);
-        return false;
-      }
-      setDamagePackageError("");
-      return true;
-    }
-    setDamagePackageError("");
-    return true;
-  };
-
-  const handleDamagePackageCountChange = (value: string) => {
-    const count = parseInt(value) || 0;
-    setDamagePackageCount(count);
-    validateDamagePackageCount(count);
-  };
-
-  // ========== VOICE RECORDING FUNCTIONS ==========
-  const startRecording = async () => {
-    try {
-      // Clear existing voice note first
-      if (voiceNoteUrl) {
-        if (voiceNoteUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(voiceNoteUrl);
-        }
-        setVoiceNoteUrl(null);
-        setVoiceNoteDuration(null);
-        setVoiceNoteBase64(null);
-      }
-
-      audioChunksRef.current = [];
-      finalDurationRef.current = 0;
-      setRecordingDuration(0);
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64Audio = reader.result as string;
-            setVoiceNoteBase64(base64Audio);
-            console.log("Voice note converted to base64");
-          };
-          reader.readAsDataURL(audioBlob);
-
-          setVoiceNoteUrl(audioUrl);
-          const savedDuration = finalDurationRef.current;
-          setVoiceNoteDuration(savedDuration);
-          toast.success(`Voice note recorded: ${formatDuration(savedDuration)}`);
-        } else {
-          toast.error("No audio captured. Please try again.");
-        }
-
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-      };
-
-      mediaRecorder.start(100);
-      setIsRecording(true);
-
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-
-      timerRef.current = setInterval(() => {
-        setRecordingDuration(prev => {
-          const newDuration = prev + 1;
-          finalDurationRef.current = newDuration;
-          if (newDuration >= 120) {
-            stopRecording();
-            return 120;
-          }
-          return newDuration;
-        });
-      }, 1000);
-
-      toast.success("Recording started... Speak now!");
-    } catch (error) {
-      console.error("Microphone error:", error);
-      toast.error("Unable to access microphone. Please check permissions.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      try {
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-
-        toast.success("Recording stopped!");
-      } catch (error) {
-        console.error("Stop recording error:", error);
-        toast.error("Error stopping recording");
-      }
-    }
-  };
-
-  const deleteVoiceNote = () => {
-    // Clear all voice note states
-    if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(voiceNoteUrl);
-    }
-    setVoiceNoteUrl(null);
-    setVoiceNoteDuration(null);
-    setVoiceNoteBase64(null);
-    setIsRecording(false);
-    setRecordingDuration(0);
-    audioChunksRef.current = [];
-    finalDurationRef.current = 0;
-
-    // Clear media recorder if active
-    if (mediaRecorderRef.current) {
-      try {
-        if (isRecording) {
-          mediaRecorderRef.current.stop();
-        }
-      } catch (e) { }
-      mediaRecorderRef.current = null;
-    }
-
-    // Stop stream tracks
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    // Clear timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    toast.success("Voice note deleted");
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // ========== PHOTO UPLOAD FUNCTIONS ==========
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (damagePhotos.length + files.length > 10) {
-      toast.error("Maximum 10 photos allowed");
-      return;
-    }
-
-    files.forEach(file => {
-      if (!file.type.match(/image\/(jpeg|png|webp)/)) {
-        toast.error(`File ${file.name} is not JPG, PNG, or WEBP`);
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`File ${file.name} exceeds 5MB`);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setDamagePhotos(prev => [...prev, result]);
-      };
-      reader.readAsDataURL(file);
-    });
-
-    e.target.value = '';
-  };
-
-  const removePhoto = (index: number) => {
-    setDamagePhotos(prev => prev.filter((_, i) => i !== index));
-  };
 
   const loadCurrentUser = () => {
     if (typeof window !== 'undefined') {
@@ -1038,16 +989,12 @@ export default function BookingComputerizedGRL() {
   };
 
   const calculateTotals = () => {
-    let pckgs = 0;
-    let actWeight = 0;
-    let chgWeight = 0;
-
+    let pckgs = 0, actWeight = 0, chgWeight = 0;
     goodsItems.forEach(item => {
       pckgs += Number(item.noOfPckgs) || 0;
       actWeight += Number(item.actualWeight) || 0;
       chgWeight += Number(item.chargeWeight) || 0;
     });
-
     setTotalPckgs(pckgs);
     setTotalActualWeight(actWeight);
     setTotalChargeWeight(chgWeight);
@@ -1057,36 +1004,32 @@ export default function BookingComputerizedGRL() {
     setGoodsItems(goodsItems.map(item => {
       if (item.id === id) {
         const updated = { ...item, [field]: value };
-
-        if (field === "actualWeight") {
-          updated.chargeWeight = Number(value);
-        }
-
+        if (field === "actualWeight") updated.chargeWeight = Number(value) || 0;
         if (field === "contentCategory") {
           updated.contentSubCategory = "";
           updated.content = "";
         }
-        if (field === "contentSubCategory") {
-          const category = contentCategories.find(c => c.id === Number(item.contentCategory));
-          const subCategory = category?.subCategories?.find((s: any) => s.id === Number(value));
-          updated.content = subCategory?.name || "";
-        }
-
         const validation = validatePackageWeight(updated);
         updated.isWeightValid = validation.isValid;
         updated.weightError = validation.error;
-
         return updated;
       }
       return item;
     }));
   };
 
+  // Number input with no leading zero
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>, callback: (value: number) => void) => {
+    const value = e.target.value;
+    const cleanedValue = value.replace(/^0+(?=\d)/, '');
+    const numValue = cleanedValue === '' ? 0 : Number(cleanedValue);
+    if (!isNaN(numValue)) {
+      callback(numValue);
+    }
+  };
+
   const addGoodsRow = () => {
-    setGoodsItems([...goodsItems, {
-      id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "",
-      content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true
-    }]);
+    setGoodsItems([...goodsItems, { id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true }]);
     toast.success("New goods row added");
   };
 
@@ -1115,15 +1058,13 @@ export default function BookingComputerizedGRL() {
     }
   };
 
+  // ========== CLIENT HANDLERS ==========
   const handleConsignorSearch = async () => {
-    if (!consignorIdType) {
-      toast.error("Please select ID type");
-      return;
-    }
+    if (!consignorIdType) { toast.error("Please select ID type"); return; }
     if (consignorIdType === "Self") {
       setConsignorId("self");
       setConsignorName(currentUser?.name || "Self");
-      setConsignorMobile("");
+      setConsignorMobile(currentUser?.mobile || "");
       setConsignorGst("");
       setConsignorAdhaar("");
       setConsignorPan("");
@@ -1134,19 +1075,17 @@ export default function BookingComputerizedGRL() {
       setConsignorEmail("");
       setConsignorIec("");
       setConsignorBankAd("");
+      setConsignorIdValue("");
       toast.success("Self selected - No ID required");
       return;
     }
-    if (!consignorIdValue) {
-      toast.error("Please enter ID value");
-      return;
-    }
+    if (!consignorIdValue) { toast.error("Please enter ID value"); return; }
 
     try {
       const response = await searchClient(consignorIdType, consignorIdValue);
       if (response.data) {
         const client = response.data;
-        setConsignorId(client._id || "");
+        setConsignorId(client._id);
         setConsignorName(client.name);
         setConsignorMobile(client.mobile || "");
         setConsignorGst(client.gstNumber || "");
@@ -1164,26 +1103,25 @@ export default function BookingComputerizedGRL() {
         toast.error("Client not found. Please add new client.");
         setIsNewConsignorDialogOpen(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
-      toast.error("Error searching client");
+      if (error.response?.status === 400) {
+        toast.error("Invalid search. Please check the ID type and value.");
+      } else {
+        toast.error("Error searching client. Please try again.");
+      }
       setIsNewConsignorDialogOpen(true);
     }
   };
 
-  const handleConsignorAdd = () => {
-    setIsNewConsignorDialogOpen(true);
-  };
+  const handleConsignorAdd = () => setIsNewConsignorDialogOpen(true);
 
   const handleConsigneeSearch = async () => {
-    if (!consigneeIdType) {
-      toast.error("Please select ID type");
-      return;
-    }
+    if (!consigneeIdType) { toast.error("Please select ID type"); return; }
     if (consigneeIdType === "Self") {
       setConsigneeId("self");
       setConsigneeName(currentUser?.name || "Self");
-      setConsigneeMobile("");
+      setConsigneeMobile(currentUser?.mobile || "");
       setConsigneeGst("");
       setConsigneeAdhaar("");
       setConsigneePan("");
@@ -1194,19 +1132,17 @@ export default function BookingComputerizedGRL() {
       setConsigneeEmail("");
       setConsigneeIec("");
       setConsigneeEximCode("");
+      setConsigneeIdValue("");
       toast.success("Self selected - No ID required");
       return;
     }
-    if (!consigneeIdValue) {
-      toast.error("Please enter ID value");
-      return;
-    }
+    if (!consigneeIdValue) { toast.error("Please enter ID value"); return; }
 
     try {
       const response = await searchClient(consigneeIdType, consigneeIdValue);
       if (response.data) {
         const client = response.data;
-        setConsigneeId(client._id || "");
+        setConsigneeId(client._id);
         setConsigneeName(client.name);
         setConsigneeMobile(client.mobile || "");
         setConsigneeGst(client.gstNumber || "");
@@ -1218,27 +1154,27 @@ export default function BookingComputerizedGRL() {
         setConsigneeState(client.state || "");
         setConsigneeEmail(client.email || "");
         setConsigneeIec(client.iecCode || "");
+        setConsigneeEximCode(client.bankAdNo || "");
         toast.success(`Consignee "${client.name}" loaded successfully!`);
       } else {
         toast.error("Client not found. Please add new client.");
         setIsNewConsigneeDialogOpen(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Search error:', error);
-      toast.error("Error searching client");
+      if (error.response?.status === 400) {
+        toast.error("Invalid search. Please check the ID type and value.");
+      } else {
+        toast.error("Error searching client. Please try again.");
+      }
       setIsNewConsigneeDialogOpen(true);
     }
   };
 
-  const handleConsigneeAdd = () => {
-    setIsNewConsigneeDialogOpen(true);
-  };
+  const handleConsigneeAdd = () => setIsNewConsigneeDialogOpen(true);
 
   const addNewClient = async (type: "consignor" | "consignee") => {
-    if (!newClientData.name) {
-      toast.error("Please enter client name");
-      return;
-    }
+    if (!newClientData.name) { toast.error("Please enter client name"); return; }
 
     try {
       const response = await createClient({
@@ -1260,7 +1196,7 @@ export default function BookingComputerizedGRL() {
       await loadClients();
 
       if (type === "consignor") {
-        setConsignorId(newClient._id || "");
+        setConsignorId(newClient._id);
         setConsignorName(newClient.name);
         setConsignorMobile(newClient.mobile || "");
         setConsignorGst(newClient.gstNumber);
@@ -1276,7 +1212,7 @@ export default function BookingComputerizedGRL() {
         setIsNewConsignorDialogOpen(false);
         toast.success(`Consignor "${newClient.name}" added successfully!`);
       } else {
-        setConsigneeId(newClient._id || "");
+        setConsigneeId(newClient._id);
         setConsigneeName(newClient.name);
         setConsigneeMobile(newClient.mobile || "");
         setConsigneeGst(newClient.gstNumber);
@@ -1288,6 +1224,7 @@ export default function BookingComputerizedGRL() {
         setConsigneeState(newClient.state);
         setConsigneeEmail(newClient.email);
         setConsigneeIec(newClient.iecCode);
+        setConsigneeEximCode(newClient.bankAdNo);
         setIsNewConsigneeDialogOpen(false);
         toast.success(`Consignee "${newClient.name}" added successfully!`);
       }
@@ -1298,143 +1235,190 @@ export default function BookingComputerizedGRL() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-    toast.success("Print dialog opened");
-  };
+  // ========== VOICE RECORDING FUNCTIONS ==========
+  const startRecording = async () => {
+    try {
+      if (voiceNoteUrl) {
+        if (voiceNoteUrl.startsWith('blob:')) URL.revokeObjectURL(voiceNoteUrl);
+        setVoiceNoteUrl(null);
+        setVoiceNoteDuration(null);
+        setVoiceNoteBase64(null);
+      }
 
-  const handleClear = () => {
-    if (confirm("Are you sure you want to clear all form data?")) {
-      resetForm();
-      toast.success("Form cleared");
+      audioChunksRef.current = [];
+      finalDurationRef.current = 0;
+      setRecordingDuration(0);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64Audio = reader.result as string;
+            setVoiceNoteBase64(base64Audio);
+          };
+          reader.readAsDataURL(audioBlob);
+
+          setVoiceNoteUrl(audioUrl);
+          const savedDuration = finalDurationRef.current;
+          setVoiceNoteDuration(savedDuration);
+          toast.success(`Voice note recorded: ${formatDuration(savedDuration)}`);
+        } else {
+          toast.error("No audio captured. Please try again.");
+        }
+
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      mediaRecorder.start(100);
+      setIsRecording(true);
+
+      if (timerRef.current) clearInterval(timerRef.current);
+
+      timerRef.current = setInterval(() => {
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1;
+          finalDurationRef.current = newDuration;
+          if (newDuration >= 120) {
+            stopRecording();
+            return 120;
+          }
+          return newDuration;
+        });
+      }, 1000);
+
+      toast.success("Recording started... Speak now!");
+    } catch (error) {
+      console.error("Microphone error:", error);
+      toast.error("Unable to access microphone. Please check permissions.");
     }
   };
 
-  const resetForm = () => {
-    setGrNo("");
-    setBookingFrom(selectedBranch);
-    setBookingDate(new Date());
-    setDestination("");
-    setPickupFrom("");
-    setDeliveryPoint("");
-    setBookingType("");
-    setCollectionAt("");
-    setPvtMarkaSealNo("");
-    setServiceProduct("SURFACE");
-    setDeliveryType("");
-    setLoadType("");
-    setMkExecutive("");
-    setFreightOn("CHARGE WEIGHT");
-    setManualRates(false);
-    setNcv(false);
-    setPrintAfterSave(false);
-    setCcAttached(false);
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      try {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
 
-    setFreightRate(0);
-    setCalculatedFreight(0);
-    setGstRate(0);
-    setAdvanceAmount(0);
-    setGstPaidBy("CONSIGNEE");
-    setExtraCharges(EXTRA_CHARGES.map(charge => ({
-      ...charge,
-      rate: charge.defaultRate,
-      amount: charge.defaultRate
-    })));
-    setSubTotal(0);
-    setGstAmount(0);
-    setTotalAmount(0);
-    setBalanceAmount(0);
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
 
-    setConsignorIdType("");
-    setConsignorIdValue("");
-    setConsignorId("");
-    setConsignorName("");
-    setConsignorMobile("");
-    setConsignorGst("");
-    setConsignorAdhaar("");
-    setConsignorPan("");
-    setConsignorDealerCode("");
-    setConsignorAddress("");
-    setConsignorCity("");
-    setConsignorState("");
-    setConsignorEmail("");
-    setConsignorIec("");
-    setConsignorBankAd("");
-
-    setConsigneeIdType("");
-    setConsigneeIdValue("");
-    setConsigneeId("");
-    setConsigneeName("");
-    setConsigneeMobile("");
-    setConsigneeGst("");
-    setConsigneeAdhaar("");
-    setConsigneePan("");
-    setConsigneeDealerCode("");
-    setConsigneeAddress("");
-    setConsigneeCity("");
-    setConsigneeState("");
-    setConsigneeEmail("");
-    setConsigneeIec("");
-    setConsigneeEximCode("");
-
-    setGoodsItems([{ id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true }]);
-    setInvoices([{ id: Date.now(), invoiceNo: "", date: new Date(), value: "0", ewayBillNo: "", ewayBillDate: new Date(), validUpto: "" }]);
-    setRemarks("");
-    setRoRemarks("");
-    setBillNo("");
-    setSupplementaryBillNo("");
-    setInsuranceCoveredBy("");
-    setInsuranceNo("");
-    setInsuranceDate(new Date());
-    setInsuranceCompany("");
-    setTotalPckgs(0);
-    setTotalActualWeight(0);
-    setTotalChargeWeight(0);
-    setTotalFreight(0);
-    setEditMode(false);
-    setCurrentEditId(null);
-    setIsConsignorAddressOpen(false);
-    setIsConsigneeAddressOpen(false);
-
-    // ========== CRITICAL: Reset all damage states ==========
-    setDamageType([]);
-    setDamageReason("");
-    setDamageOtherRemark("");
-    setDamagePackageCount(0);
-    setDamagePackageError("");
-    setDamagePhotos([]);
-
-    // ========== CRITICAL: Reset voice note states completely ==========
-    if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(voiceNoteUrl);
+        toast.success("Recording stopped!");
+      } catch (error) {
+        console.error("Stop recording error:", error);
+        toast.error("Error stopping recording");
+      }
     }
+  };
+
+  const deleteVoiceNote = () => {
+    if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) URL.revokeObjectURL(voiceNoteUrl);
     setVoiceNoteUrl(null);
     setVoiceNoteDuration(null);
     setVoiceNoteBase64(null);
     setIsRecording(false);
     setRecordingDuration(0);
-    finalDurationRef.current = 0;
     audioChunksRef.current = [];
+    finalDurationRef.current = 0;
+
+    if (mediaRecorderRef.current) {
+      try { if (isRecording) mediaRecorderRef.current.stop(); } catch (e) { }
+      mediaRecorderRef.current = null;
+    }
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
+
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-    if (mediaRecorderRef.current) {
-      try {
-        if (isRecording) {
-          mediaRecorderRef.current.stop();
-        }
-      } catch (e) { }
-      mediaRecorderRef.current = null;
+
+    toast.success("Voice note deleted");
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // ========== PHOTO UPLOAD FUNCTIONS ==========
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (damagePhotos.length + files.length > 10) {
+      toast.error("Maximum 10 photos allowed");
+      return;
     }
 
-    // Clear validation errors
-    setValidationErrors({});
+    files.forEach(file => {
+      if (!file.type.match(/image\/(jpeg|png|webp)/)) {
+        toast.error(`File ${file.name} is not JPG, PNG, or WEBP`);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} exceeds 5MB`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setDamagePhotos(prev => [...prev, result]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    setDamagePhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // ========== VALIDATION FUNCTIONS ==========
+  const validateDamagePackageCount = (count: number) => {
+    if (damageType.length > 0) {
+      if (count < 1) {
+        setDamagePackageError("Number of damaged/missing packages must be at least 1");
+        return false;
+      }
+      if (count > totalPckgs) {
+        setDamagePackageError(`Cannot exceed total packages (${totalPckgs})`);
+        return false;
+      }
+      setDamagePackageError("");
+      return true;
+    }
+    setDamagePackageError("");
+    return true;
+  };
+
+  const handleDamagePackageCountChange = (value: string) => {
+    const count = parseInt(value) || 0;
+    setDamagePackageCount(count);
+    validateDamagePackageCount(count);
   };
 
   const handleDamageTypeChange = (type: "damaged" | "missing" | "both") => {
@@ -1478,7 +1462,6 @@ export default function BookingComputerizedGRL() {
       errors.weightError = "Please fix weight validation errors";
     }
 
-    // Damage validation
     if (damageType.length > 0) {
       if (!damageReason) errors.damageReason = "Please select a damage/missing reason";
       if (damageReason === "Other (specify)" && !damageOtherRemark.trim()) {
@@ -1497,16 +1480,144 @@ export default function BookingComputerizedGRL() {
     return Object.keys(errors).length === 0;
   };
 
+  // ========== FORM HANDLERS ==========
+  const handlePrint = () => {
+    window.print();
+    toast.success("Print dialog opened");
+  };
+
+  const handleClear = () => {
+    if (confirm("Are you sure you want to clear all form data?")) {
+      resetForm();
+      toast.success("Form cleared");
+    }
+  };
+
+  const resetForm = () => {
+    setGrNo("");
+    setBookingFrom(selectedBranch);
+    setBookingDate(new Date());
+    setDestination("");
+    setPickupFrom("");
+    setDeliveryPoint("");
+    setBookingType("TOPAY");
+    setCollectionAt("");
+    setPvtMarkaSealNo("");
+    setServiceProduct("SURFACE");
+    setDeliveryType("GODOWN");
+    setLoadType("PART LOAD");
+    setMkExecutive("");
+    setFreightOn("CHARGE WEIGHT");
+    setManualRates(false);
+    setNcv(false);
+    setPrintAfterSave(false);
+    setCcAttached(false);
+
+    setFreightRate(0);
+    setCalculatedFreight(0);
+    setGstRate(0);
+    setAdvanceAmount(0);
+    setGstPaidBy("CONSIGNEE");
+    setExtraCharges(EXTRA_CHARGES.map(charge => ({ ...charge, rate: charge.defaultRate, amount: charge.defaultRate })));
+    setSubTotal(0);
+    setGstAmount(0);
+    setTotalAmount(0);
+    setBalanceAmount(0);
+
+    setConsignorIdType("");
+    setConsignorIdValue("");
+    setConsignorId("");
+    setConsignorName("");
+    setConsignorMobile("");
+    setConsignorGst("");
+    setConsignorAdhaar("");
+    setConsignorPan("");
+    setConsignorDealerCode("");
+    setConsignorAddress("");
+    setConsignorCity("");
+    setConsignorState("");
+    setConsignorEmail("");
+    setConsignorIec("");
+    setConsignorBankAd("");
+    setConsignorSearchResults([]);
+    setShowConsignorDropdown(false);
+
+    setConsigneeIdType("");
+    setConsigneeIdValue("");
+    setConsigneeId("");
+    setConsigneeName("");
+    setConsigneeMobile("");
+    setConsigneeGst("");
+    setConsigneeAdhaar("");
+    setConsigneePan("");
+    setConsigneeDealerCode("");
+    setConsigneeAddress("");
+    setConsigneeCity("");
+    setConsigneeState("");
+    setConsigneeEmail("");
+    setConsigneeIec("");
+    setConsigneeEximCode("");
+    setConsigneeSearchResults([]);
+    setShowConsigneeDropdown(false);
+
+    setContentCategorySearch("");
+    setContentCategoryResults([]);
+    setShowContentCategoryDropdown(false);
+
+    setGoodsItems([{ id: Date.now(), noOfPckgs: 0, contentCategory: "", contentSubCategory: "", content: "", packing: "BOX", actualWeight: 0, chargeWeight: 0, isWeightValid: true }]);
+    setInvoices([{ id: Date.now(), invoiceNo: "", date: new Date(), value: "0", ewayBillNo: "", ewayBillDate: new Date(), validUpto: "" }]);
+    setRemarks("");
+    setRoRemarks("");
+    setBillNo("");
+    setSupplementaryBillNo("");
+    setInsuranceCoveredBy("");
+    setInsuranceNo("");
+    setInsuranceDate(new Date());
+    setInsuranceCompany("");
+    setTotalPckgs(0);
+    setTotalActualWeight(0);
+    setTotalChargeWeight(0);
+    setTotalFreight(0);
+    setEditMode(false);
+    setCurrentEditId(null);
+    setIsConsignorAddressOpen(false);
+    setIsConsigneeAddressOpen(false);
+
+    setDamageType([]);
+    setDamageReason("");
+    setDamageOtherRemark("");
+    setDamagePackageCount(0);
+    setDamagePackageError("");
+    setDamagePhotos([]);
+
+    if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) URL.revokeObjectURL(voiceNoteUrl);
+    setVoiceNoteUrl(null);
+    setVoiceNoteDuration(null);
+    setVoiceNoteBase64(null);
+    setIsRecording(false);
+    setRecordingDuration(0);
+    finalDurationRef.current = 0;
+    audioChunksRef.current = [];
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (mediaRecorderRef.current) {
+      try { if (isRecording) mediaRecorderRef.current.stop(); } catch (e) { }
+      mediaRecorderRef.current = null;
+    }
+
+    setValidationErrors({});
+  };
+
   const handleSave = async () => {
     console.log("=== COMPUTERIZED BOOKING SAVE BUTTON CLICKED ===");
 
-    // Validate all required fields
     if (!validateRequiredFields()) {
-      // Show first error
       const firstError = Object.values(validationErrors)[0];
-      if (firstError) {
-        toast.error(firstError);
-      }
+      if (firstError) toast.error(firstError);
       return;
     }
 
@@ -1615,7 +1726,11 @@ export default function BookingComputerizedGRL() {
     } catch (error: any) {
       console.error('Save error:', error);
       if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+        if (error.response.data.message.includes("duplicate") || error.response.data.message.includes("already exists")) {
+          toast.error(`GR Number "${grNo}" already exists. Please use a different GR number.`);
+        } else {
+          toast.error(error.response.data.message);
+        }
       } else if (error.message) {
         toast.error(error.message);
       } else {
@@ -1627,10 +1742,7 @@ export default function BookingComputerizedGRL() {
   };
 
   const handleCancelBooking = async () => {
-    if (!cancelledReason) {
-      toast.error("Please select cancellation reason");
-      return;
-    }
+    if (!cancelledReason) { toast.error("Please select cancellation reason"); return; }
     if (cancellingBooking) {
       setLoading(true);
       try {
@@ -1752,8 +1864,9 @@ export default function BookingComputerizedGRL() {
     loadCancelledBookings();
     toast.success("Search filters cleared");
   };
+
   const handleEdit = (record: BookingRecord) => {
-    resetForm();  // CRITICAL: Reset form before loading edit data
+    resetForm();
 
     setEditMode(true);
     setCurrentEditId(record._id!);
@@ -1819,38 +1932,21 @@ export default function BookingComputerizedGRL() {
     setTotalChargeWeight(record.totalChargeWeight);
     setTotalFreight(record.totalFreight);
 
-    // Load damage data - ONLY if exists in record
-    if (record.damageType && record.damageType.length > 0) {
-      setDamageType(record.damageType);
-    } else {
-      setDamageType([]);
-    }
+    if (record.damageType && record.damageType.length > 0) setDamageType(record.damageType);
+    else setDamageType([]);
 
-    if (record.damageReason) {
-      setDamageReason(record.damageReason);
-    } else {
-      setDamageReason("");
-    }
+    if (record.damageReason) setDamageReason(record.damageReason);
+    else setDamageReason("");
 
-    if (record.damageOtherRemark) {
-      setDamageOtherRemark(record.damageOtherRemark);
-    } else {
-      setDamageOtherRemark("");
-    }
+    if (record.damageOtherRemark) setDamageOtherRemark(record.damageOtherRemark);
+    else setDamageOtherRemark("");
 
-    if (record.damagePackageCount && record.damagePackageCount > 0) {
-      setDamagePackageCount(record.damagePackageCount);
-    } else {
-      setDamagePackageCount(0);
-    }
+    if (record.damagePackageCount && record.damagePackageCount > 0) setDamagePackageCount(record.damagePackageCount);
+    else setDamagePackageCount(0);
 
-    if (record.damagePhotos && record.damagePhotos.length > 0) {
-      setDamagePhotos(record.damagePhotos);
-    } else {
-      setDamagePhotos([]);
-    }
+    if (record.damagePhotos && record.damagePhotos.length > 0) setDamagePhotos(record.damagePhotos);
+    else setDamagePhotos([]);
 
-    // CRITICAL: Voice note - ONLY if exists in record
     if (record.voiceNoteUrl && record.voiceNoteUrl.trim() !== "") {
       setVoiceNoteUrl(record.voiceNoteUrl);
       setVoiceNoteBase64(record.voiceNoteUrl);
@@ -2141,7 +2237,7 @@ export default function BookingComputerizedGRL() {
         </>
       )}
 
-      {/* Cancelled Tab Content - Simplified */}
+      {/* Cancelled Tab Content */}
       {mainTab === "cancelled" && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2480,14 +2576,17 @@ export default function BookingComputerizedGRL() {
                   </Select>
                   {validationErrors.destination && <p className="text-red-500 text-xs mt-1">{validationErrors.destination}</p>}
                 </div>
+                {/* POINT 1: Pickup From Disabled */}
                 <div>
                   <Label className="text-sm">Pickup From</Label>
-                  <Input value={pickupFrom} onChange={(e) => setPickupFrom(e.target.value)} className="h-9 text-sm" />
+                  <Input value={pickupFrom} className="h-9 text-sm bg-gray-100" disabled />
                 </div>
+                {/* POINT 1: Delivery Point Disabled */}
                 <div>
                   <Label className="text-sm">Delivery Point</Label>
-                  <Input value={deliveryPoint} onChange={(e) => setDeliveryPoint(e.target.value)} className="h-9 text-sm" />
+                  <Input value={deliveryPoint} className="h-9 text-sm bg-gray-100" disabled />
                 </div>
+                {/* POINT 2: Booking Type Default "TOPAY" */}
                 <div>
                   <Label className="text-sm">Booking Type <span className="text-red-500">*</span></Label>
                   <Select value={bookingType} onValueChange={setBookingType}>
@@ -2505,14 +2604,18 @@ export default function BookingComputerizedGRL() {
                   <Label className="text-sm">Pvt Marka/Seal No</Label>
                   <Input value={pvtMarkaSealNo} onChange={(e) => setPvtMarkaSealNo(e.target.value)} className="h-9 text-sm" />
                 </div>
+                {/* POINT 6: Service Product LOCKED - SURFACE Default */}
                 <div>
                   <Label className="text-sm">Service/Product <span className="text-red-500">*</span></Label>
-                  <Select value={serviceProduct} onValueChange={setServiceProduct}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
+                  <Select value={serviceProduct} onValueChange={setServiceProduct} disabled>
+                    <SelectTrigger className="h-9 text-sm bg-gray-100">
+                      <SelectValue placeholder="SURFACE" />
+                    </SelectTrigger>
                     <SelectContent>{serviceProductOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
                   </Select>
                   {validationErrors.serviceProduct && <p className="text-red-500 text-xs mt-1">{validationErrors.serviceProduct}</p>}
                 </div>
+                {/* POINT 7: Delivery Type - GODOWN Default, DOOR DELIVERY instead of PICKUP */}
                 <div>
                   <Label className="text-sm">Delivery Type <span className="text-red-500">*</span></Label>
                   <Select value={deliveryType} onValueChange={setDeliveryType}>
@@ -2521,6 +2624,7 @@ export default function BookingComputerizedGRL() {
                   </Select>
                   {validationErrors.deliveryType && <p className="text-red-500 text-xs mt-1">{validationErrors.deliveryType}</p>}
                 </div>
+                {/* POINT 8: Load Type Default "PART LOAD" */}
                 <div>
                   <Label className="text-sm">Load Type <span className="text-red-500">*</span></Label>
                   <Select value={loadType} onValueChange={setLoadType}>
@@ -2529,9 +2633,10 @@ export default function BookingComputerizedGRL() {
                   </Select>
                   {validationErrors.loadType && <p className="text-red-500 text-xs mt-1">{validationErrors.loadType}</p>}
                 </div>
+                {/* POINT 9: MKT Executive LOCKED */}
                 <div>
                   <Label className="text-sm">MKT. Executive</Label>
-                  <Input value={mkExecutive} onChange={(e) => setMkExecutive(e.target.value)} className="h-9 text-sm" />
+                  <Input value={mkExecutive} className="h-9 text-sm bg-gray-100" disabled />
                 </div>
                 <div>
                   <Label className="text-sm">Freight On</Label>
@@ -2548,20 +2653,51 @@ export default function BookingComputerizedGRL() {
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-blue-700">
                 <Building className="h-5 w-5" /> Consignor Details
               </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <Label className="text-sm">Select ID Type</Label>
                   <Select value={consignorIdType} onValueChange={setConsignorIdType}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
-                    <SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="SELECT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {idTypeOptions.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
+
                 {consignorIdType !== "Self" && consignorIdType !== "" && (
-                  <div>
-                    <Label className="text-sm">Enter ID Value</Label>
-                    <Input value={consignorIdValue} onChange={(e) => setConsignorIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" />
+                  <div className="relative">
+                    <Label className="text-sm">Enter ID Value / Name</Label>
+                    <Input
+                      value={consignorIdValue}
+                      onChange={(e) => handleConsignorNameSearch(e.target.value)}
+                      placeholder="Enter GST/Adhaar/PAN or Name"
+                      className="h-9 text-sm"
+                    />
+                    {showConsignorDropdown && consignorSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {consignorSearchResults.map((client) => (
+                          <div
+                            key={client._id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            onClick={() => handleConsignorSelect(client)}
+                          >
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {client.gstNumber && `GST: ${client.gstNumber}`}
+                              {client.mobile && ` | 📱 ${client.mobile}`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
+
                 <div className="flex gap-2 items-end">
                   <Button onClick={handleConsignorSearch} className="h-9 text-sm bg-blue-600">
                     <Search className="h-4 w-4 mr-1" />Search
@@ -2572,22 +2708,33 @@ export default function BookingComputerizedGRL() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+              {/* POINT 10: Name and Mobile - Both always visible for Self and others */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <Label className="text-sm">Name</Label>
-                  <Input value={consignorName} onChange={(e) => setConsignorName(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} />
+                  <Label className="text-sm">Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={consignorName}
+                    onChange={(e) => setConsignorName(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Name"
+                  />
                   {validationErrors.consignorName && <p className="text-red-500 text-xs mt-1">{validationErrors.consignorName}</p>}
                 </div>
-                {consignorIdType !== "Self" && (
-                  <div>
-                    <Label className="text-sm">Mobile No.</Label>
-                    <Input value={consignorMobile} onChange={(e) => setConsignorMobile(e.target.value)} className="h-9 text-sm" readOnly={consignorIdType !== "Self"} />
-                  </div>
-                )}
+                <div>
+                  <Label className="text-sm">Mobile No.</Label>
+                  <Input
+                    value={consignorMobile}
+                    onChange={(e) => setConsignorMobile(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Mobile Number"
+                  />
+                </div>
               </div>
 
               {consignorName === "Self" && (
-                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                  ✓ Self Selected
+                </div>
               )}
 
               <button
@@ -2597,6 +2744,7 @@ export default function BookingComputerizedGRL() {
                 {isConsignorAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
                 {isConsignorAddressOpen ? "Hide Address Details" : "Show Address Details"}
               </button>
+
               {isConsignorAddressOpen && (
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
                   <div><Label className="text-sm">Address</Label><Input value={consignorAddress} onChange={(e) => setConsignorAddress(e.target.value)} className="h-9 text-sm" /></div>
@@ -2614,20 +2762,51 @@ export default function BookingComputerizedGRL() {
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-green-700">
                 <Users className="h-5 w-5" /> Consignee Details
               </h3>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                 <div>
                   <Label className="text-sm">Select ID Type</Label>
                   <Select value={consigneeIdType} onValueChange={setConsigneeIdType}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="SELECT" /></SelectTrigger>
-                    <SelectContent>{idTypeOptions.map(opt => (<SelectItem key={opt} value={opt}>{opt}</SelectItem>))}</SelectContent>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="SELECT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {idTypeOptions.map(opt => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
+
                 {consigneeIdType !== "Self" && consigneeIdType !== "" && (
-                  <div>
-                    <Label className="text-sm">Enter ID Value</Label>
-                    <Input value={consigneeIdValue} onChange={(e) => setConsigneeIdValue(e.target.value)} placeholder="Enter GST/Adhaar/PAN" className="h-9 text-sm" />
+                  <div className="relative">
+                    <Label className="text-sm">Enter ID Value / Name</Label>
+                    <Input
+                      value={consigneeIdValue}
+                      onChange={(e) => handleConsigneeNameSearch(e.target.value)}
+                      placeholder="Enter GST/Adhaar/PAN or Name"
+                      className="h-9 text-sm"
+                    />
+                    {showConsigneeDropdown && consigneeSearchResults.length > 0 && (
+                      <div className="absolute z-50 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {consigneeSearchResults.map((client) => (
+                          <div
+                            key={client._id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            onClick={() => handleConsigneeSelect(client)}
+                          >
+                            <div className="font-medium">{client.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {client.gstNumber && `GST: ${client.gstNumber}`}
+                              {client.mobile && ` | 📱 ${client.mobile}`}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
+
                 <div className="flex gap-2 items-end">
                   <Button onClick={handleConsigneeSearch} className="h-9 text-sm bg-green-600">
                     <Search className="h-4 w-4 mr-1" />Search
@@ -2638,22 +2817,33 @@ export default function BookingComputerizedGRL() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-3">
+              {/* POINT 10: Name and Mobile - Both always visible for Self and others */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <Label className="text-sm">Name</Label>
-                  <Input value={consigneeName} onChange={(e) => setConsigneeName(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} />
+                  <Label className="text-sm">Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={consigneeName}
+                    onChange={(e) => setConsigneeName(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Name"
+                  />
                   {validationErrors.consigneeName && <p className="text-red-500 text-xs mt-1">{validationErrors.consigneeName}</p>}
                 </div>
-                {consigneeIdType !== "Self" && (
-                  <div>
-                    <Label className="text-sm">Mobile No.</Label>
-                    <Input value={consigneeMobile} onChange={(e) => setConsigneeMobile(e.target.value)} className="h-9 text-sm" readOnly={consigneeIdType !== "Self"} />
-                  </div>
-                )}
+                <div>
+                  <Label className="text-sm">Mobile No.</Label>
+                  <Input
+                    value={consigneeMobile}
+                    onChange={(e) => setConsigneeMobile(e.target.value)}
+                    className="h-9 text-sm"
+                    placeholder="Enter Mobile Number"
+                  />
+                </div>
               </div>
 
               {consigneeName === "Self" && (
-                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">✓ Self (No ID required)</div>
+                <div className="mt-2 text-sm text-green-600 bg-green-50 p-2 rounded">
+                  ✓ Self Selected
+                </div>
               )}
 
               <button
@@ -2663,6 +2853,7 @@ export default function BookingComputerizedGRL() {
                 {isConsigneeAddressOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRightIcon className="h-4 w-4" />}
                 {isConsigneeAddressOpen ? "Hide Address Details" : "Show Address Details"}
               </button>
+
               {isConsigneeAddressOpen && (
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white p-3 rounded border">
                   <div><Label className="text-sm">Address</Label><Input value={consigneeAddress} onChange={(e) => setConsigneeAddress(e.target.value)} className="h-9 text-sm" /></div>
@@ -2691,9 +2882,12 @@ export default function BookingComputerizedGRL() {
                     <TableRow className="bg-gray-50">
                       <TableHead className="text-sm w-12">#</TableHead>
                       <TableHead className="text-sm">No Of Pckgs</TableHead>
-                      <TableHead className="text-sm">Content Category</TableHead>
-                      <TableHead className="text-sm">Content (Sub)</TableHead>
-                      <TableHead className="text-sm">Packing</TableHead>
+                      {/* POINT 12: Content Category with Search */}
+                      <TableHead className="text-sm min-w-[180px]">Content Category</TableHead>
+                      {/* POINT 13: Content Sub (Free) Lock */}
+                      <TableHead className="text-sm">Content (Sub) Locked</TableHead>
+                      {/* POINT 14: Packing (Free) Lock */}
+                      <TableHead className="text-sm">Packing Locked</TableHead>
                       <TableHead className="text-sm">Actual Weight</TableHead>
                       <TableHead className="text-sm">Charge Weight</TableHead>
                       <TableHead className="text-sm">Status</TableHead>
@@ -2709,58 +2903,124 @@ export default function BookingComputerizedGRL() {
                           <TableCell>
                             <Input
                               type="number"
-                              value={item.noOfPckgs}
-                              onChange={(e) => updateGoodsItem(item.id, "noOfPckgs", Number(e.target.value))}
+                              value={item.noOfPckgs || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "noOfPckgs", val))}
                               className="h-8 w-24 text-sm"
                               min="0"
+                              placeholder="0"
                             />
                           </TableCell>
-                          <TableCell>
-                            <Select value={item.contentCategory} onValueChange={(val) => updateGoodsItem(item.id, "contentCategory", val)}>
-                              <SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Category" /></SelectTrigger>
-                              <SelectContent>
-                                {contentCategories.map(cat => (<SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>))}
-                              </SelectContent>
-                            </Select>
+                          {/* POINT 12: Content Category with Search */}
+                          <TableCell className="relative min-w-[180px]">
+                            <div className="relative">
+                              <Input
+                                value={contentCategorySearch || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setContentCategorySearch(value);
+                                  if (value.length >= 1) {
+                                    const filtered = contentCategories.filter(cat =>
+                                      cat.name.toLowerCase().includes(value.toLowerCase())
+                                    );
+                                    setContentCategoryResults(filtered);
+                                    setShowContentCategoryDropdown(true);
+                                  } else {
+                                    setContentCategoryResults([]);
+                                    setShowContentCategoryDropdown(false);
+                                    setGoodsItems(prevItems =>
+                                      prevItems.map(item => ({
+                                        ...item,
+                                        contentCategory: "",
+                                        content: "",
+                                        contentSubCategory: ""
+                                      }))
+                                    );
+                                  }
+                                }}
+                                className="h-8 w-32 text-sm pr-7"
+                                placeholder="Search category..."
+                              />
+                              {contentCategorySearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setContentCategorySearch("");
+                                    setContentCategoryResults([]);
+                                    setShowContentCategoryDropdown(false);
+                                    setGoodsItems(prevItems =>
+                                      prevItems.map(item => ({
+                                        ...item,
+                                        contentCategory: "",
+                                        content: "",
+                                        contentSubCategory: ""
+                                      }))
+                                    );
+                                  }}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+
+                            {showContentCategoryDropdown && contentCategoryResults.length > 0 && (
+                              <div className="absolute z-50 mt-1 w-64 bg-white border rounded-md shadow-lg max-h-40 overflow-auto">
+                                {contentCategoryResults.map((cat) => (
+                                  <div
+                                    key={cat.id}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm"
+                                    onClick={() => handleContentCategorySelect(cat)}
+                                  >
+                                    {cat.name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </TableCell>
+                          {/* POINT 13: Content (Sub) Locked */}
                           <TableCell>
                             <Select
                               value={item.contentSubCategory}
                               onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)}
-                              disabled={!item.contentCategory}
+                              disabled
                             >
-                              <SelectTrigger className="h-8 w-32 text-sm"><SelectValue placeholder="Select Sub Category" /></SelectTrigger>
-                              <SelectContent>
-                                {selectedCategory?.subCategories?.map((sub: any) => (<SelectItem key={sub.id} value={String(sub.id)}>{sub.name}</SelectItem>))}
-                              </SelectContent>
+                              <SelectTrigger className="h-8 w-32 text-sm bg-gray-100">
+                                <SelectValue placeholder="Locked" />
+                              </SelectTrigger>
                             </Select>
                           </TableCell>
+                          {/* POINT 14: Packing Locked */}
                           <TableCell>
-                            <Select value={item.packing} onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}>
-                              <SelectTrigger className="h-8 w-28 text-sm"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {packingTypes.map(opt => (<SelectItem key={opt.name} value={opt.name}>{opt.name} ({opt.maxWeight}kg max/pkg)</SelectItem>))}
-                              </SelectContent>
+                            <Select
+                              value={item.packing}
+                              onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}
+                              disabled
+                            >
+                              <SelectTrigger className="h-8 w-28 text-sm bg-gray-100">
+                                <SelectValue placeholder="Locked" />
+                              </SelectTrigger>
                             </Select>
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
-                              value={item.actualWeight}
-                              onChange={(e) => updateGoodsItem(item.id, "actualWeight", Number(e.target.value))}
+                              value={item.actualWeight || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "actualWeight", val))}
                               className="h-8 w-24 text-sm"
                               step="0.01"
                               min="0"
+                              placeholder="0"
                             />
                           </TableCell>
                           <TableCell>
                             <Input
                               type="number"
-                              value={item.chargeWeight}
-                              onChange={(e) => updateGoodsItem(item.id, "chargeWeight", Number(e.target.value))}
+                              value={item.chargeWeight || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "chargeWeight", val))}
                               className="h-8 w-24 text-sm"
                               step="0.01"
                               min="0"
+                              placeholder="0"
                             />
                           </TableCell>
                           <TableCell>
@@ -3024,7 +3284,7 @@ export default function BookingComputerizedGRL() {
               )}
             </div>
 
-            {/* Manual Rates Section */}
+            {/* POINT 15: Manual Rates Section - Only show when manualRates is true */}
             {manualRates && (
               <div className="border rounded-lg p-3 bg-yellow-50/30">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -3033,10 +3293,11 @@ export default function BookingComputerizedGRL() {
                       <Label className="text-xs font-medium">Rate (per kg/pkg):</Label>
                       <Input
                         type="number"
-                        value={freightRate}
-                        onChange={(e) => setFreightRate(Number(e.target.value))}
+                        value={freightRate || ""}
+                        onChange={(e) => handleNumberChange(e, setFreightRate)}
                         className="h-7 text-xs w-28"
                         step="0.01"
+                        placeholder="0"
                       />
                       <Button onClick={handleClearFreight} variant="outline" size="sm" className="h-7 text-xs px-2">
                         CLEAR
@@ -3044,11 +3305,11 @@ export default function BookingComputerizedGRL() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-xs font-medium">Charge Wt:</Label>
-                      <Input type="number" value={totalChargeWeight} readOnly className="h-7 text-xs w-28 bg-gray-50" />
+                      <Input type="number" value={totalChargeWeight || ""} readOnly className="h-7 text-xs w-28 bg-gray-50" />
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-xs font-medium">Freight:</Label>
-                      <Input type="number" value={calculatedFreight} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" />
+                      <Input type="number" value={calculatedFreight || ""} readOnly className="h-7 text-xs w-28 font-bold text-green-600 bg-green-50" />
                     </div>
                   </div>
 
@@ -3068,10 +3329,11 @@ export default function BookingComputerizedGRL() {
                             <TableCell className="p-1">
                               <Input
                                 type="number"
-                                value={charge.rate}
-                                onChange={(e) => updateExtraCharge(charge.id, Number(e.target.value))}
+                                value={charge.rate || ""}
+                                onChange={(e) => handleNumberChange(e, (val) => updateExtraCharge(charge.id, val))}
                                 className="h-7 w-20 text-xs"
                                 step="0.01"
+                                placeholder="0"
                               />
                             </TableCell>
                             <TableCell className="text-xs p-1 text-right">₹{charge.amount.toFixed(0)}</TableCell>
@@ -3095,7 +3357,7 @@ export default function BookingComputerizedGRL() {
                     </div>
                     <div className="flex items-center justify-between">
                       <Label className="text-xs">GST Rate (%):</Label>
-                      <Input type="number" value={gstRate} onChange={(e) => setGstRate(Number(e.target.value))} className="h-7 w-20 text-xs" step="0.01" />
+                      <Input type="number" value={gstRate || ""} onChange={(e) => handleNumberChange(e, setGstRate)} className="h-7 w-20 text-xs" step="0.01" placeholder="0" />
                     </div>
                     <div className="border-t pt-1 mt-1">
                       <div className="flex justify-between text-xs">
@@ -3106,13 +3368,14 @@ export default function BookingComputerizedGRL() {
                         <span>GST ({gstRate}%):</span>
                         <span>₹{gstAmount.toFixed(0)}</span>
                       </div>
+                      {/* POINT 15: Total Amount Show Only in Manual Rates */}
                       <div className="flex justify-between text-xs font-bold text-green-600">
                         <span>Total:</span>
                         <span>₹{totalAmount.toFixed(0)}</span>
                       </div>
                       <div className="flex justify-between items-center text-xs mt-1">
                         <span>Advance:</span>
-                        <Input type="number" value={advanceAmount} onChange={(e) => setAdvanceAmount(Number(e.target.value))} className="h-7 w-24 text-xs text-right" step="0.01" />
+                        <Input type="number" value={advanceAmount || ""} onChange={(e) => handleNumberChange(e, setAdvanceAmount)} className="h-7 w-24 text-xs text-right" step="0.01" placeholder="0" />
                       </div>
                       <div className="flex justify-between text-xs font-bold text-blue-600 border-t pt-1 mt-1">
                         <span>Balance:</span>
@@ -3203,9 +3466,10 @@ export default function BookingComputerizedGRL() {
             {/* Remarks Section */}
             <div className="border rounded-lg p-4">
               <h3 className="text-base font-semibold mb-3 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" /> Billing Details
+                <MessageSquare className="h-5 w-5" /> Remarks & Billing
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><Label className="text-sm">Remarks</Label><Textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} rows={2} className="text-sm" placeholder="General remarks" /></div>
                 <div><Label className="text-sm">RO Remarks</Label><Textarea value={roRemarks} onChange={(e) => setRoRemarks(e.target.value)} rows={2} className="text-sm" placeholder="RO remarks" /></div>
                 <div><Label className="text-sm">Bill No</Label><Input value={billNo} onChange={(e) => setBillNo(e.target.value)} className="h-9 text-sm" placeholder="Bill number" /></div>
                 <div><Label className="text-sm">Supplementary Bill No</Label><Input value={supplementaryBillNo} onChange={(e) => setSupplementaryBillNo(e.target.value)} className="h-9 text-sm" placeholder="Supplementary bill number" /></div>
