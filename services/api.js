@@ -570,11 +570,46 @@ export const deleteClient = async (id) => {
 };
 
 // Search client by ID type
+// export const searchClient = async (idType, idValue) => {
+//   console.log(`Searching client by ${idType}: ${idValue}`);
+//   const response = await api.get(`/clients/search?idType=${idType}&idValue=${idValue}`);
+//   console.log('Search client response:', response.data);
+//   return response.data;
+// };
+// Updated searchClient - Supports both ID and Name Search
 export const searchClient = async (idType, idValue) => {
-  console.log(`Searching client by ${idType}: ${idValue}`);
-  const response = await api.get(`/clients/search?idType=${idType}&idValue=${idValue}`);
-  console.log('Search client response:', response.data);
-  return response.data;
+  try {
+    console.log(`Searching client by ${idType}: ${idValue}`);
+
+    let url = '';
+
+    if (idType.toLowerCase() === "name" || idType === "") {
+      // Name Search
+      url = `/clients/search?name=${encodeURIComponent(idValue)}`;
+    } else {
+      // GST, Adhaar, PAN Search
+      url = `/clients/search?idType=${encodeURIComponent(idType)}&idValue=${encodeURIComponent(idValue)}`;
+    }
+
+    const response = await api.get(url);
+    
+    console.log(`Search client response for ${idType}:`, response.data);
+
+    return response.data;   // Return raw response (as before)
+
+  } catch (error) {
+    console.error('Search client error:', error.response?.data || error.message);
+    
+    // Better error message
+    const errorMsg = error.response?.data?.message || 
+                    (idType.toLowerCase() === "name" 
+                      ? "Name search not supported or no results found" 
+                      : "Client not found");
+
+    toast.error(errorMsg);
+    
+    throw error; // Let frontend handle it
+  }
 };
 
 // ==================== DASHBOARD APIs ====================
