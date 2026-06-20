@@ -2170,8 +2170,8 @@ export default function BookingGRLManual() {
 
       {/* Main Booking Modal */}
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent className="w-[95vw] max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
-          <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pb-3 border-b shrink-0">
+        <DialogContent className="w-screen max-w-screen h-screen max-h-screen p-0 m-0 rounded-none overflow-hidden flex flex-col bg-white">
+          <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pt-4 border-b shrink-0">
             <DialogTitle className="text-xl">{editMode ? "Edit Booking" : "Create New Booking"}</DialogTitle>
             <DialogDescription>Fill in all booking details below.</DialogDescription>
           </DialogHeader>
@@ -2437,6 +2437,7 @@ export default function BookingGRLManual() {
             <div className="border rounded-lg overflow-hidden">
               <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="text-base font-semibold flex items-center gap-2"><Package className="h-5 w-5" /> GOODS DETAILS</h3><Button onClick={addGoodsRow} variant="ghost" size="sm" className="h-8 text-sm"><Plus className="mr-1 h-4 w-4" />ADD GOODS</Button></div>
               <div className="overflow-x-auto p-4">
+                <div className="overflow-x-auto p-4 max-h-[300px] overflow-y-auto">
                 <Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">#</TableHead><TableHead className="text-sm">No Of Pckgs</TableHead><TableHead className="text-sm">Content Category</TableHead><TableHead className="text-sm">Content (Sub)</TableHead><TableHead className="text-sm">Packing</TableHead><TableHead className="text-sm">Actual Weight</TableHead><TableHead className="text-sm">Charge Weight</TableHead><TableHead className="text-sm">Status</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
                   <TableBody>{goodsItems.map((item, idx) => {
                     const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory));
@@ -2576,6 +2577,7 @@ export default function BookingGRLManual() {
                     );
                   })}</TableBody>
                 </Table>
+                </div>
               </div>
               <div className="p-3 bg-gray-50 flex flex-wrap gap-4 justify-between items-center border-t"><div className="flex flex-wrap gap-4 items-center"><span className="text-sm font-medium">Total Pckgs: <strong className="text-blue-600">{totalPckgs}</strong></span><span className="text-sm font-medium">Total Actual Weight: <strong className="text-blue-600">{totalActualWeight.toFixed(2)} kg</strong></span><span className="text-sm font-medium">Total Charge Weight: <strong className="text-blue-600">{totalChargeWeight.toFixed(2)} kg</strong></span>{!manualRates && (<span className="text-sm font-medium">Total Freight: <strong className="text-green-600">₹{(totalChargeWeight * 5).toFixed(2)}</strong></span>)}</div><div className="flex items-center gap-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={manualRates} onChange={(e) => setManualRates(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm font-medium">Manual Rates</span></label></div></div>
             </div>
