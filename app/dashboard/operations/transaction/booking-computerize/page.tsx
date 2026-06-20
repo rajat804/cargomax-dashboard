@@ -2518,8 +2518,8 @@ export default function BookingComputerizedGRL() {
         }
         setIsBookingModalOpen(open);
       }}>
-        <DialogContent className="w-[95vw] max-w-6xl h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0">
-          <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pb-3 border-b shrink-0">
+        <DialogContent className="w-screen max-w-screen h-screen max-h-screen p-0 m-0 rounded-none overflow-hidden flex flex-col bg-white">
+          <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-6 pt-4 border-b shrink-0">
             <DialogTitle className="text-xl">{editMode ? "Edit Booking" : "Create New Booking"}</DialogTitle>
             <DialogDescription>Fill in all booking details below.</DialogDescription>
           </DialogHeader>
