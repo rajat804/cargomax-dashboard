@@ -39,16 +39,12 @@ export default function LoginPage() {
         sessionStorage.setItem("user", JSON.stringify(userData));
         sessionStorage.setItem("isLoggedIn", "true");
 
+        sessionStorage.removeItem("selectedBranch");
+  sessionStorage.removeItem("branchCode");
 
         toast.success("Login successful!");
-        if (userData.branch && userData.branchCode) {
-          sessionStorage.setItem("selectedBranch", userData.branch);
-          sessionStorage.setItem("branchCode", userData.branchCode);
 
-          router.push("/dashboard/overview");
-        } else {
           router.push("/auth/select-branch");
-        }
 
       } else {
         toast.error(response.message || "Login failed");
