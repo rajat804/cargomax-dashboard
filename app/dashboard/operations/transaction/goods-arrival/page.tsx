@@ -21,6 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -79,6 +85,8 @@ import {
   deleteGoodsArrival,
   searchAnyManifest,
   searchManifestByGR,
+  getBookings,
+  getManualBookings,
 } from "@/services/api";
 
 // ============================================
@@ -139,7 +147,6 @@ interface AssignedGR {
   bookingType: string;
 }
 
-// ✅ UPDATED GRItem with per-GR issue tracking
 interface GRItem {
   grNo: string;
   grDate: Date;
@@ -151,13 +158,10 @@ interface GRItem {
   despWt: number;
   receivePckgs: number;
   receiveWt: number;
-  // ✅ PER-GR ISSUE FIELDS
-  issueType: "damage" | "short" | "excess" | "missing" | "none";
   damagePcs: number;
   short: number;
   excess: number;
   missingPcs: number;
-  issueReason: string;
   issueDescription: string;
   godown: string;
   remarks: string;
@@ -185,29 +189,13 @@ const damageReasonOptions = [
   "Other (specify)"
 ];
 
-// ✅ Issue type colors
-const issueTypeColors = {
-  damage: "bg-red-100 text-red-700 border-red-300",
-  short: "bg-orange-100 text-orange-700 border-orange-300",
-  excess: "bg-green-100 text-green-700 border-green-300",
-  missing: "bg-purple-100 text-purple-700 border-purple-300",
-  none: "bg-gray-100 text-gray-500 border-gray-300",
-};
-
-const issueTypeLabels = {
-  damage: "⚠️ Damage",
-  short: "📉 Short",
-  excess: "📈 Excess",
-  missing: "❓ Missing",
-  none: "✅ OK",
-};
-
 // ============================================
 // MAIN COMPONENT
 // ============================================
 export default function GoodsArrival() {
   // View State
   const [viewMode, setViewMode] = useState<"list" | "form">("list");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"pending" | "arrived">("pending");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -301,6 +289,11 @@ export default function GoodsArrival() {
   // GR Items
   const [grItems, setGrItems] = useState<GRItem[]>([]);
 
+  // GR Search Results
+  const [grSearchResults, setGrSearchResults] = useState<any[]>([]);
+  const [isGrSearching, setIsGrSearching] = useState(false);
+  const [grSearchTerm, setGrSearchTerm] = useState("");
+
   // Totals
   const [manifestTotals, setManifestTotals] = useState({
     noOfGR: 0,
@@ -319,9 +312,10 @@ export default function GoodsArrival() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // ============================================
-  // VOICE NOTE FUNCTIONS
+  // VOICE NOTE FUNCTIONS - FIXED
   // ============================================
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -425,6 +419,7 @@ export default function GoodsArrival() {
     }
   };
 
+  // ✅ FIXED: deleteVoiceNote without toast
   const deleteVoiceNote = () => {
     if (voiceNoteUrl && voiceNoteUrl.startsWith('blob:')) {
       URL.revokeObjectURL(voiceNoteUrl);
@@ -453,8 +448,6 @@ export default function GoodsArrival() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-
-    toast.success("Voice note deleted");
   };
 
   useEffect(() => {
@@ -466,7 +459,86 @@ export default function GoodsArrival() {
   }, [voiceNoteUrl]);
 
   // ============================================
-  // ✅ FIXED: DAMAGE TYPE HANDLERS
+  // GR SEARCH FUNCTIONS - FIXED with dropdown
+  // ============================================
+  const searchGR = async (grNo: string) => {
+    if (!grNo || grNo.trim() === "") return [];
+
+    try {
+      const results: any[] = [];
+
+      // Search in Computerized Booking
+      try {
+        const response = await getBookings({ grNo: grNo.trim(), limit: 10 });
+        if (response.success && response.data && response.data.length > 0) {
+          results.push(...response.data.map((b: any) => ({ ...b, source: 'Computerized' })));
+        }
+      } catch (e) { }
+
+      // Search in Manual Booking
+      try {
+        const response = await getManualBookings({ grNo: grNo.trim(), limit: 10 });
+        if (response.success && response.data && response.data.length > 0) {
+          results.push(...response.data.map((b: any) => ({ ...b, source: 'Manual' })));
+        }
+      } catch (e) { }
+
+      return results;
+    } catch (error) {
+      console.error("Error searching GR:", error);
+      return [];
+    }
+  };
+
+  const handleGRSearch = async (value: string) => {
+    setGrSearchTerm(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (value.length < 2) {
+      setGrSearchResults([]);
+      return;
+    }
+
+    setIsGrSearching(true);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const results = await searchGR(value);
+        setGrSearchResults(results);
+      } catch (error) {
+        console.error("Search error:", error);
+        setGrSearchResults([]);
+      } finally {
+        setIsGrSearching(false);
+      }
+    }, 500);
+  };
+
+  const selectGR = (booking: any, index: number) => {
+    const updated = [...grItems];
+    updated[index] = {
+      ...updated[index],
+      grNo: booking.grNo,
+      grDate: booking.bookingDate || new Date(),
+      origin: booking.bookingFrom || "",
+      destination: booking.destination || "",
+      consignor: booking.consignorName || "",
+      consignee: booking.consigneeName || "",
+      despPckgs: booking.totalPckgs || 0,
+      despWt: booking.totalChargeWeight || 0,
+    };
+    setGrItems(updated);
+    setGrSearchResults([]);
+    setGrSearchTerm("");
+    calculateTotals();
+    toast.success(`GR ${booking.grNo} loaded from ${booking.source}!`);
+  };
+
+  // ============================================
+  // DAMAGE TYPE HANDLERS
   // ============================================
   const handleDamageTypeChange = (type: "damaged" | "missing") => {
     setDamageType(prev => {
@@ -630,59 +702,57 @@ export default function GoodsArrival() {
   // AUTO FETCH MANIFEST
   // ============================================
   const autoFetchManifest = async (searchValue: string) => {
-  if (!searchValue || searchValue.trim() === "") {
-    return;
-  }
-
-  setIsAutoFetching(true);
-  try {
-    const trimmedValue = searchValue.trim();
-    console.log("🔍 Searching for:", trimmedValue);
-    
-    // ✅ Use generic search parameter
-    const response = await getPendingManifests({ 
-      search: trimmedValue,  // ✅ NEW: Generic search
-      page: 1,
-      limit: 1 
-    });
-    
-    console.log("📦 Search response:", response);
-    
-    if (response.success && response.data && response.data.length > 0) {
-      const manifest = response.data[0];
-      toast.success(`✅ Manifest ${manifest.manifestNo} found!`);
-      handleSelectManifest(manifest);
-    } else {
-      // ✅ Try searching in all manifests (including arrived)
-      try {
-        const responseAll = await searchAnyManifest(trimmedValue);
-        
-        if (responseAll.success && responseAll.data && responseAll.data.length > 0) {
-          const manifest = responseAll.data[0];
-          
-          if (manifest.isArrived) {
-            toast(`⚠️ Manifest ${manifest.manifestNo} is already arrived!`, {
-              icon: '⚠️',
-              duration: 4000,
-            });
-            handleSelectManifest(manifest);
-            setIsAutoFetching(false);
-            return;
-          }
-        }
-      } catch (e) {
-        console.log("⚠️ Not found in all manifests");
-      }
-      
-      toast.error(`❌ No manifest found for "${trimmedValue}"`);
+    if (!searchValue || searchValue.trim() === "") {
+      return;
     }
-  } catch (error: any) {
-    console.error("❌ Error auto-fetching manifest:", error);
-    toast.error(error.response?.data?.message || "Failed to fetch manifest");
-  } finally {
-    setIsAutoFetching(false);
-  }
-};
+
+    setIsAutoFetching(true);
+    try {
+      const trimmedValue = searchValue.trim();
+      console.log("🔍 Searching for:", trimmedValue);
+
+      const response = await getPendingManifests({
+        search: trimmedValue,
+        page: 1,
+        limit: 1
+      });
+
+      console.log("📦 Search response:", response);
+
+      if (response.success && response.data && response.data.length > 0) {
+        const manifest = response.data[0];
+        toast.success(`✅ Manifest ${manifest.manifestNo} found!`);
+        handleSelectManifest(manifest);
+      } else {
+        try {
+          const responseAll = await searchAnyManifest(trimmedValue);
+
+          if (responseAll.success && responseAll.data && responseAll.data.length > 0) {
+            const manifest = responseAll.data[0];
+
+            if (manifest.isArrived) {
+              toast(`⚠️ Manifest ${manifest.manifestNo} is already arrived!`, {
+                icon: '⚠️',
+                duration: 4000,
+              });
+              handleSelectManifest(manifest);
+              setIsAutoFetching(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.log("⚠️ Not found in all manifests");
+        }
+
+        toast.error(`❌ No manifest found for "${trimmedValue}"`);
+      }
+    } catch (error: any) {
+      console.error("❌ Error auto-fetching manifest:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch manifest");
+    } finally {
+      setIsAutoFetching(false);
+    }
+  };
 
   // ============================================
   // fetchPendingManifests
@@ -789,12 +859,10 @@ export default function GoodsArrival() {
       despWt: gr.weight || 0,
       receivePckgs: 0,
       receiveWt: 0,
-      issueType: "none",
       damagePcs: 0,
       short: 0,
       excess: 0,
       missingPcs: 0,
-      issueReason: "",
       issueDescription: "",
       godown: "",
       remarks: ""
@@ -812,12 +880,10 @@ export default function GoodsArrival() {
         despWt: manifest.grossWeight || 0,
         receivePckgs: 0,
         receiveWt: 0,
-        issueType: "none",
         damagePcs: 0,
         short: 0,
         excess: 0,
         missingPcs: 0,
-        issueReason: "",
         issueDescription: "",
         godown: "",
         remarks: ""
@@ -858,118 +924,7 @@ export default function GoodsArrival() {
     setSaveStatus("idle");
     setSaveMessage("");
 
-    setViewMode("form");
-  };
-
-  // ============================================
-  // PER-GR ISSUE HANDLERS
-  // ============================================
-  const handleGRIssueTypeChange = (index: number, value: string) => {
-    const updated = [...grItems];
-    updated[index] = {
-      ...updated[index],
-      issueType: value as any,
-      damagePcs: 0,
-      short: 0,
-      excess: 0,
-      missingPcs: 0,
-    };
-    setGrItems(updated);
-    calculateTotals();
-  };
-
-  const handleGRDamageChange = (index: number, value: number) => {
-    const updated = [...grItems];
-    updated[index].damagePcs = value;
-    if (value > 0 && updated[index].issueType === "none") {
-      updated[index].issueType = "damage";
-    }
-    setGrItems(updated);
-    calculateTotals();
-  };
-
-  const handleGRShortChange = (index: number, value: number) => {
-    const updated = [...grItems];
-    updated[index].short = value;
-    if (value > 0 && updated[index].issueType === "none") {
-      updated[index].issueType = "short";
-    }
-    setGrItems(updated);
-    calculateTotals();
-  };
-
-  const handleGRExcessChange = (index: number, value: number) => {
-    const updated = [...grItems];
-    updated[index].excess = value;
-    if (value > 0 && updated[index].issueType === "none") {
-      updated[index].issueType = "excess";
-    }
-    setGrItems(updated);
-    calculateTotals();
-  };
-
-  const handleGRMissingChange = (index: number, value: number) => {
-    const updated = [...grItems];
-    updated[index].missingPcs = value;
-    if (value > 0 && updated[index].issueType === "none") {
-      updated[index].issueType = "missing";
-    }
-    setGrItems(updated);
-    calculateTotals();
-  };
-
-  const handleCancelArrival = async (id: string) => {
-    if (!confirm("Are you sure you want to cancel this arrival?")) return;
-
-    setLoading(true);
-    try {
-      const response = await cancelGoodsArrival(id);
-      if (response.success) {
-        toast.success("Arrival cancelled successfully");
-        fetchArrivedGoods();
-        loadStats();
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to cancel arrival");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRestoreArrival = async (id: string) => {
-    if (!confirm("Are you sure you want to restore this arrival?")) return;
-
-    setLoading(true);
-    try {
-      const response = await restoreGoodsArrival(id);
-      if (response.success) {
-        toast.success("Arrival restored successfully");
-        fetchArrivedGoods();
-        loadStats();
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to restore arrival");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteArrival = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this arrival?")) return;
-
-    setLoading(true);
-    try {
-      const response = await deleteGoodsArrival(id);
-      if (response.success) {
-        toast.success("Arrival deleted successfully");
-        fetchArrivedGoods();
-        loadStats();
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete arrival");
-    } finally {
-      setLoading(false);
-    }
+    setIsModalOpen(true);
   };
 
   // ============================================
@@ -993,20 +948,6 @@ export default function GoodsArrival() {
     }
     if (!formData.unloadingPerson) {
       toast.error("Unloading person is required");
-      return;
-    }
-
-    // ✅ Validate per-GR issues
-    const invalidGRs = grItems.filter(item =>
-      item.issueType !== "none" &&
-      item.issueType !== "damage" &&
-      item.issueType !== "short" &&
-      item.issueType !== "excess" &&
-      item.issueType !== "missing"
-    );
-
-    if (invalidGRs.length > 0) {
-      toast.error("Please select valid issue type for all GRs");
       return;
     }
 
@@ -1071,7 +1012,6 @@ export default function GoodsArrival() {
         serArrivalNo: formData.autoArrival ? undefined : formData.serArrivalNo,
         arrivalTotals,
         manifestTotals,
-        // ✅ GLOBAL DAMAGE/MISSING FIELDS
         damageType: damageType.length > 0 ? damageType : undefined,
         damageReason: damageReason || undefined,
         damageOtherRemark: damageOtherRemark || undefined,
@@ -1098,6 +1038,7 @@ export default function GoodsArrival() {
 
         setTimeout(() => {
           resetForm();
+          setIsModalOpen(false);
           setViewMode("list");
           setActiveTab("arrived");
           setCurrentPage(1);
@@ -1238,12 +1179,10 @@ export default function GoodsArrival() {
       despWt: 0,
       receivePckgs: 0,
       receiveWt: 0,
-      issueType: "none",
       damagePcs: 0,
       short: 0,
       excess: 0,
       missingPcs: 0,
-      issueReason: "",
       issueDescription: "",
       godown: "",
       remarks: ""
@@ -1296,6 +1235,8 @@ export default function GoodsArrival() {
     });
     setGrItems([]);
     setSelectedManifest(null);
+    setGrSearchResults([]);
+    setGrSearchTerm("");
     setDamageType([]);
     setShortExcessType([]);
     setDamageReason("");
@@ -1335,6 +1276,60 @@ export default function GoodsArrival() {
     ));
   };
 
+  const handleCancelArrival = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this arrival?")) return;
+
+    setLoading(true);
+    try {
+      const response = await cancelGoodsArrival(id);
+      if (response.success) {
+        toast.success("Arrival cancelled successfully");
+        fetchArrivedGoods();
+        loadStats();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to cancel arrival");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRestoreArrival = async (id: string) => {
+    if (!confirm("Are you sure you want to restore this arrival?")) return;
+
+    setLoading(true);
+    try {
+      const response = await restoreGoodsArrival(id);
+      if (response.success) {
+        toast.success("Arrival restored successfully");
+        fetchArrivedGoods();
+        loadStats();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to restore arrival");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteArrival = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this arrival?")) return;
+
+    setLoading(true);
+    try {
+      const response = await deleteGoodsArrival(id);
+      if (response.success) {
+        toast.success("Arrival deleted successfully");
+        fetchArrivedGoods();
+        loadStats();
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to delete arrival");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ============================================
   // EFFECTS
   // ============================================
@@ -1350,6 +1345,15 @@ export default function GoodsArrival() {
       fetchArrivedGoods();
     }
   }, [activeTab, currentPage]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ============================================
   // RENDER: PENDING MANIFESTS
@@ -1707,370 +1711,353 @@ export default function GoodsArrival() {
   );
 
   // ============================================
-  // FORM VIEW WITH COMPLETE DAMAGE/MISSING SECTION
+  // RENDER: MODAL FORM
   // ============================================
-  const renderFormView = () => (
-    <div className="max-w-7xl mx-auto">
-      <Card>
-        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+  const renderModalForm = () => (
+    <Dialog open={isModalOpen} onOpenChange={(open) => {
+      if (!open) {
+        resetForm();
+      }
+      setIsModalOpen(open);
+    }}>
+      <DialogContent className="w-screen max-w-screen h-screen max-h-screen p-0 m-0 rounded-none overflow-hidden flex flex-col bg-white">
+        <DialogHeader className="sticky top-0 bg-white z-10 px-6 pt-4 pb-3 border-b shrink-0 flex justify-between items-center">
+          <div>
+            <DialogTitle className="text-xl flex items-center gap-2">
               <Truck className="h-5 w-5 text-blue-600" />
               Goods Arrival - {selectedManifest?.manifestNo || "New Entry"}
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setViewMode("list"); resetForm(); }}
-              className="h-8"
-              disabled={submitting}
-            >
-              <X className="mr-1 h-3 w-3" /> Cancel
-            </Button>
+            </DialogTitle>
           </div>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-5">
-            {/* Basic Information */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Building className="h-4 w-4" /> Basic Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Branch *</Label>
-                  <Select value={formData.branch} onValueChange={(v) => setFormData({ ...formData, branch: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>
-                      {branchOptions.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.text}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setIsModalOpen(false); resetForm(); }}
+            className="h-8"
+            disabled={submitting}
+          >
+            <X className="mr-1 h-3 w-3" /> Close
+          </Button>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {/* Basic Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Building className="h-4 w-4" /> Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Branch *</Label>
+                <Select value={formData.branch} onValueChange={(v) => setFormData({ ...formData, branch: v })}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Branch" /></SelectTrigger>
+                  <SelectContent>
+                    {branchOptions.map(opt => (<SelectItem key={opt.value} value={opt.value}>{opt.text}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Select Godown *</Label>
+                <Select value={formData.selectGodown} onValueChange={(v) => setFormData({ ...formData, selectGodown: v })}>
+                  <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Godown" /></SelectTrigger>
+                  <SelectContent>{renderGodownOptions()}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Manifest # *</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.manifestNo}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, manifestNo: val });
+                      if (val.length >= 3) {
+                        const timeoutId = setTimeout(() => {
+                          autoFetchManifest(val);
+                        }, 500);
+                        return () => clearTimeout(timeoutId);
+                      }
+                    }}
+                    className="h-8 text-sm flex-1"
+                    placeholder="Enter Manifest Number (Auto-fetch)"
+                    disabled={isAutoFetching}
+                  />
+                  {isAutoFetching && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Select Godown *</Label>
-                  <Select value={formData.selectGodown} onValueChange={(v) => setFormData({ ...formData, selectGodown: v })}>
-                    <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select Godown" /></SelectTrigger>
-                    <SelectContent>{renderGodownOptions()}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Manifest # *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={formData.manifestNo}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setFormData({ ...formData, manifestNo: val });
-                        if (val.length >= 3) {
-                          const timeoutId = setTimeout(() => {
-                            autoFetchManifest(val);
-                          }, 500);
-                          return () => clearTimeout(timeoutId);
-                        }
-                      }}
-                      className="h-8 text-sm flex-1"
-                      placeholder="Enter Manifest Number (Auto-fetch)"
-                      disabled={isAutoFetching}
-                    />
-                    {isAutoFetching && <Loader2 className="h-5 w-5 animate-spin text-blue-500" />}
-                  </div>
-                  <p className="text-xs text-gray-500">Enter manifest number to auto-fetch details</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Receive Date *</Label>
-                  <div className="flex gap-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="h-8 flex-1 text-sm">
-                          <CalendarIcon className="mr-1 h-3 w-3" />
-                          {format(formData.receiveDate, "dd-MM-yyyy")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent>
-                        <Calendar mode="single" selected={formData.receiveDate} onSelect={(d) => d && setFormData({ ...formData, receiveDate: d })} />
-                      </PopoverContent>
-                    </Popover>
-                    <Input type="time" value={formData.receiveTime} onChange={(e) => setFormData({ ...formData, receiveTime: e.target.value })} className="h-8 w-28 text-sm" />
-                  </div>
+                <p className="text-xs text-gray-500">Enter manifest number to auto-fetch details</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Receive Date *</Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-8 flex-1 text-sm">
+                        <CalendarIcon className="mr-1 h-3 w-3" />
+                        {format(formData.receiveDate, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Calendar mode="single" selected={formData.receiveDate} onSelect={(d) => d && setFormData({ ...formData, receiveDate: d })} />
+                    </PopoverContent>
+                  </Popover>
+                  <Input type="time" value={formData.receiveTime} onChange={(e) => setFormData({ ...formData, receiveTime: e.target.value })} className="h-8 w-28 text-sm" />
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Transport Details */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Navigation className="h-4 w-4" /> Transport Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">From Station</Label>
-                  <Input value={formData.fromStation} onChange={(e) => setFormData({ ...formData, fromStation: e.target.value })} className="h-8 text-sm" placeholder="Enter from station" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Mode Name</Label>
-                  <Input value={formData.modeName} onChange={(e) => setFormData({ ...formData, modeName: e.target.value })} className="h-8 text-sm" placeholder="Enter mode name" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Driver</Label>
-                  <Input value={formData.driver} onChange={(e) => setFormData({ ...formData, driver: e.target.value })} className="h-8 text-sm" placeholder="Enter driver name" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Unloading Person *</Label>
-                  <Input value={formData.unloadingPerson} onChange={(e) => setFormData({ ...formData, unloadingPerson: e.target.value })} className="h-8 text-sm" placeholder="Enter unloading person" />
-                </div>
+          {/* Transport Details */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Navigation className="h-4 w-4" /> Transport Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">From Station</Label>
+                <Input value={formData.fromStation} onChange={(e) => setFormData({ ...formData, fromStation: e.target.value })} className="h-8 text-sm" placeholder="Enter from station" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Mode Name</Label>
+                <Input value={formData.modeName} onChange={(e) => setFormData({ ...formData, modeName: e.target.value })} className="h-8 text-sm" placeholder="Enter mode name" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Driver</Label>
+                <Input value={formData.driver} onChange={(e) => setFormData({ ...formData, driver: e.target.value })} className="h-8 text-sm" placeholder="Enter driver name" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium">Unloading Person *</Label>
+                <Input value={formData.unloadingPerson} onChange={(e) => setFormData({ ...formData, unloadingPerson: e.target.value })} className="h-8 text-sm" placeholder="Enter unloading person" />
               </div>
             </div>
+          </div>
 
-            {/* GR Items Table with Per-GR Issues */}
-            <div className="rounded-md border">
-              <div className="bg-gray-50 px-3 py-2 border-b flex justify-between items-center">
-                <h3 className="text-sm font-semibold flex items-center gap-2">
-                  <Package className="h-4 w-4" /> GR Details - Per GR Issue Tracking
-                </h3>
-                <Button onClick={addGRItem} variant="ghost" size="sm" className="h-7 text-xs text-blue-600">
-                  <PlusCircle className="mr-1 h-3 w-3" /> Add GR
-                </Button>
-              </div>
-              <div className="overflow-x-auto p-3">
-                <div className="min-w-[1600px]">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-xs min-w-[80px]">GR #</TableHead>
-                        <TableHead className="text-xs min-w-[80px]">Origin</TableHead>
-                        <TableHead className="text-xs min-w-[80px]">Destination</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px]">Desp Pckgs</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px]">Desp Wt</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px]">Rec Pckgs</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px]">Rec Wt</TableHead>
-                        <TableHead className="text-xs text-center min-w-[120px] bg-red-50">Issue Type</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px] bg-red-100">Damage</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px] bg-orange-100">Short</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px] bg-green-100">Excess</TableHead>
-                        <TableHead className="text-xs text-center min-w-[70px] bg-purple-100">Missing</TableHead>
-                        <TableHead className="text-xs min-w-[120px]">Issue Remarks</TableHead>
-                        <TableHead className="text-xs min-w-[100px]">Godown</TableHead>
-                        <TableHead className="w-8"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grItems.map((item, idx) => {
-                        const hasIssue = item.issueType !== "none";
-                        return (
-                          <TableRow
-                            key={idx}
-                            className={cn(
-                              hasIssue && "bg-red-50/20",
-                              hasIssue && "border-l-4 border-red-400"
-                            )}
-                          >
-                            <TableCell>
-                              <Input
-                                value={item.grNo}
-                                onChange={(e) => updateGRItem(idx, "grNo", e.target.value)}
-                                className="h-7 w-28 text-xs"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={item.origin}
-                                onChange={(e) => updateGRItem(idx, "origin", e.target.value)}
-                                className="h-7 w-28 text-xs"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={item.destination}
-                                onChange={(e) => updateGRItem(idx, "destination", e.target.value)}
-                                className="h-7 w-28 text-xs"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.despPckgs}
-                                onChange={(e) => updateGRItem(idx, "despPckgs", Number(e.target.value))}
-                                className="h-7 w-20 text-xs text-right"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.despWt}
-                                onChange={(e) => updateGRItem(idx, "despWt", Number(e.target.value))}
-                                className="h-7 w-20 text-xs text-right"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.receivePckgs}
-                                onChange={(e) => updateGRItem(idx, "receivePckgs", Number(e.target.value))}
-                                className="h-7 w-20 text-xs text-right"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={item.receiveWt}
-                                onChange={(e) => updateGRItem(idx, "receiveWt", Number(e.target.value))}
-                                className="h-7 w-20 text-xs text-right"
-                              />
-                            </TableCell>
-                            <TableCell className="bg-red-50/30">
-                              <Select
-                                value={item.issueType}
-                                onValueChange={(v) => handleGRIssueTypeChange(idx, v)}
-                              >
-                                <SelectTrigger className={cn(
-                                  "h-7 w-28 text-xs",
-                                  item.issueType !== "none" && "border-red-300"
-                                )}>
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">✅ OK</SelectItem>
-                                  <SelectItem value="damage" className="text-red-600">⚠️ Damage</SelectItem>
-                                  <SelectItem value="short" className="text-orange-600">📉 Short</SelectItem>
-                                  <SelectItem value="excess" className="text-green-600">📈 Excess</SelectItem>
-                                  <SelectItem value="missing" className="text-purple-600">❓ Missing</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              {item.issueType !== "none" && (
-                                <Badge className={cn(
-                                  "text-[8px] mt-1",
-                                  issueTypeColors[item.issueType]
-                                )}>
-                                  {issueTypeLabels[item.issueType]}
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell className="bg-red-50">
-                              <Input
-                                type="number"
-                                value={item.damagePcs || 0}
-                                onChange={(e) => handleGRDamageChange(idx, Number(e.target.value))}
-                                className={cn(
-                                  "h-7 w-20 text-xs text-right",
-                                  item.issueType === "damage" ? "border-red-500 bg-red-50" : "border-gray-200"
-                                )}
-                                min="0"
-                                disabled={item.issueType !== "damage" && item.issueType !== "none"}
-                              />
-                            </TableCell>
-                            <TableCell className="bg-orange-50">
-                              <Input
-                                type="number"
-                                value={item.short || 0}
-                                onChange={(e) => handleGRShortChange(idx, Number(e.target.value))}
-                                className={cn(
-                                  "h-7 w-20 text-xs text-right",
-                                  item.issueType === "short" ? "border-orange-500 bg-orange-50" : "border-gray-200"
-                                )}
-                                min="0"
-                                disabled={item.issueType !== "short" && item.issueType !== "none"}
-                              />
-                            </TableCell>
-                            <TableCell className="bg-green-50">
-                              <Input
-                                type="number"
-                                value={item.excess || 0}
-                                onChange={(e) => handleGRExcessChange(idx, Number(e.target.value))}
-                                className={cn(
-                                  "h-7 w-20 text-xs text-right",
-                                  item.issueType === "excess" ? "border-green-500 bg-green-50" : "border-gray-200"
-                                )}
-                                min="0"
-                                disabled={item.issueType !== "excess" && item.issueType !== "none"}
-                              />
-                            </TableCell>
-                            <TableCell className="bg-purple-50">
-                              <Input
-                                type="number"
-                                value={item.missingPcs || 0}
-                                onChange={(e) => handleGRMissingChange(idx, Number(e.target.value))}
-                                className={cn(
-                                  "h-7 w-20 text-xs text-right",
-                                  item.issueType === "missing" ? "border-purple-500 bg-purple-50" : "border-gray-200"
-                                )}
-                                min="0"
-                                disabled={item.issueType !== "missing" && item.issueType !== "none"}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={item.issueDescription || ""}
-                                onChange={(e) => updateGRItem(idx, "issueDescription", e.target.value)}
-                                className={cn(
-                                  "h-7 text-xs",
-                                  item.issueType !== "none" && "border-red-300 bg-red-50/30"
-                                )}
-                                placeholder="Describe issue..."
-                                disabled={item.issueType === "none"}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={item.godown}
-                                onValueChange={(v) => updateGRItem(idx, "godown", v)}
-                              >
-                                <SelectTrigger className="h-7 w-28 text-xs">
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>{renderGodownOptions()}</SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeGRItem(idx)}
-                                className="h-6 w-6 p-0 text-red-500"
-                                disabled={grItems.length <= 1}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </div>
-
-            {/* Totals Display */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="border rounded-lg p-3 bg-blue-50">
-                <h4 className="text-sm font-semibold mb-2">As Per Manifest</h4>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <span>GR: {manifestTotals.noOfGR}</span>
-                  <span>Pckgs: {manifestTotals.totalPckgs}</span>
-                  <span>Wt: {manifestTotals.totalWeight.toFixed(2)} kg</span>
-                </div>
-              </div>
-              <div className="border rounded-lg p-3 bg-green-50">
-                <h4 className="text-sm font-semibold mb-2">As Per Arrival</h4>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <span>GR: {arrivalTotals.noOfGR}</span>
-                  <span>Pckgs: {arrivalTotals.totalPckgs}</span>
-                  <span>Wt: {arrivalTotals.totalWeight.toFixed(2)} kg</span>
-                  {arrivalTotals.damagePckgs > 0 && <span className="text-red-600">Damage: {arrivalTotals.damagePckgs}</span>}
-                  {arrivalTotals.totalShort > 0 && <span className="text-orange-600">Short: {arrivalTotals.totalShort}</span>}
-                  {arrivalTotals.totalExcess > 0 && <span className="text-green-600">Excess: {arrivalTotals.totalExcess}</span>}
-                  {arrivalTotals.totalMissing > 0 && <span className="text-purple-600">Missing: {arrivalTotals.totalMissing}</span>}
-                </div>
-              </div>
-            </div>
-
-            {/* ============================================
-            🔥 COMPLETE DAMAGE/MISSING SECTION
-            ============================================ */}
-            <div className="border rounded-lg p-4 bg-red-50/20">
-              <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
-                <AlertCircle className="h-5 w-5" /> Damage / Missing / Short / Excess Details
+          {/* GR Items Table with Search Dropdown */}
+          <div className="rounded-md border">
+            <div className="bg-gray-50 px-3 py-2 border-b flex justify-between items-center">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Package className="h-4 w-4" /> GR Details
               </h3>
+              <Button onClick={addGRItem} variant="ghost" size="sm" className="h-7 text-xs text-blue-600">
+                <PlusCircle className="mr-1 h-3 w-3" /> Add GR
+              </Button>
+            </div>
+            <div className="overflow-x-auto p-3">
+              <div className="min-w-[1400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="text-xs min-w-[200px]">GR #</TableHead>
+                      <TableHead className="text-xs min-w-[80px]">Origin</TableHead>
+                      <TableHead className="text-xs min-w-[80px]">Destination</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px]">Desp Pckgs</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px]">Desp Wt</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px]">Rec Pckgs</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px]">Rec Wt</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px] bg-red-50">Damage</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px] bg-orange-50">Short</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px] bg-green-50">Excess</TableHead>
+                      <TableHead className="text-xs text-center min-w-[70px] bg-purple-50">Missing</TableHead>
+                      <TableHead className="text-xs min-w-[150px]">Issue Remarks</TableHead>
+                      <TableHead className="text-xs min-w-[100px]">Godown</TableHead>
+                      <TableHead className="w-8"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {grItems.map((item, idx) => (
+                      <TableRow key={idx} className={cn(
+                        (item.damagePcs > 0 || item.short > 0 || item.excess > 0 || item.missingPcs > 0) &&
+                        "border-l-4 border-red-400 bg-red-50/10"
+                      )}>
+                        <TableCell className="relative">
+                          <Input
+                            value={item.grNo}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              updateGRItem(idx, "grNo", val);
+                              handleGRSearch(val);
+                            }}
+                            className="h-7 w-48 text-xs"
+                            placeholder="Enter GR # to search..."
+                          />
+                          {/* Search Results Dropdown */}
+                          {grSearchResults.length > 0 && idx === grItems.length - 1 && (
+                            <div className="absolute z-50 top-full left-0 mt-1 w-96 bg-white border rounded-md shadow-lg max-h-48 overflow-auto">
+                              {grSearchResults.map((result, ridx) => (
+                                <div
+                                  key={ridx}
+                                  className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-xs"
+                                  onClick={() => selectGR(result, idx)}
+                                >
+                                  <div className="font-medium">{result.grNo}</div>
+                                  <div className="text-gray-500 text-[10px]">
+                                    {result.consignorName} → {result.destination} | 
+                                    Pckgs: {result.totalPckgs} | Wt: {result.totalChargeWeight}kg
+                                    <Badge className="ml-2 text-[8px]" variant="outline">
+                                      {result.source}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.origin}
+                            onChange={(e) => updateGRItem(idx, "origin", e.target.value)}
+                            className="h-7 w-28 text-xs"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.destination}
+                            onChange={(e) => updateGRItem(idx, "destination", e.target.value)}
+                            className="h-7 w-28 text-xs"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.despPckgs || ""}
+                            onChange={(e) => updateGRItem(idx, "despPckgs", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.despWt || ""}
+                            onChange={(e) => updateGRItem(idx, "despWt", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.receivePckgs || ""}
+                            onChange={(e) => updateGRItem(idx, "receivePckgs", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.receiveWt || ""}
+                            onChange={(e) => updateGRItem(idx, "receiveWt", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell className="bg-red-50">
+                          <Input
+                            type="number"
+                            value={item.damagePcs || ""}
+                            onChange={(e) => updateGRItem(idx, "damagePcs", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right border-red-300 bg-red-50"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell className="bg-orange-50">
+                          <Input
+                            type="number"
+                            value={item.short || ""}
+                            onChange={(e) => updateGRItem(idx, "short", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right border-orange-300 bg-orange-50"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell className="bg-green-50">
+                          <Input
+                            type="number"
+                            value={item.excess || ""}
+                            onChange={(e) => updateGRItem(idx, "excess", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right border-green-300 bg-green-50"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell className="bg-purple-50">
+                          <Input
+                            type="number"
+                            value={item.missingPcs || ""}
+                            onChange={(e) => updateGRItem(idx, "missingPcs", Number(e.target.value))}
+                            className="h-7 w-20 text-xs text-right border-purple-300 bg-purple-50"
+                            placeholder="0"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.issueDescription || ""}
+                            onChange={(e) => updateGRItem(idx, "issueDescription", e.target.value)}
+                            className="h-7 text-xs"
+                            placeholder="Describe issue..."
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={item.godown}
+                            onValueChange={(v) => updateGRItem(idx, "godown", v)}
+                          >
+                            <SelectTrigger className="h-7 w-28 text-xs">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>{renderGodownOptions()}</SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeGRItem(idx)}
+                            className="h-6 w-6 p-0 text-red-500"
+                            disabled={grItems.length <= 1}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
 
-              {/* Row 1: Damage & Missing */}
-              <div className="mb-4">
-                <Label className="text-sm font-medium mb-2 block">Select Damage/Missing Type:</Label>
+          {/* Totals Display */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="border rounded-lg p-3 bg-blue-50">
+              <h4 className="text-sm font-semibold mb-2">As Per Manifest</h4>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <span>GR: {manifestTotals.noOfGR}</span>
+                <span>Pckgs: {manifestTotals.totalPckgs}</span>
+                <span>Wt: {manifestTotals.totalWeight.toFixed(2)} kg</span>
+              </div>
+            </div>
+            <div className="border rounded-lg p-3 bg-green-50">
+              <h4 className="text-sm font-semibold mb-2">As Per Arrival</h4>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <span>GR: {arrivalTotals.noOfGR}</span>
+                <span>Pckgs: {arrivalTotals.totalPckgs}</span>
+                <span>Wt: {arrivalTotals.totalWeight.toFixed(2)} kg</span>
+                {arrivalTotals.damagePckgs > 0 && <span className="text-red-600">Damage: {arrivalTotals.damagePckgs}</span>}
+                {arrivalTotals.totalShort > 0 && <span className="text-orange-600">Short: {arrivalTotals.totalShort}</span>}
+                {arrivalTotals.totalExcess > 0 && <span className="text-green-600">Excess: {arrivalTotals.totalExcess}</span>}
+                {arrivalTotals.totalMissing > 0 && <span className="text-purple-600">Missing: {arrivalTotals.totalMissing}</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* ============================================
+          🔥 COMPLETE DAMAGE/MISSING SECTION - 2 Columns
+          ============================================ */}
+          <div className="border rounded-lg p-4 bg-red-50/20">
+            <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" /> Damage / Missing / Short / Excess Details
+            </h3>
+
+            {/* Row 1: Damage/Missing & Short/Excess - 2 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Damage/Missing Type:</Label>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -2093,9 +2080,8 @@ export default function GoodsArrival() {
                 </div>
               </div>
 
-              {/* Row 2: Short & Excess */}
-              <div className="mb-4">
-                <Label className="text-sm font-medium mb-2 block">Select Short/Excess Type:</Label>
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Short/Excess Type:</Label>
                 <div className="flex flex-wrap gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -2117,42 +2103,47 @@ export default function GoodsArrival() {
                   </label>
                 </div>
               </div>
+            </div>
 
-              {/* Damage/Missing Details */}
-              {damageType.length > 0 && (
-                <div className="space-y-4 border-t border-dashed border-red-200 pt-4 mt-2">
-                  <div>
-                    <Label className="text-sm font-medium">Reason <span className="text-red-500">*</span></Label>
-                    <Select value={damageReason} onValueChange={handleDamageReasonChange}>
-                      <SelectTrigger className="mt-1"><SelectValue placeholder="Select reason" /></SelectTrigger>
-                      <SelectContent>
-                        {damageReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    {damageValidationErrors.damageReason && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageReason}</p>}
+            {/* Row 2: Reason - Full Width */}
+            {damageType.length > 0 && (
+              <div className="mb-3">
+                <Label className="text-sm font-medium">Reason <span className="text-red-500">*</span></Label>
+                <Select value={damageReason} onValueChange={handleDamageReasonChange}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select reason" /></SelectTrigger>
+                  <SelectContent>
+                    {damageReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {damageValidationErrors.damageReason && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageReason}</p>}
+
+                {damageReason === "Other (specify)" && (
+                  <div className="mt-2">
+                    <Textarea
+                      value={damageOtherRemark}
+                      onChange={(e) => setDamageOtherRemark(e.target.value)}
+                      placeholder="Describe the issue in detail..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                    {damageValidationErrors.damageOtherRemark && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageOtherRemark}</p>}
                   </div>
+                )}
+              </div>
+            )}
 
-                  {damageReason === "Other (specify)" && (
-                    <div>
-                      <Label className="text-sm font-medium">Please specify <span className="text-red-500">*</span></Label>
-                      <Textarea
-                        value={damageOtherRemark}
-                        onChange={(e) => setDamageOtherRemark(e.target.value)}
-                        placeholder="Describe the issue in detail..."
-                        rows={2}
-                        className="mt-1"
-                      />
-                      {damageValidationErrors.damageOtherRemark && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageOtherRemark}</p>}
-                    </div>
-                  )}
-
+            {/* Row 3: Damage Package Count & Remarks - 2 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {damageType.length > 0 && (
+                <>
                   <div>
-                    <Label className="text-sm font-medium">Number of Damaged/Missing Packages <span className="text-red-500">*</span></Label>
+                    <Label className="text-sm font-medium">Damage/Missing Packages <span className="text-red-500">*</span></Label>
                     <Input
                       type="number"
                       value={damagePackageCount || ""}
                       onChange={(e) => handleDamagePackageCountChange(e.target.value)}
-                      className="mt-1 w-32"
+                      className="mt-1"
+                      placeholder="0"
                       min="1"
                       max={grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}
                     />
@@ -2160,24 +2151,62 @@ export default function GoodsArrival() {
                     {damageValidationErrors.damagePackageCount && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damagePackageCount}</p>}
                     <p className="text-xs text-gray-500 mt-1">Total received packages: <strong>{grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}</strong></p>
                   </div>
-
                   <div>
-                    <Label className="text-sm font-medium">Damage/Missing Remarks <span className="text-red-500">*</span></Label>
+                    <Label className="text-sm font-medium">Damage Remarks <span className="text-red-500">*</span></Label>
                     <Textarea
                       value={damageRemarks}
                       onChange={(e) => setDamageRemarks(e.target.value)}
-                      placeholder="Enter details about damage/missing condition..."
+                      placeholder="Enter details about damage/missing..."
                       rows={2}
                       className="mt-1"
                     />
                     {damageValidationErrors.damageRemarks && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageRemarks}</p>}
                   </div>
+                </>
+              )}
+            </div>
 
+            {/* Row 4: Short & Excess Details - 2 Columns */}
+            {shortExcessType.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                {shortExcessType.includes("short") && (
                   <div>
-                    <Label className="text-sm font-medium">Upload Damage Photos <span className="text-red-500">* (Min: 1, Max: 10)</span></Label>
+                    <Label className="text-sm font-medium">Short Details <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      value={shortDetails}
+                      onChange={(e) => setShortDetails(e.target.value)}
+                      placeholder="Enter details about short packages..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                    {damageValidationErrors.shortDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.shortDetails}</p>}
+                  </div>
+                )}
+                {shortExcessType.includes("excess") && (
+                  <div>
+                    <Label className="text-sm font-medium">Excess Details <span className="text-red-500">*</span></Label>
+                    <Textarea
+                      value={excessDetails}
+                      onChange={(e) => setExcessDetails(e.target.value)}
+                      placeholder="Enter details about excess packages..."
+                      rows={2}
+                      className="mt-1"
+                    />
+                    {damageValidationErrors.excessDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.excessDetails}</p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Row 5: Photos & Voice Note - 2 Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+              {damageType.length > 0 && (
+                <>
+                  <div>
+                    <Label className="text-sm font-medium">Damage Photos <span className="text-red-500">* (Min: 1, Max: 10)</span></Label>
                     <div className="mt-2">
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-9">
-                        <PlusCircle className="h-4 w-4 mr-2" />Select Photos (JPG, PNG, WEBP)
+                        <PlusCircle className="h-4 w-4 mr-2" />Select Photos
                       </Button>
                       <input
                         ref={fileInputRef}
@@ -2191,7 +2220,7 @@ export default function GoodsArrival() {
                     {damagePhotos.length > 0 && (
                       <div className="flex flex-wrap gap-3 mt-3">
                         {damagePhotos.map((photo, idx) => (
-                          <div key={idx} className="relative w-24 h-24 border rounded-lg overflow-hidden group bg-gray-100">
+                          <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-100">
                             <img src={photo} alt={`Damage ${idx + 1}`} className="w-full h-full object-cover" />
                             <button
                               type="button"
@@ -2205,10 +2234,9 @@ export default function GoodsArrival() {
                       </div>
                     )}
                     {damageValidationErrors.damagePhotos && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damagePhotos}</p>}
-                    <p className="text-xs text-gray-500 mt-1">Supported: JPG, PNG, WEBP. Max 5MB per photo.</p>
+                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WEBP. Max 5MB each.</p>
                   </div>
 
-                  {/* Voice Note */}
                   <div>
                     <Label className="text-sm font-medium mb-2 block">Voice Note <span className="text-red-500">*</span></Label>
                     {!isRecording && !voiceNoteUrl && (
@@ -2221,7 +2249,7 @@ export default function GoodsArrival() {
                         <Button type="button" onClick={stopRecording} variant="destructive" className="h-10 w-full animate-pulse">
                           <MicOff className="h-4 w-4 mr-2" /> ■ Stop Recording ({formatDuration(recordingDuration)})
                         </Button>
-                        <p className="text-xs text-red-600 text-center">Recording in progress... Please speak clearly</p>
+                        <p className="text-xs text-red-600 text-center">Recording...</p>
                       </div>
                     )}
                     {voiceNoteUrl && !isRecording && (
@@ -2242,135 +2270,92 @@ export default function GoodsArrival() {
                             </Button>
                           </div>
                         </div>
-                        <p className="text-sm font-medium text-green-700">✅ Voice note recorded - Duration: {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}</p>
+                        <p className="text-sm font-medium text-green-700">✅ Voice note recorded - {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}</p>
                       </div>
                     )}
                     {damageValidationErrors.voiceNote && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.voiceNote}</p>}
-                    <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />Tip: Describe the damage verbally - what you see, package condition, any remarks from unloading person (Max 2 minutes)
-                    </p>
                   </div>
-                </div>
-              )}
-
-              {/* Short & Excess Details */}
-              {shortExcessType.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 border-t border-dashed border-yellow-200 pt-4">
-                  {shortExcessType.includes("short") && (
-                    <div>
-                      <Label className="text-sm font-medium">Short Details <span className="text-red-500">*</span></Label>
-                      <Textarea
-                        value={shortDetails}
-                        onChange={(e) => setShortDetails(e.target.value)}
-                        placeholder="Enter details about short packages..."
-                        rows={2}
-                        className="mt-1"
-                      />
-                      {damageValidationErrors.shortDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.shortDetails}</p>}
-                    </div>
-                  )}
-                  {shortExcessType.includes("excess") && (
-                    <div>
-                      <Label className="text-sm font-medium">Excess Details <span className="text-red-500">*</span></Label>
-                      <Textarea
-                        value={excessDetails}
-                        onChange={(e) => setExcessDetails(e.target.value)}
-                        placeholder="Enter details about excess packages..."
-                        rows={2}
-                        className="mt-1"
-                      />
-                      {damageValidationErrors.excessDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.excessDetails}</p>}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Summary of selected options */}
-              {(damageType.length > 0 || shortExcessType.length > 0) && (
-                <div className="mt-4 p-3 bg-white rounded-lg border">
-                  <p className="text-xs font-medium text-gray-600">Selected Options:</p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {damageType.includes("damaged") && <Badge className="bg-red-100 text-red-700">Damaged</Badge>}
-                    {damageType.includes("missing") && <Badge className="bg-orange-100 text-orange-700">Missing</Badge>}
-                    {shortExcessType.includes("short") && <Badge className="bg-yellow-100 text-yellow-700">Short</Badge>}
-                    {shortExcessType.includes("excess") && <Badge className="bg-green-100 text-green-700">Excess</Badge>}
-                  </div>
-                </div>
+                </>
               )}
             </div>
 
-            {/* General Remarks */}
-            <div className="space-y-1">
-              <Label className="text-sm font-medium">General Remarks</Label>
-              <Textarea
-                value={formData.remarks}
-                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                rows={2}
-                className="text-sm"
-                placeholder="Additional remarks..."
-              />
-            </div>
-
-            {/* Save Status */}
-            {saveStatus !== "idle" && (
-              <div className={cn(
-                "p-3 rounded-lg border flex items-center gap-2",
-                saveStatus === "saving" && "bg-blue-50 border-blue-200 text-blue-700",
-                saveStatus === "success" && "bg-green-50 border-green-200 text-green-700",
-                saveStatus === "error" && "bg-red-50 border-red-200 text-red-700"
-              )}>
-                {saveStatus === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
-                {saveStatus === "success" && <CheckCircle className="h-4 w-4" />}
-                {saveStatus === "error" && <AlertCircle className="h-4 w-4" />}
-                <span className="text-sm">{saveMessage}</span>
+            {/* Selected Options Summary */}
+            {(damageType.length > 0 || shortExcessType.length > 0) && (
+              <div className="mt-3 p-3 bg-white rounded-lg border">
+                <p className="text-xs font-medium text-gray-600">Selected Options:</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {damageType.includes("damaged") && <Badge className="bg-red-100 text-red-700">Damaged</Badge>}
+                  {damageType.includes("missing") && <Badge className="bg-orange-100 text-orange-700">Missing</Badge>}
+                  {shortExcessType.includes("short") && <Badge className="bg-yellow-100 text-yellow-700">Short</Badge>}
+                  {shortExcessType.includes("excess") && <Badge className="bg-green-100 text-green-700">Excess</Badge>}
+                </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-3 pt-3 border-t">
-              <Button
-                variant="outline"
-                onClick={() => { setViewMode("list"); resetForm(); setSaveStatus("idle"); }}
-                className="h-8"
-                disabled={submitting}
-              >
-                <X className="mr-1 h-3 w-3" /> Cancel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => { resetForm(); setSaveStatus("idle"); setSaveMessage(""); }}
-                className="h-8"
-                disabled={submitting}
-              >
-                <RefreshCw className="mr-1 h-3 w-3" /> Clear
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting || saveStatus === "saving"}
-                className="h-8 min-w-[120px] bg-green-600 hover:bg-green-700"
-              >
-                {submitting || saveStatus === "saving" ? (
-                  <>
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                    Saving...
-                  </>
-                ) : saveStatus === "success" ? (
-                  <>
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    Saved!
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-1 h-3 w-3" />
-                    Save Arrival
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          {/* General Remarks */}
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">General Remarks</Label>
+            <Textarea
+              value={formData.remarks}
+              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+              rows={2}
+              className="text-sm"
+              placeholder="Additional remarks..."
+            />
+          </div>
+
+          {/* Save Status */}
+          {saveStatus !== "idle" && (
+            <div className={cn(
+              "p-3 rounded-lg border flex items-center gap-2",
+              saveStatus === "saving" && "bg-blue-50 border-blue-200 text-blue-700",
+              saveStatus === "success" && "bg-green-50 border-green-200 text-green-700",
+              saveStatus === "error" && "bg-red-50 border-red-200 text-red-700"
+            )}>
+              {saveStatus === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saveStatus === "success" && <CheckCircle className="h-4 w-4" />}
+              {saveStatus === "error" && <AlertCircle className="h-4 w-4" />}
+              <span className="text-sm">{saveMessage}</span>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-3 border-t">
+            <Button
+              variant="outline"
+              onClick={() => { resetForm(); setSaveStatus("idle"); setSaveMessage(""); }}
+              className="h-8"
+              disabled={submitting}
+            >
+              <RefreshCw className="mr-1 h-3 w-3" /> Clear
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting || saveStatus === "saving"}
+              className="h-8 min-w-[120px] bg-green-600 hover:bg-green-700"
+            >
+              {submitting || saveStatus === "saving" ? (
+                <>
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                  Saving...
+                </>
+              ) : saveStatus === "success" ? (
+                <>
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  Saved!
+                </>
+              ) : (
+                <>
+                  <Save className="mr-1 h-3 w-3" />
+                  Save Arrival
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 
   // ============================================
@@ -2392,7 +2377,7 @@ export default function GoodsArrival() {
             </div>
           </div>
           {viewMode === "list" && (
-            <Button onClick={() => setViewMode("form")} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="mr-2 h-4 w-4" /> New Goods Arrival
             </Button>
           )}
@@ -2422,8 +2407,11 @@ export default function GoodsArrival() {
 
       {viewMode === "list"
         ? (activeTab === "pending" ? renderPendingManifests() : renderArrivedGoods())
-        : renderFormView()
+        : renderModalForm()
       }
+
+      {/* Modal - Always rendered but controlled by isModalOpen */}
+      {renderModalForm()}
     </div>
   );
 }
