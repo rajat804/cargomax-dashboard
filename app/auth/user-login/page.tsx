@@ -15,8 +15,8 @@ import { useModules } from "@/contexts/ModuleContext";
 export default function UserLoginPage() {
 
   const router = useRouter();
-const { refreshModules } = useModules();
-  
+  const { refreshModules } = useModules();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,7 +25,7 @@ const { refreshModules } = useModules();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
@@ -38,24 +38,18 @@ const { refreshModules } = useModules();
       if (response.success) {
         const userData = response.data;
         console.log(userData);
-        
+
         // ✅ Store in sessionStorage (multi-tab support)
         sessionStorage.setItem("token", userData.token);
         sessionStorage.setItem("user", JSON.stringify(userData));
         sessionStorage.setItem("isLoggedIn", "true");
-        
+
+        sessionStorage.removeItem("selectedBranch");
+        sessionStorage.removeItem("branchCode");
         toast.success("Login successful!");
-        
-        // Check if user already has a branch
-        if (userData.branch && userData.branchCode) {
-          sessionStorage.setItem("userData", JSON.stringify(userData));
-          sessionStorage.setItem("selectedBranch", userData.branch);
-          sessionStorage.setItem("branchCode", userData.branchCode);
-          refreshModules();
-          router.push("/dashboard/overview");
-        } else {
-          router.push("/auth/select-branch");
-        }
+        router.push("/auth/select-branch");
+
+        refreshModules();
       } else {
         toast.error(response.message || "Login failed");
       }
@@ -79,7 +73,7 @@ const { refreshModules } = useModules();
               <ArrowLeft className="h-5 w-5" />
             </button>
           </div>
-          
+
           <div className="flex justify-center">
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-3 rounded-full shadow-lg">
               <User className="h-8 w-8 text-white" />
@@ -92,7 +86,7 @@ const { refreshModules } = useModules();
             Sign in to your account
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1.5">
@@ -111,7 +105,7 @@ const { refreshModules } = useModules();
                 required
               />
             </div>
-            
+
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-sm font-medium">
                 Password
@@ -138,8 +132,8 @@ const { refreshModules } = useModules();
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
               disabled={loading}
             >
@@ -159,8 +153,8 @@ const { refreshModules } = useModules();
             <div className="text-center pt-2">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <Link 
-                  href="/auth/register" 
+                <Link
+                  href="/auth/register"
                   className="text-purple-600 hover:text-purple-800 font-medium hover:underline transition-colors"
                 >
                   Create Account
@@ -171,8 +165,8 @@ const { refreshModules } = useModules();
             <div className="text-center">
               <p className="text-xs text-gray-400">
                 Are you an Admin?{" "}
-                <Link 
-                  href="/auth/login" 
+                <Link
+                  href="/auth/login"
                   className="text-blue-500 hover:text-blue-700 hover:underline transition-colors"
                 >
                   Admin Login
