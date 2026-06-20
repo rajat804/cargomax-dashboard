@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Building2, ChevronRight, Store, CheckCircle, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { selectBranch, userSelectBranch, getCurrentUser } from "@/services/api";
+import { useModules } from "@/contexts/ModuleContext";
 
 const locations = [
   { value: "286", text: "AGARTALA" },
@@ -303,6 +304,7 @@ const locations = [
 
 export default function SelectBranchPage() {
   const router = useRouter();
+  const { refreshModules } = useModules();
   const [selectedBranch, setSelectedBranch] = useState<string>("");
   const [selectedBranchText, setSelectedBranchText] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -331,14 +333,17 @@ export default function SelectBranchPage() {
         setUser(parsedUser);
         
         if (parsedUser.role === 'admin' || parsedUser.role === 'superadmin') {
+          refreshModules();
           setIsAdmin(true);
         }
-        
-        if (parsedUser.branch && parsedUser.branchCode) {
-          toast.success(`Welcome back to ${parsedUser.branch}!`);
-          router.push("/dashboard/overview");
-          return;
-        }
+        sessionStorage.removeItem("selectedBranch");
+  sessionStorage.removeItem("branchCode");
+        // if (parsedUser.branch && parsedUser.branchCode) {
+        //   toast.success(`Welcome back to ${parsedUser.branch}!`);
+        //   router.push("/dashboard/overview");
+        //   refreshModules();
+        //   return;
+        // }
       }
     } catch (error) {
       console.error("Error checking user:", error);
@@ -384,14 +389,14 @@ export default function SelectBranchPage() {
       }
       
       if (response.success) {
-        // Update user data in localStorage
-        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        // Update user data in sessionStorage
+        const userData = JSON.parse(sessionStorage.getItem("user") || "{}");
         userData.branch = selectedBranchText;
         userData.branchCode = selectedBranch;
-        localStorage.setItem("user", JSON.stringify(userData));
-        localStorage.setItem("userData", JSON.stringify(userData));
-        localStorage.setItem("selectedBranch", selectedBranchText);
-        localStorage.setItem("branchCode", selectedBranch);
+        sessionStorage.setItem("user", JSON.stringify(userData));
+        sessionStorage.setItem("userData", JSON.stringify(userData));
+        sessionStorage.setItem("selectedBranch", selectedBranchText);
+        sessionStorage.setItem("branchCode", selectedBranch);
         
         toast.success(`Welcome to ${selectedBranchText} branch!`);
         
