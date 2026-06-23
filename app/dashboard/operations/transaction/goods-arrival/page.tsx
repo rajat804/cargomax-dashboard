@@ -1885,7 +1885,7 @@ export default function GoodsArrival() {
                                 >
                                   <div className="font-medium">{result.grNo}</div>
                                   <div className="text-gray-500 text-[10px]">
-                                    {result.consignorName} → {result.destination} | 
+                                    {result.consignorName} → {result.destination} |
                                     Pckgs: {result.totalPckgs} | Wt: {result.totalChargeWeight}kg
                                     <Badge className="ml-2 text-[8px]" variant="outline">
                                       {result.source}
@@ -2049,246 +2049,188 @@ export default function GoodsArrival() {
           {/* ============================================
           🔥 COMPLETE DAMAGE/MISSING SECTION - 2 Columns
           ============================================ */}
-          <div className="border rounded-lg p-4 bg-red-50/20">
-            <h3 className="text-base font-semibold mb-3 flex items-center gap-2 text-red-600">
-              <AlertCircle className="h-5 w-5" /> Damage / Missing / Short / Excess Details
+          <div className="border rounded-lg p-3 bg-red-50/20">
+            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5 text-red-600">
+              <AlertCircle className="h-4 w-4" /> Damage / Missing / Short / Excess
             </h3>
 
-            {/* Row 1: Damage/Missing & Short/Excess - 2 Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Damage/Missing Type:</Label>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={damageType.includes("damaged")}
-                      onChange={() => handleDamageTypeChange("damaged")}
-                      className="h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm font-medium text-red-700">Damaged</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={damageType.includes("missing")}
-                      onChange={() => handleDamageTypeChange("missing")}
-                      className="h-4 w-4 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
-                    />
-                    <span className="text-sm font-medium text-orange-700">Missing</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Short/Excess Type:</Label>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={shortExcessType.includes("short")}
-                      onChange={() => handleShortExcessTypeChange("short")}
-                      className="h-4 w-4 rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500"
-                    />
-                    <span className="text-sm font-medium text-yellow-700">Short</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={shortExcessType.includes("excess")}
-                      onChange={() => handleShortExcessTypeChange("excess")}
-                      className="h-4 w-4 rounded border-green-300 text-green-600 focus:ring-green-500"
-                    />
-                    <span className="text-sm font-medium text-green-700">Excess</span>
-                  </label>
-                </div>
-              </div>
+            {/* Row 1: All checkboxes in one row */}
+            <div className="flex flex-wrap gap-3 mb-2">
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                <input type="checkbox" checked={damageType.includes("damaged")} onChange={() => handleDamageTypeChange("damaged")} className="h-3.5 w-3.5 rounded border-red-300 text-red-600" />
+                <span className="text-red-700 font-medium">Damaged</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                <input type="checkbox" checked={damageType.includes("missing")} onChange={() => handleDamageTypeChange("missing")} className="h-3.5 w-3.5 rounded border-orange-300 text-orange-600" />
+                <span className="text-orange-700 font-medium">Missing</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                <input type="checkbox" checked={shortExcessType.includes("short")} onChange={() => handleShortExcessTypeChange("short")} className="h-3.5 w-3.5 rounded border-yellow-300 text-yellow-600" />
+                <span className="text-yellow-700 font-medium">Short</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                <input type="checkbox" checked={shortExcessType.includes("excess")} onChange={() => handleShortExcessTypeChange("excess")} className="h-3.5 w-3.5 rounded border-green-300 text-green-600" />
+                <span className="text-green-700 font-medium">Excess</span>
+              </label>
             </div>
 
-            {/* Row 2: Reason - Full Width */}
+            {/* Row 2: Reason, Packages, Remarks - 3 columns (only when damageType selected) */}
             {damageType.length > 0 && (
-              <div className="mb-3">
-                <Label className="text-sm font-medium">Reason <span className="text-red-500">*</span></Label>
-                <Select value={damageReason} onValueChange={handleDamageReasonChange}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select reason" /></SelectTrigger>
-                  <SelectContent>
-                    {damageReasonOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                {damageValidationErrors.damageReason && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageReason}</p>}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <div>
+                  <Label className="text-xs font-medium">Reason <span className="text-red-500">*</span></Label>
+                  <Select value={damageReason} onValueChange={handleDamageReasonChange}>
+                    <SelectTrigger className="h-7 text-xs mt-0.5"><SelectValue placeholder="Select reason" /></SelectTrigger>
+                    <SelectContent>
+                      {damageReasonOptions.map(opt => <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {damageValidationErrors.damageReason && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.damageReason}</p>}
 
-                {damageReason === "Other (specify)" && (
-                  <div className="mt-2">
-                    <Textarea
-                      value={damageOtherRemark}
-                      onChange={(e) => setDamageOtherRemark(e.target.value)}
-                      placeholder="Describe the issue in detail..."
-                      rows={2}
-                      className="mt-1"
-                    />
-                    {damageValidationErrors.damageOtherRemark && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageOtherRemark}</p>}
-                  </div>
-                )}
+                  {damageReason === "Other (specify)" && (
+                    <div className="mt-1">
+                      <Textarea
+                        value={damageOtherRemark}
+                        onChange={(e) => setDamageOtherRemark(e.target.value)}
+                        placeholder="Describe the issue..."
+                        rows={1}
+                        className="text-xs h-8"
+                      />
+                      {damageValidationErrors.damageOtherRemark && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.damageOtherRemark}</p>}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <Label className="text-xs font-medium">Damage/Missing Packages <span className="text-red-500">*</span></Label>
+                  <Input
+                    type="number"
+                    value={damagePackageCount || ""}
+                    onChange={(e) => handleDamagePackageCountChange(e.target.value)}
+                    className="mt-0.5 h-7 text-xs"
+                    placeholder="0"
+                    min="1"
+                    max={grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}
+                  />
+                  {damagePackageError && <p className="text-red-500 text-[10px] mt-0.5">{damagePackageError}</p>}
+                  {damageValidationErrors.damagePackageCount && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.damagePackageCount}</p>}
+                  <p className="text-[10px] text-gray-500 mt-0.5">Total received: <strong>{grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}</strong></p>
+                </div>
+
+                <div>
+                  <Label className="text-xs font-medium">Damage Remarks <span className="text-red-500">*</span></Label>
+                  <Textarea
+                    value={damageRemarks}
+                    onChange={(e) => setDamageRemarks(e.target.value)}
+                    placeholder="Details about damage/missing..."
+                    rows={1}
+                    className="mt-0.5 text-xs h-8"
+                  />
+                  {damageValidationErrors.damageRemarks && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.damageRemarks}</p>}
+                </div>
               </div>
             )}
 
-            {/* Row 3: Damage Package Count & Remarks - 2 Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {damageType.length > 0 && (
-                <>
-                  <div>
-                    <Label className="text-sm font-medium">Damage/Missing Packages <span className="text-red-500">*</span></Label>
-                    <Input
-                      type="number"
-                      value={damagePackageCount || ""}
-                      onChange={(e) => handleDamagePackageCountChange(e.target.value)}
-                      className="mt-1"
-                      placeholder="0"
-                      min="1"
-                      max={grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}
-                    />
-                    {damagePackageError && <p className="text-red-500 text-xs mt-1">{damagePackageError}</p>}
-                    {damageValidationErrors.damagePackageCount && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damagePackageCount}</p>}
-                    <p className="text-xs text-gray-500 mt-1">Total received packages: <strong>{grItems.reduce((sum, item) => sum + (item.receivePckgs || 0), 0)}</strong></p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Damage Remarks <span className="text-red-500">*</span></Label>
-                    <Textarea
-                      value={damageRemarks}
-                      onChange={(e) => setDamageRemarks(e.target.value)}
-                      placeholder="Enter details about damage/missing..."
-                      rows={2}
-                      className="mt-1"
-                    />
-                    {damageValidationErrors.damageRemarks && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damageRemarks}</p>}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Row 4: Short & Excess Details - 2 Columns */}
+            {/* Row 3: Short & Excess details (2 columns) */}
             {shortExcessType.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                 {shortExcessType.includes("short") && (
                   <div>
-                    <Label className="text-sm font-medium">Short Details <span className="text-red-500">*</span></Label>
+                    <Label className="text-xs font-medium">Short Details <span className="text-red-500">*</span></Label>
                     <Textarea
                       value={shortDetails}
                       onChange={(e) => setShortDetails(e.target.value)}
-                      placeholder="Enter details about short packages..."
-                      rows={2}
-                      className="mt-1"
+                      placeholder="Short packages details..."
+                      rows={1}
+                      className="mt-0.5 text-xs h-8"
                     />
-                    {damageValidationErrors.shortDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.shortDetails}</p>}
+                    {damageValidationErrors.shortDetails && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.shortDetails}</p>}
                   </div>
                 )}
                 {shortExcessType.includes("excess") && (
                   <div>
-                    <Label className="text-sm font-medium">Excess Details <span className="text-red-500">*</span></Label>
+                    <Label className="text-xs font-medium">Excess Details <span className="text-red-500">*</span></Label>
                     <Textarea
                       value={excessDetails}
                       onChange={(e) => setExcessDetails(e.target.value)}
-                      placeholder="Enter details about excess packages..."
-                      rows={2}
-                      className="mt-1"
+                      placeholder="Excess packages details..."
+                      rows={1}
+                      className="mt-0.5 text-xs h-8"
                     />
-                    {damageValidationErrors.excessDetails && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.excessDetails}</p>}
+                    {damageValidationErrors.excessDetails && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.excessDetails}</p>}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Row 5: Photos & Voice Note - 2 Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-              {damageType.length > 0 && (
-                <>
-                  <div>
-                    <Label className="text-sm font-medium">Damage Photos <span className="text-red-500">* (Min: 1, Max: 10)</span></Label>
-                    <div className="mt-2">
-                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-9">
-                        <PlusCircle className="h-4 w-4 mr-2" />Select Photos
-                      </Button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        multiple
-                        onChange={handlePhotoUpload}
-                        className="hidden"
-                      />
-                    </div>
-                    {damagePhotos.length > 0 && (
-                      <div className="flex flex-wrap gap-3 mt-3">
-                        {damagePhotos.map((photo, idx) => (
-                          <div key={idx} className="relative w-20 h-20 border rounded-lg overflow-hidden group bg-gray-100">
-                            <img src={photo} alt={`Damage ${idx + 1}`} className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removePhoto(idx)}
-                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {damageValidationErrors.damagePhotos && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.damagePhotos}</p>}
-                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, WEBP. Max 5MB each.</p>
+            {/* Row 4: Photos and Voice Note (2 columns) */}
+            {damageType.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                <div>
+                  <Label className="text-xs font-medium">Photos <span className="text-red-500">* (1-10)</span></Label>
+                  <div className="mt-0.5">
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-7 text-xs">
+                      <PlusCircle className="h-3 w-3 mr-1" /> Select
+                    </Button>
+                    <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handlePhotoUpload} className="hidden" />
                   </div>
-
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Voice Note <span className="text-red-500">*</span></Label>
-                    {!isRecording && !voiceNoteUrl && (
-                      <Button type="button" onClick={startRecording} variant="outline" className="h-10 bg-blue-50 hover:bg-blue-100 border-blue-300">
-                        <Mic className="h-4 w-4 mr-2" />Start Recording (Max 2 min)
-                      </Button>
-                    )}
-                    {isRecording && (
-                      <div className="space-y-2 p-3 bg-red-50 rounded-lg border border-red-200">
-                        <Button type="button" onClick={stopRecording} variant="destructive" className="h-10 w-full animate-pulse">
-                          <MicOff className="h-4 w-4 mr-2" /> ■ Stop Recording ({formatDuration(recordingDuration)})
-                        </Button>
-                        <p className="text-xs text-red-600 text-center">Recording...</p>
-                      </div>
-                    )}
-                    {voiceNoteUrl && !isRecording && (
-                      <div className="space-y-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <audio
-                            controls
-                            src={voiceNoteUrl}
-                            className="h-10 flex-1 min-w-[200px]"
-                            onError={() => { toast.error("Audio playback error"); deleteVoiceNote(); }}
-                          />
-                          <div className="flex gap-2">
-                            <Button type="button" onClick={() => { deleteVoiceNote(); startRecording(); }} variant="outline" size="sm" className="h-8">
-                              <Mic className="h-3 w-3 mr-1" />Re-record
-                            </Button>
-                            <Button type="button" onClick={deleteVoiceNote} variant="ghost" size="sm" className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50">
-                              <Trash2 className="h-3 w-3 mr-1" />Delete
-                            </Button>
-                          </div>
+                  {damagePhotos.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {damagePhotos.map((photo, idx) => (
+                        <div key={idx} className="relative w-14 h-14 border rounded overflow-hidden group bg-gray-100">
+                          <img src={photo} alt={`Damage ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => removePhoto(idx)} className="absolute top-0.5 right-0.5 bg-red-600 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700">
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
-                        <p className="text-sm font-medium text-green-700">✅ Voice note recorded - {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}</p>
-                      </div>
-                    )}
-                    {damageValidationErrors.voiceNote && <p className="text-red-500 text-xs mt-1">{damageValidationErrors.voiceNote}</p>}
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Selected Options Summary */}
-            {(damageType.length > 0 || shortExcessType.length > 0) && (
-              <div className="mt-3 p-3 bg-white rounded-lg border">
-                <p className="text-xs font-medium text-gray-600">Selected Options:</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {damageType.includes("damaged") && <Badge className="bg-red-100 text-red-700">Damaged</Badge>}
-                  {damageType.includes("missing") && <Badge className="bg-orange-100 text-orange-700">Missing</Badge>}
-                  {shortExcessType.includes("short") && <Badge className="bg-yellow-100 text-yellow-700">Short</Badge>}
-                  {shortExcessType.includes("excess") && <Badge className="bg-green-100 text-green-700">Excess</Badge>}
+                      ))}
+                    </div>
+                  )}
+                  {damageValidationErrors.damagePhotos && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.damagePhotos}</p>}
+                  <p className="text-[10px] text-gray-500">JPG, PNG, WEBP, ≤5MB each</p>
                 </div>
+
+                <div>
+                  <Label className="text-xs font-medium mb-0.5 block">Voice Note <span className="text-red-500">*</span></Label>
+                  {!isRecording && !voiceNoteUrl && (
+                    <Button type="button" onClick={startRecording} variant="outline" className="h-7 text-xs bg-blue-50 hover:bg-blue-100 border-blue-300">
+                      <Mic className="h-3 w-3 mr-1" /> Record (max 2 min)
+                    </Button>
+                  )}
+                  {isRecording && (
+                    <div className="space-y-1 p-2 bg-red-50 rounded border border-red-200">
+                      <Button type="button" onClick={stopRecording} variant="destructive" className="h-7 w-full text-xs animate-pulse">
+                        <MicOff className="h-3 w-3 mr-1" /> Stop ({formatDuration(recordingDuration)})
+                      </Button>
+                      <p className="text-[10px] text-red-600 text-center">Recording...</p>
+                    </div>
+                  )}
+                  {voiceNoteUrl && !isRecording && (
+                    <div className="p-2 bg-green-50 rounded border border-green-200">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <audio controls src={voiceNoteUrl} className="h-8 flex-1 min-w-[120px]" onError={() => { toast.error("Playback error"); deleteVoiceNote(); }} />
+                        <Button type="button" onClick={() => { deleteVoiceNote(); startRecording(); }} variant="outline" size="sm" className="h-6 text-xs">
+                          <Mic className="h-3 w-3" /> Re-record
+                        </Button>
+                        <Button type="button" onClick={deleteVoiceNote} variant="ghost" size="sm" className="h-6 text-xs text-red-600">
+                          <Trash2 className="h-3 w-3" /> Delete
+                        </Button>
+                      </div>
+                      <p className="text-xs font-medium text-green-700 mt-0.5">✅ Recorded - {voiceNoteDuration ? formatDuration(voiceNoteDuration) : "0:00"}</p>
+                    </div>
+                  )}
+                  {damageValidationErrors.voiceNote && <p className="text-red-500 text-[10px] mt-0.5">{damageValidationErrors.voiceNote}</p>}
+                </div>
+              </div>
+            )}
+
+            {/* Summary badges */}
+            {(damageType.length > 0 || shortExcessType.length > 0) && (
+              <div className="mt-1 pt-2 border-t border-dashed border-gray-300 flex flex-wrap gap-2">
+                {damageType.includes("damaged") && <Badge className="bg-red-100 text-red-700 text-[10px]">Damaged</Badge>}
+                {damageType.includes("missing") && <Badge className="bg-orange-100 text-orange-700 text-[10px]">Missing</Badge>}
+                {shortExcessType.includes("short") && <Badge className="bg-yellow-100 text-yellow-700 text-[10px]">Short</Badge>}
+                {shortExcessType.includes("excess") && <Badge className="bg-green-100 text-green-700 text-[10px]">Excess</Badge>}
               </div>
             )}
           </div>
