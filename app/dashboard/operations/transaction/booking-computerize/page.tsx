@@ -2040,15 +2040,15 @@ export default function BookingComputerizedGRL() {
   // ============================================
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
-  const generatePDFFromData = async (data: any) => {
-  // Guard against server-side execution
+const generatePDFFromData = async (data: any) => {
+  // ✅ FIX 1: Guard against server-side execution
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     console.warn('PDF generation skipped - running on server');
     return;
   }
 
   try {
-    // Dynamically import html2pdf only on client
+    // ✅ FIX 2: Dynamic import - only loads on client
     const html2pdf = (await import('html2pdf.js')).default;
 
     // Build HTML content with all booking details
