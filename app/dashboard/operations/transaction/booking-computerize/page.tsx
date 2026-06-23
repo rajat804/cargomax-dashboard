@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Table,
   TableBody,
@@ -66,6 +68,7 @@ import {
   Mic,
   MicOff,
   Camera,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -1482,8 +1485,63 @@ export default function BookingComputerizedGRL() {
 
   // ========== FORM HANDLERS ==========
   const handlePrint = () => {
-    window.print();
-    toast.success("Print dialog opened");
+    // Build data object from current state
+    const data = {
+      editMode,
+      grNo,
+      bookingFrom,
+      bookingDate,
+      destination,
+      bookingType,
+      collectionAt,
+      serviceProduct,
+      deliveryType,
+      loadType,
+      freightOn,
+      pvtMarkaSealNo,
+      consignorName,
+      consignorMobile,
+      consignorGst,
+      consignorPan,
+      consignorAddress,
+      consignorCity,
+      consignorState,
+      consigneeName,
+      consigneeMobile,
+      consigneeGst,
+      consigneePan,
+      consigneeAddress,
+      consigneeCity,
+      consigneeState,
+      goodsItems: goodsItems.map(item => ({
+        ...item,
+        contentCategoryName: contentCategories.find(c => c.id === Number(item.contentCategory))?.name || item.contentCategory
+      })),
+      invoices,
+      totalPckgs,
+      totalActualWeight,
+      totalChargeWeight,
+      manualRates,
+      calculatedFreight,
+      gstRate,
+      gstAmount,
+      totalAmount,
+      advanceAmount,
+      balanceAmount,
+      damageType,
+      damageReason,
+      damageOtherRemark,
+      damagePackageCount,
+      remarks,
+      roRemarks,
+      billNo,
+      supplementaryBillNo,
+      insuranceCoveredBy,
+      insuranceNo,
+      insuranceCompany,
+      insuranceDate,
+    };
+    generatePDFFromData(data);
   };
 
   const handleClear = () => {
@@ -1979,6 +2037,304 @@ export default function BookingComputerizedGRL() {
     setIsCancelledDialogOpen(true);
   };
 
+  // ============================================
+  // PDF GENERATION HELPER
+  // ============================================
+  const generatePDFFromData = (data: any) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Company Header
+    doc.setFontSize(16);
+    doc.setTextColor(40, 40, 80);
+    doc.text('GOLDEN ROADWAYS & LOGISTICS PVT LTD', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Corporate Office: Golden Roadways Building, NH-24, Delhi', pageWidth / 2, 27, { align: 'center' });
+    doc.text('Phone: 011-12345678 | Email: info@goldenroadways.com', pageWidth / 2, 32, { align: 'center' });
+
+    // Booking Title
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text(data.editMode ? 'EDIT BOOKING' : 'BOOKING CONFIRMATION', pageWidth / 2, 42, { align: 'center' });
+
+    // Booking Info (2 columns)
+    const leftColX = 14;
+    const rightColX = pageWidth / 2 + 10;
+    let yPos = 50;
+
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+
+    const addField = (label: string, value: any, x: number, y: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', x, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), x + 30, y);
+      return y + 6;
+    };
+
+    yPos = addField('GR No.', data.grNo || 'Auto-generated', leftColX, yPos);
+    yPos = addField('Booking From', data.bookingFrom, leftColX, yPos);
+    yPos = addField('Booking Date', format(data.bookingDate, 'dd-MM-yyyy'), leftColX, yPos);
+    yPos = addField('Destination', data.destination, leftColX, yPos);
+    yPos = addField('Booking Type', data.bookingType, leftColX, yPos);
+    yPos = addField('Collection At', data.collectionAt, leftColX, yPos);
+
+    let yPosRight = 50;
+    const addFieldRight = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', rightColX, yPosRight);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), rightColX + 30, yPosRight);
+      yPosRight += 6;
+    };
+
+    addFieldRight('Service Product', data.serviceProduct);
+    addFieldRight('Delivery Type', data.deliveryType);
+    addFieldRight('Load Type', data.loadType);
+    addFieldRight('Freight On', data.freightOn);
+    addFieldRight('Pvt Marka/Seal', data.pvtMarkaSealNo);
+
+    // Consignor & Consignee
+    yPos = Math.max(yPos, yPosRight) + 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('CONSIGNOR DETAILS', leftColX, yPos);
+    doc.text('CONSIGNEE DETAILS', pageWidth / 2 + 10, yPos);
+    yPos += 6;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    let cy = yPos;
+    const addConsignorField = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', leftColX, cy);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), leftColX + 25, cy);
+      cy += 5;
+    };
+    addConsignorField('Name', data.consignorName);
+    addConsignorField('Mobile', data.consignorMobile);
+    addConsignorField('GST', data.consignorGst);
+    addConsignorField('PAN', data.consignorPan);
+    addConsignorField('Address', data.consignorAddress);
+    addConsignorField('City', data.consignorCity);
+    addConsignorField('State', data.consignorState);
+
+    let cy2 = yPos;
+    const addConsigneeField = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', pageWidth / 2 + 10, cy2);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), pageWidth / 2 + 35, cy2);
+      cy2 += 5;
+    };
+    addConsigneeField('Name', data.consigneeName);
+    addConsigneeField('Mobile', data.consigneeMobile);
+    addConsigneeField('GST', data.consigneeGst);
+    addConsigneeField('PAN', data.consigneePan);
+    addConsigneeField('Address', data.consigneeAddress);
+    addConsigneeField('City', data.consigneeCity);
+    addConsigneeField('State', data.consigneeState);
+
+    // Goods Table
+    const goodsStartY = Math.max(cy, cy2) + 6;
+    if (data.goodsItems && data.goodsItems.length > 0) {
+      autoTable(doc, {
+        startY: goodsStartY,
+        head: [['#', 'Pckgs', 'Category', 'Content', 'Packing', 'Act. Wt', 'Chg. Wt']],
+        body: data.goodsItems.map((item: any, idx: number) => [
+          idx + 1,
+          item.noOfPckgs,
+          item.contentCategoryName || item.contentCategory || '',
+          item.content || '',
+          item.packing,
+          item.actualWeight.toFixed(2),
+          item.chargeWeight.toFixed(2)
+        ]),
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 20 }
+        },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // Totals
+    let finalY = (doc as any).lastAutoTable?.finalY || goodsStartY + 20;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Packages: ${data.totalPckgs}`, 14, finalY + 6);
+    doc.text(`Total Actual Weight: ${data.totalActualWeight.toFixed(2)} kg`, 14, finalY + 12);
+    doc.text(`Total Charge Weight: ${data.totalChargeWeight.toFixed(2)} kg`, 14, finalY + 18);
+    if (data.manualRates) {
+      doc.text(`Freight: ₹${data.calculatedFreight?.toFixed(0) || 0}`, 14, finalY + 24);
+      doc.text(`GST (${data.gstRate || 0}%): ₹${data.gstAmount?.toFixed(0) || 0}`, 14, finalY + 30);
+      doc.text(`Total Amount: ₹${data.totalAmount?.toFixed(0) || 0}`, 14, finalY + 36);
+      doc.text(`Advance: ₹${data.advanceAmount?.toFixed(0) || 0}`, 14, finalY + 42);
+      doc.text(`Balance: ₹${data.balanceAmount?.toFixed(0) || 0}`, 14, finalY + 48);
+    } else {
+      doc.text(`Freight: ₹${(data.totalChargeWeight * 5).toFixed(2)}`, 14, finalY + 24);
+    }
+
+    // Invoices Table
+    const invoiceStartY = finalY + (data.manualRates ? 54 : 30);
+    if (data.invoices && data.invoices.length > 0) {
+      autoTable(doc, {
+        startY: invoiceStartY,
+        head: [['S#', 'Invoice #', 'Date', 'Value', 'Eway Bill #', 'Eway Date', 'Valid Upto']],
+        body: data.invoices.map((inv: any, idx: number) => [
+          idx + 1,
+          inv.invoiceNo || '-',
+          format(inv.date, 'dd-MM-yyyy'),
+          inv.value || '0',
+          inv.ewayBillNo || '-',
+          format(inv.ewayBillDate, 'dd-MM-yyyy'),
+          inv.validUpto || '-'
+        ]),
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [46, 204, 113], textColor: [255, 255, 255] },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // Damage Section (if any)
+    let damageY = (doc as any).lastAutoTable?.finalY || invoiceStartY + 20;
+    if (data.damageType && data.damageType.length > 0) {
+      damageY += 6;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(200, 0, 0);
+      doc.text('DAMAGE / MISSING REPORT', 14, damageY);
+      doc.setTextColor(0);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Type: ${data.damageType.join(', ')}`, 14, damageY + 6);
+      doc.text(`Reason: ${data.damageReason || 'N/A'}`, 14, damageY + 12);
+      doc.text(`Packages: ${data.damagePackageCount || 0}`, 14, damageY + 18);
+      if (data.damageOtherRemark) doc.text(`Other Remark: ${data.damageOtherRemark}`, 14, damageY + 24);
+      damageY += 36;
+    }
+
+    // Remarks & Insurance
+    let remarksY = damageY + 6;
+    if (data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REMARKS & BILLING', 14, remarksY);
+      doc.setFont('helvetica', 'normal');
+      let ry = remarksY + 6;
+      if (data.remarks) { doc.text(`Remarks: ${data.remarks}`, 14, ry); ry += 5; }
+      if (data.roRemarks) { doc.text(`RO Remarks: ${data.roRemarks}`, 14, ry); ry += 5; }
+      if (data.billNo) { doc.text(`Bill No: ${data.billNo}`, 14, ry); ry += 5; }
+      if (data.supplementaryBillNo) { doc.text(`Suppl. Bill No: ${data.supplementaryBillNo}`, 14, ry); ry += 5; }
+      remarksY = ry;
+    }
+
+    if (data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany) {
+      const insY = remarksY + 4;
+      doc.setFont('helvetica', 'bold');
+      doc.text('INSURANCE', 14, insY);
+      doc.setFont('helvetica', 'normal');
+      let iy = insY + 6;
+      if (data.insuranceCoveredBy) { doc.text(`Covered By: ${data.insuranceCoveredBy}`, 14, iy); iy += 5; }
+      if (data.insuranceNo) { doc.text(`Insurance #: ${data.insuranceNo}`, 14, iy); iy += 5; }
+      if (data.insuranceCompany) { doc.text(`Company: ${data.insuranceCompany}`, 14, iy); iy += 5; }
+      if (data.insuranceDate) { doc.text(`Date: ${format(data.insuranceDate, 'dd-MM-yyyy')}`, 14, iy); }
+    }
+
+    // Footer
+    const totalPages = doc.getNumberOfPages(); 
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm')} | Page ${i} of ${totalPages}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    // Save PDF
+    const filename = `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+    doc.save(filename);
+    toast.success('PDF downloaded successfully!');
+  };
+
+  // ============================================
+  // DOWNLOAD PDF FOR A SPECIFIC BOOKING
+  // ============================================
+  const downloadBookingPDF = (record: BookingRecord) => {
+    const data = {
+      editMode: false,
+      grNo: record.grNo,
+      bookingFrom: record.bookingFrom,
+      bookingDate: record.bookingDate,
+      destination: record.destination,
+      bookingType: record.bookingType,
+      collectionAt: record.collectionAt,
+      serviceProduct: record.serviceProduct,
+      deliveryType: record.deliveryType,
+      loadType: record.loadType,
+      freightOn: record.freightOn || 'CHARGE WEIGHT',
+      pvtMarkaSealNo: record.pvtMarkaSealNo || '',
+      consignorName: record.consignorName,
+      consignorMobile: record.consignorMobile || '',
+      consignorGst: record.consignorGst || '',
+      consignorPan: record.consignorPan || '',
+      consignorAddress: record.consignorAddress || '',
+      consignorCity: record.consignorCity || '',
+      consignorState: record.consignorState || '',
+      consigneeName: record.consigneeName,
+      consigneeMobile: record.consigneeMobile || '',
+      consigneeGst: record.consigneeGst || '',
+      consigneePan: record.consigneePan || '',
+      consigneeAddress: record.consigneeAddress || '',
+      consigneeCity: record.consigneeCity || '',
+      consigneeState: record.consigneeState || '',
+      goodsItems: record.goodsItems.map(item => ({
+        ...item,
+        contentCategoryName: contentCategories.find(c => c.id === Number(item.contentCategory))?.name || item.contentCategory
+      })),
+      invoices: record.invoices || [],
+      totalPckgs: record.totalPckgs,
+      totalActualWeight: record.totalActualWeight,
+      totalChargeWeight: record.totalChargeWeight,
+      manualRates: record.manualRates || false,
+      calculatedFreight: record.totalFreight || 0,
+      gstRate: 0,
+      gstAmount: 0,
+      totalAmount: 0,
+      advanceAmount: 0,
+      balanceAmount: 0,
+      damageType: record.damageType || [],
+      damageReason: record.damageReason || '',
+      damageOtherRemark: record.damageOtherRemark || '',
+      damagePackageCount: record.damagePackageCount || 0,
+      remarks: record.remarks || '',
+      roRemarks: record.roRemarks || '',
+      billNo: record.billNo || '',
+      supplementaryBillNo: record.supplementaryBillNo || '',
+      insuranceCoveredBy: record.insuranceCoveredBy || '',
+      insuranceNo: record.insuranceNo || '',
+      insuranceCompany: record.insuranceCompany || '',
+      insuranceDate: record.insuranceDate || new Date(),
+    };
+    generatePDFFromData(data);
+  };
+
+  // Stats
   const activeStats = {
     total: stats.active.count,
     totalFreight: stats.active.totalFreight,
@@ -2181,7 +2537,7 @@ export default function BookingComputerizedGRL() {
                           </TableCell>
                           <TableCell className="text-sm p-3 text-right font-semibold">₹{r.totalFreight.toLocaleString()}</TableCell>
                           <TableCell className="text-sm p-3 text-center">
-                            <div className="flex gap-1 justify-center">
+                            <div className="flex gap-1 justify-center flex-wrap">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -2205,6 +2561,16 @@ export default function BookingComputerizedGRL() {
                                 className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
+                              </Button>
+                              {/* NEW DOWNLOAD BUTTON */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => downloadBookingPDF(r)}
+                                className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                                title="Download PDF"
+                              >
+                                <Download className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -2379,15 +2745,27 @@ export default function BookingComputerizedGRL() {
                             {r.cancelledReason}
                           </TableCell>
                           <TableCell className="text-sm p-3 text-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRestoreBooking(r)}
-                              className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
-                              title="Restore Booking"
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
+                            <div className="flex gap-1 justify-center flex-wrap">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRestoreBooking(r)}
+                                className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
+                                title="Restore Booking"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                              {/* NEW DOWNLOAD BUTTON FOR CANCELLED AS WELL */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => downloadBookingPDF(r)}
+                                className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50"
+                                title="Download PDF"
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
