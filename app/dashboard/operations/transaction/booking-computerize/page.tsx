@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import html2pdf from 'html2pdf.js';
+// import jsPDF from 'jspdf';
+// import autoTable from 'jspdf-autotable';
+
 import {
   Table,
   TableBody,
@@ -2037,241 +2039,417 @@ export default function BookingComputerizedGRL() {
     setIsCancelledDialogOpen(true);
   };
 
-  // ============================================
-  // PDF GENERATION HELPER
-  // ============================================
-  const generatePDFFromData = (data: any) => {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
+// ============================================
+// PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
+// ============================================
+const generatePDFFromData = (data: any) => {
+  // Build HTML content with all booking details
+  const content = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8" />
+      <title>Booking Confirmation</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Helvetica', 'Arial', sans-serif;
+          background: #fff;
+          padding: 12px;
+          color: #000;
+        }
+        .page {
+          max-width: 210mm;
+          margin: 0 auto;
+          background: #fff;
+          padding: 10px 12px 8px 12px;
+          border: 2px solid #000;
+          position: relative;
+        }
+        /* Header Section */
+        .header {
+          text-align: center;
+          border-bottom: 3px double #000;
+          padding-bottom: 8px;
+          margin-bottom: 10px;
+        }
+        .header h1 {
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 1px;
+        }
+        .header p {
+          font-size: 9px;
+          margin: 2px 0;
+          color: #333;
+        }
+        /* Title & Status */
+        .title-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+          border-bottom: 1px solid #ccc;
+          padding-bottom: 5px;
+        }
+        .title-section h2 {
+          font-size: 17px;
+          font-weight: 700;
+        }
+        .status-badge {
+          font-size: 10px;
+          font-weight: 700;
+          color: #cc0000;
+          border: 1px solid #cc0000;
+          padding: 2px 12px;
+          border-radius: 3px;
+        }
+        /* Two-column layout */
+        .row {
+          display: flex;
+          flex-wrap: wrap;
+          margin-bottom: 4px;
+        }
+        .col {
+          flex: 1 1 45%;
+          padding: 2px 6px;
+        }
+        .field {
+          display: flex;
+          font-size: 9px;
+          line-height: 1.6;
+          padding: 1px 0;
+        }
+        .field .label {
+          font-weight: 700;
+          width: 90px;
+          flex-shrink: 0;
+        }
+        .field .value {
+          flex: 1;
+          word-break: break-word;
+          padding-left: 2px;
+        }
+        /* Section Title */
+        .section-title {
+          font-size: 12px;
+          font-weight: 700;
+          background: #eee;
+          padding: 3px 10px;
+          margin: 10px 0 5px 0;
+          border-left: 4px solid #000;
+        }
+        /* Tables */
+        .grid-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 8.5px;
+          margin: 5px 0 8px 0;
+        }
+        .grid-table th {
+          background: #333;
+          color: #fff;
+          padding: 4px 5px;
+          text-align: center;
+          font-weight: 700;
+          border: 1px solid #000;
+        }
+        .grid-table td {
+          padding: 3px 5px;
+          border: 1px solid #000;
+          text-align: center;
+        }
+        .grid-table tr:nth-child(even) td {
+          background: #f8f8f8;
+        }
+        /* Totals Box */
+        .totals-box {
+          border: 1px solid #000;
+          padding: 8px 12px;
+          margin: 6px 0 10px 0;
+          background: #f9f9f9;
+        }
+        .totals-box .label {
+          font-weight: 700;
+          display: inline-block;
+          width: 150px;
+        }
+        .totals-box .line {
+          padding: 2px 0;
+          font-size: 9px;
+        }
+        .totals-box .title {
+          font-weight: 700;
+          font-size: 11px;
+          margin-bottom: 3px;
+        }
+        /* Damage & Remarks Boxes */
+        .damage-box, .remarks-box {
+          border: 1px solid #000;
+          padding: 8px 12px;
+          margin: 6px 0;
+          background: #fcfcfc;
+        }
+        .damage-box .title, .remarks-box .title {
+          font-weight: 700;
+          font-size: 11px;
+          background: #eee;
+          padding: 2px 8px;
+          margin: -8px -12px 6px -12px;
+          border-bottom: 1px solid #000;
+        }
+        .damage-box .line, .remarks-box .line {
+          font-size: 9px;
+          padding: 2px 0;
+        }
+        .damage-box .line .lbl, .remarks-box .line .lbl {
+          font-weight: 700;
+          display: inline-block;
+          width: 110px;
+        }
+        /* Footer */
+        .footer {
+          text-align: center;
+          font-size: 7.5px;
+          color: #666;
+          border-top: 1px solid #ccc;
+          padding-top: 6px;
+          margin-top: 10px;
+        }
+        .footer .page-number {
+          font-weight: 700;
+        }
+        /* Responsive */
+        @media (max-width: 600px) {
+          .col { flex: 1 1 100%; }
+          .field .label { width: 70px; }
+        }
+        @media print {
+          .page { border: none; padding: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="page" id="pdf-content">
+        <!-- HEADER -->
+        <div class="header">
+          <h1>GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD</h1>
+          <p>Corporate Office: Golden Roadways Building, NH-24, Delhi - 110092</p>
+          <p>Phone: 011-12345678 | Email: info@goldenroadways.com | GST: 07AABCG1234D1Z1</p>
+        </div>
 
-    // Company Header
-    doc.setFontSize(16);
-    doc.setTextColor(40, 40, 80);
-    doc.text('GOLDEN ROADWAYS & LOGISTICS PVT LTD', pageWidth / 2, 20, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text('Corporate Office: Golden Roadways Building, NH-24, Delhi', pageWidth / 2, 27, { align: 'center' });
-    doc.text('Phone: 011-12345678 | Email: info@goldenroadways.com', pageWidth / 2, 32, { align: 'center' });
+        <!-- TITLE & STATUS -->
+        <div class="title-section">
+          <h2>${data.editMode ? 'EDIT BOOKING' : 'BOOKING CONFIRMATION'}</h2>
+          <span class="status-badge">STATUS: ${(data.status || 'ACTIVE').toUpperCase()}</span>
+        </div>
 
-    // Booking Title
-    doc.setFontSize(14);
-    doc.setTextColor(0);
-    doc.text(data.editMode ? 'EDIT BOOKING' : 'BOOKING CONFIRMATION', pageWidth / 2, 42, { align: 'center' });
+        <!-- BOOKING DETAILS (two columns) -->
+        <div class="row">
+          <div class="col">
+            <div class="field"><span class="label">GR No.</span><span class="value">${data.grNo || 'Auto-generated'}</span></div>
+            <div class="field"><span class="label">Booking From</span><span class="value">${data.bookingFrom || '-'}</span></div>
+            <div class="field"><span class="label">Booking Date</span><span class="value">${format(data.bookingDate, 'dd-MM-yyyy')}</span></div>
+            <div class="field"><span class="label">Destination</span><span class="value">${data.destination || '-'}</span></div>
+            <div class="field"><span class="label">Booking Type</span><span class="value">${data.bookingType || '-'}</span></div>
+            <div class="field"><span class="label">Collection At</span><span class="value">${data.collectionAt || '-'}</span></div>
+          </div>
+          <div class="col">
+            <div class="field"><span class="label">Service Product</span><span class="value">${data.serviceProduct || '-'}</span></div>
+            <div class="field"><span class="label">Delivery Type</span><span class="value">${data.deliveryType || '-'}</span></div>
+            <div class="field"><span class="label">Load Type</span><span class="value">${data.loadType || '-'}</span></div>
+            <div class="field"><span class="label">Freight On</span><span class="value">${data.freightOn || '-'}</span></div>
+            <div class="field"><span class="label">Pvt Marka/Seal</span><span class="value">${data.pvtMarkaSealNo || '-'}</span></div>
+          </div>
+        </div>
 
-    // Booking Info (2 columns)
-    const leftColX = 14;
-    const rightColX = pageWidth / 2 + 10;
-    let yPos = 50;
+        <!-- CONSIGNOR & CONSIGNEE -->
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin:6px 0 8px 0;">
+          <div style="flex:1; min-width:190px; border:1px solid #000; padding:7px;">
+            <div style="font-weight:700; background:#eee; padding:2px 8px; margin:-7px -7px 5px -7px; border-bottom:1px solid #000;">CONSIGNOR DETAILS</div>
+            <div class="field"><span class="label">Name</span><span class="value">${data.consignorName || '-'}</span></div>
+            <div class="field"><span class="label">Mobile</span><span class="value">${data.consignorMobile || '-'}</span></div>
+            <div class="field"><span class="label">GST</span><span class="value">${data.consignorGst || '-'}</span></div>
+            <div class="field"><span class="label">PAN</span><span class="value">${data.consignorPan || '-'}</span></div>
+            <div class="field"><span class="label">Address</span><span class="value">${data.consignorAddress || '-'}</span></div>
+            <div class="field"><span class="label">City</span><span class="value">${data.consignorCity || '-'}</span></div>
+            <div class="field"><span class="label">State</span><span class="value">${data.consignorState || '-'}</span></div>
+          </div>
+          <div style="flex:1; min-width:190px; border:1px solid #000; padding:7px;">
+            <div style="font-weight:700; background:#eee; padding:2px 8px; margin:-7px -7px 5px -7px; border-bottom:1px solid #000;">CONSIGNEE DETAILS</div>
+            <div class="field"><span class="label">Name</span><span class="value">${data.consigneeName || '-'}</span></div>
+            <div class="field"><span class="label">Mobile</span><span class="value">${data.consigneeMobile || '-'}</span></div>
+            <div class="field"><span class="label">GST</span><span class="value">${data.consigneeGst || '-'}</span></div>
+            <div class="field"><span class="label">PAN</span><span class="value">${data.consigneePan || '-'}</span></div>
+            <div class="field"><span class="label">Address</span><span class="value">${data.consigneeAddress || '-'}</span></div>
+            <div class="field"><span class="label">City</span><span class="value">${data.consigneeCity || '-'}</span></div>
+            <div class="field"><span class="label">State</span><span class="value">${data.consigneeState || '-'}</span></div>
+          </div>
+        </div>
 
-    doc.setFontSize(10);
-    doc.setTextColor(50);
+        <!-- GOODS TABLE -->
+        <div class="section-title">GOODS DETAILS</div>
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th style="width:5%;">#</th>
+              <th style="width:8%;">Pkgs</th>
+              <th style="width:18%;">Category</th>
+              <th style="width:18%;">Content</th>
+              <th style="width:12%;">Packing</th>
+              <th style="width:14%;">Act. Wt (kg)</th>
+              <th style="width:14%;">Chg. Wt (kg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.goodsItems && data.goodsItems.length > 0
+              ? data.goodsItems.map((item: any, idx: number) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${item.noOfPckgs}</td>
+                  <td>${item.contentCategoryName || item.contentCategory || '-'}</td>
+                  <td>${item.content || '-'}</td>
+                  <td>${item.packing || '-'}</td>
+                  <td>${Number(item.actualWeight).toFixed(2)}</td>
+                  <td>${Number(item.chargeWeight).toFixed(2)}</td>
+                </tr>
+              `).join('')
+              : `<tr><td colspan="7" style="text-align:center; padding:10px;">No goods items</td></tr>`
+            }
+          </tbody>
+        </table>
 
-    const addField = (label: string, value: any, x: number, y: number) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ':', x, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(value || '-'), x + 30, y);
-      return y + 6;
-    };
+        <!-- TOTALS -->
+        <div class="totals-box">
+          <div class="title">TOTALS</div>
+          <div class="line"><span class="label">Total Packages:</span> ${data.totalPckgs}</div>
+          <div class="line"><span class="label">Total Actual Weight:</span> ${Number(data.totalActualWeight).toFixed(2)} kg</div>
+          <div class="line"><span class="label">Total Charge Weight:</span> ${Number(data.totalChargeWeight).toFixed(2)} kg</div>
+          ${data.manualRates ? `
+            <div class="line"><span class="label">Freight:</span> Rs. ${Number(data.calculatedFreight || 0).toLocaleString('en-IN')}</div>
+            <div class="line"><span class="label">GST (${data.gstRate || 0}%):</span> Rs. ${Number(data.gstAmount || 0).toLocaleString('en-IN')}</div>
+            <div class="line"><span class="label">Total Amount:</span> Rs. ${Number(data.totalAmount || 0).toLocaleString('en-IN')}</div>
+            <div class="line"><span class="label">Advance:</span> Rs. ${Number(data.advanceAmount || 0).toLocaleString('en-IN')}</div>
+            <div class="line"><span class="label">Balance:</span> Rs. ${Number(data.balanceAmount || 0).toLocaleString('en-IN')}</div>
+          ` : `
+            <div class="line"><span class="label">Freight:</span> Rs. ${(data.totalChargeWeight * 5).toFixed(2)}</div>
+          `}
+        </div>
 
-    yPos = addField('GR No.', data.grNo || 'Auto-generated', leftColX, yPos);
-    yPos = addField('Booking From', data.bookingFrom, leftColX, yPos);
-    yPos = addField('Booking Date', format(data.bookingDate, 'dd-MM-yyyy'), leftColX, yPos);
-    yPos = addField('Destination', data.destination, leftColX, yPos);
-    yPos = addField('Booking Type', data.bookingType, leftColX, yPos);
-    yPos = addField('Collection At', data.collectionAt, leftColX, yPos);
+        <!-- INVOICES TABLE -->
+        ${data.invoices && data.invoices.length > 0 ? `
+          <div class="section-title">INVOICE DETAILS</div>
+          <table class="grid-table">
+            <thead>
+              <tr>
+                <th style="width:6%;">S#</th>
+                <th style="width:16%;">Invoice #</th>
+                <th style="width:14%;">Date</th>
+                <th style="width:14%;">Value</th>
+                <th style="width:16%;">Eway Bill #</th>
+                <th style="width:14%;">Eway Date</th>
+                <th style="width:14%;">Valid Upto</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.invoices.map((inv: any, idx: number) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${inv.invoiceNo || '-'}</td>
+                  <td>${format(inv.date, 'dd-MM-yyyy')}</td>
+                  <td>${inv.value || '0'}</td>
+                  <td>${inv.ewayBillNo || '-'}</td>
+                  <td>${format(inv.ewayBillDate, 'dd-MM-yyyy')}</td>
+                  <td>${inv.validUpto || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        ` : ''}
 
-    let yPosRight = 50;
-    const addFieldRight = (label: string, value: any) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ':', rightColX, yPosRight);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(value || '-'), rightColX + 30, yPosRight);
-      yPosRight += 6;
-    };
+        <!-- DAMAGE SECTION -->
+        ${data.damageType && data.damageType.length > 0 ? `
+          <div class="damage-box">
+            <div class="title">DAMAGE / MISSING REPORT</div>
+            <div class="line"><span class="lbl">Type:</span> ${data.damageType.join(', ')}</div>
+            <div class="line"><span class="lbl">Reason:</span> ${data.damageReason || 'N/A'}</div>
+            <div class="line"><span class="lbl">Packages:</span> ${data.damagePackageCount || 0}</div>
+            ${data.damageOtherRemark ? `<div class="line"><span class="lbl">Other Remark:</span> ${data.damageOtherRemark}</div>` : ''}
+          </div>
+        ` : ''}
 
-    addFieldRight('Service Product', data.serviceProduct);
-    addFieldRight('Delivery Type', data.deliveryType);
-    addFieldRight('Load Type', data.loadType);
-    addFieldRight('Freight On', data.freightOn);
-    addFieldRight('Pvt Marka/Seal', data.pvtMarkaSealNo);
+        <!-- REMARKS & INSURANCE -->
+        ${(data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo ||
+           data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany || data.insuranceDate) ? `
+          <div class="remarks-box">
+            <div class="title">REMARKS &amp; INSURANCE</div>
+            ${data.remarks ? `<div class="line"><span class="lbl">Remarks:</span> ${data.remarks}</div>` : ''}
+            ${data.roRemarks ? `<div class="line"><span class="lbl">RO Remarks:</span> ${data.roRemarks}</div>` : ''}
+            ${data.billNo ? `<div class="line"><span class="lbl">Bill No:</span> ${data.billNo}</div>` : ''}
+            ${data.supplementaryBillNo ? `<div class="line"><span class="lbl">Suppl. Bill No:</span> ${data.supplementaryBillNo}</div>` : ''}
+            ${data.insuranceCoveredBy ? `<div class="line"><span class="lbl">Covered By:</span> ${data.insuranceCoveredBy}</div>` : ''}
+            ${data.insuranceNo ? `<div class="line"><span class="lbl">Insurance #:</span> ${data.insuranceNo}</div>` : ''}
+            ${data.insuranceCompany ? `<div class="line"><span class="lbl">Company:</span> ${data.insuranceCompany}</div>` : ''}
+            ${data.insuranceDate ? `<div class="line"><span class="lbl">Date:</span> ${format(data.insuranceDate, 'dd-MM-yyyy')}</div>` : ''}
+          </div>
+        ` : ''}
 
-    // Consignor & Consignee
-    yPos = Math.max(yPos, yPosRight) + 6;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('CONSIGNOR DETAILS', leftColX, yPos);
-    doc.text('CONSIGNEE DETAILS', pageWidth / 2 + 10, yPos);
-    yPos += 6;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+        <!-- FOOTER -->
+        <div class="footer">
+          <div>This is a computer-generated document. No signature required.</div>
+          <div class="page-number">Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm:ss')}</div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
-    let cy = yPos;
-    const addConsignorField = (label: string, value: any) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ':', leftColX, cy);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(value || '-'), leftColX + 25, cy);
-      cy += 5;
-    };
-    addConsignorField('Name', data.consignorName);
-    addConsignorField('Mobile', data.consignorMobile);
-    addConsignorField('GST', data.consignorGst);
-    addConsignorField('PAN', data.consignorPan);
-    addConsignorField('Address', data.consignorAddress);
-    addConsignorField('City', data.consignorCity);
-    addConsignorField('State', data.consignorState);
+  // Create a hidden container to render the HTML
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '210mm';
+  container.style.background = '#fff';
+  container.style.zIndex = '-1';
+  container.innerHTML = content;
+  document.body.appendChild(container);
 
-    let cy2 = yPos;
-    const addConsigneeField = (label: string, value: any) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ':', pageWidth / 2 + 10, cy2);
-      doc.setFont('helvetica', 'normal');
-      doc.text(String(value || '-'), pageWidth / 2 + 35, cy2);
-      cy2 += 5;
-    };
-    addConsigneeField('Name', data.consigneeName);
-    addConsigneeField('Mobile', data.consigneeMobile);
-    addConsigneeField('GST', data.consigneeGst);
-    addConsigneeField('PAN', data.consigneePan);
-    addConsigneeField('Address', data.consigneeAddress);
-    addConsigneeField('City', data.consigneeCity);
-    addConsigneeField('State', data.consigneeState);
+  const element = container.querySelector('#pdf-content');
+  if (!element) {
+    document.body.removeChild(container);
+    toast.error('PDF content not found');
+    return;
+  }
 
-    // Goods Table
-    const goodsStartY = Math.max(cy, cy2) + 6;
-    if (data.goodsItems && data.goodsItems.length > 0) {
-      autoTable(doc, {
-        startY: goodsStartY,
-        head: [['#', 'Pckgs', 'Category', 'Content', 'Packing', 'Act. Wt', 'Chg. Wt']],
-        body: data.goodsItems.map((item: any, idx: number) => [
-          idx + 1,
-          item.noOfPckgs,
-          item.contentCategoryName || item.contentCategory || '',
-          item.content || '',
-          item.packing,
-          item.actualWeight.toFixed(2),
-          item.chargeWeight.toFixed(2)
-        ]),
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 15 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 20 },
-          6: { cellWidth: 20 }
-        },
-        margin: { left: 14, right: 14 }
-      });
-    }
-
-    // Totals
-    let finalY = (doc as any).lastAutoTable?.finalY || goodsStartY + 20;
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total Packages: ${data.totalPckgs}`, 14, finalY + 6);
-    doc.text(`Total Actual Weight: ${data.totalActualWeight.toFixed(2)} kg`, 14, finalY + 12);
-    doc.text(`Total Charge Weight: ${data.totalChargeWeight.toFixed(2)} kg`, 14, finalY + 18);
-    if (data.manualRates) {
-      doc.text(`Freight: ₹${data.calculatedFreight?.toFixed(0) || 0}`, 14, finalY + 24);
-      doc.text(`GST (${data.gstRate || 0}%): ₹${data.gstAmount?.toFixed(0) || 0}`, 14, finalY + 30);
-      doc.text(`Total Amount: ₹${data.totalAmount?.toFixed(0) || 0}`, 14, finalY + 36);
-      doc.text(`Advance: ₹${data.advanceAmount?.toFixed(0) || 0}`, 14, finalY + 42);
-      doc.text(`Balance: ₹${data.balanceAmount?.toFixed(0) || 0}`, 14, finalY + 48);
-    } else {
-      doc.text(`Freight: ₹${(data.totalChargeWeight * 5).toFixed(2)}`, 14, finalY + 24);
-    }
-
-    // Invoices Table
-    const invoiceStartY = finalY + (data.manualRates ? 54 : 30);
-    if (data.invoices && data.invoices.length > 0) {
-      autoTable(doc, {
-        startY: invoiceStartY,
-        head: [['S#', 'Invoice #', 'Date', 'Value', 'Eway Bill #', 'Eway Date', 'Valid Upto']],
-        body: data.invoices.map((inv: any, idx: number) => [
-          idx + 1,
-          inv.invoiceNo || '-',
-          format(inv.date, 'dd-MM-yyyy'),
-          inv.value || '0',
-          inv.ewayBillNo || '-',
-          format(inv.ewayBillDate, 'dd-MM-yyyy'),
-          inv.validUpto || '-'
-        ]),
-        theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [46, 204, 113], textColor: [255, 255, 255] },
-        margin: { left: 14, right: 14 }
-      });
-    }
-
-    // Damage Section (if any)
-    let damageY = (doc as any).lastAutoTable?.finalY || invoiceStartY + 20;
-    if (data.damageType && data.damageType.length > 0) {
-      damageY += 6;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(200, 0, 0);
-      doc.text('DAMAGE / MISSING REPORT', 14, damageY);
-      doc.setTextColor(0);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Type: ${data.damageType.join(', ')}`, 14, damageY + 6);
-      doc.text(`Reason: ${data.damageReason || 'N/A'}`, 14, damageY + 12);
-      doc.text(`Packages: ${data.damagePackageCount || 0}`, 14, damageY + 18);
-      if (data.damageOtherRemark) doc.text(`Other Remark: ${data.damageOtherRemark}`, 14, damageY + 24);
-      damageY += 36;
-    }
-
-    // Remarks & Insurance
-    let remarksY = damageY + 6;
-    if (data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo) {
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('REMARKS & BILLING', 14, remarksY);
-      doc.setFont('helvetica', 'normal');
-      let ry = remarksY + 6;
-      if (data.remarks) { doc.text(`Remarks: ${data.remarks}`, 14, ry); ry += 5; }
-      if (data.roRemarks) { doc.text(`RO Remarks: ${data.roRemarks}`, 14, ry); ry += 5; }
-      if (data.billNo) { doc.text(`Bill No: ${data.billNo}`, 14, ry); ry += 5; }
-      if (data.supplementaryBillNo) { doc.text(`Suppl. Bill No: ${data.supplementaryBillNo}`, 14, ry); ry += 5; }
-      remarksY = ry;
-    }
-
-    if (data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany) {
-      const insY = remarksY + 4;
-      doc.setFont('helvetica', 'bold');
-      doc.text('INSURANCE', 14, insY);
-      doc.setFont('helvetica', 'normal');
-      let iy = insY + 6;
-      if (data.insuranceCoveredBy) { doc.text(`Covered By: ${data.insuranceCoveredBy}`, 14, iy); iy += 5; }
-      if (data.insuranceNo) { doc.text(`Insurance #: ${data.insuranceNo}`, 14, iy); iy += 5; }
-      if (data.insuranceCompany) { doc.text(`Company: ${data.insuranceCompany}`, 14, iy); iy += 5; }
-      if (data.insuranceDate) { doc.text(`Date: ${format(data.insuranceDate, 'dd-MM-yyyy')}`, 14, iy); }
-    }
-
-    // Footer
-    const totalPages = doc.getNumberOfPages(); 
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150);
-      doc.text(
-        `Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm')} | Page ${i} of ${totalPages}`,
-        pageWidth / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: 'center' }
-      );
-    }
-
-    // Save PDF
-    const filename = `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
-    doc.save(filename);
-    toast.success('PDF downloaded successfully!');
+  // PDF options
+  const opt = {
+    margin:        [8, 8, 8, 8],
+    filename:      `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+    image:         { type: 'jpeg', quality: 0.98 },
+    html2canvas:   { scale: 2, useCORS: true, logging: false },
+    jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:     { mode: 'avoid-all' }
   };
 
+  html2pdf()
+    .from(element)
+    .set(opt)
+    .save()
+    .then(() => {
+      document.body.removeChild(container);
+      toast.success('PDF downloaded successfully!');
+    })
+    .catch((err: any) => {
+      console.error('PDF generation error:', err);
+      document.body.removeChild(container);
+      toast.error('Failed to generate PDF');
+    });
+};
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
   // ============================================
