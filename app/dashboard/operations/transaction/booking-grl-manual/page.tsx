@@ -710,28 +710,28 @@ export default function BookingGRLManual() {
 
   // ========== POINT 11: Consignor Name Search with GST ==========
   const handleConsignorNameSearch = async (value: string) => {
-  setConsignorIdValue(value);
-  setConsignorName(value);
+    setConsignorIdValue(value);
+    setConsignorName(value);
 
-  if (value.length >= 2) {
-    try {
-      // Pass "name" as idType
-      const response = await searchClient("name", value);
-      
-      const data = response?.data || response || [];
-      const results = Array.isArray(data) ? data : [data].filter(Boolean);
-      
-      setConsignorSearchResults(results);
-      setShowConsignorDropdown(results.length > 0);
-    } catch (error) {
+    if (value.length >= 2) {
+      try {
+        // Pass "name" as idType
+        const response = await searchClient("name", value);
+
+        const data = response?.data || response || [];
+        const results = Array.isArray(data) ? data : [data].filter(Boolean);
+
+        setConsignorSearchResults(results);
+        setShowConsignorDropdown(results.length > 0);
+      } catch (error) {
+        setConsignorSearchResults([]);
+        setShowConsignorDropdown(false);
+      }
+    } else {
       setConsignorSearchResults([]);
       setShowConsignorDropdown(false);
     }
-  } else {
-    setConsignorSearchResults([]);
-    setShowConsignorDropdown(false);
-  }
-};
+  };
 
   const handleConsignorSelect = (client: ClientData) => {
     setConsignorId(client._id || "");
@@ -1931,12 +1931,12 @@ export default function BookingGRLManual() {
     setIsCancelledDialogOpen(true);
   };
 
-// ============================================
-// PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
-// ============================================
-const generatePDFFromData = (data: any) => {
-  // Build HTML content with all booking details
-  const content = `
+  // ============================================
+  // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
+  // ============================================
+  const generatePDFFromData = (data: any) => {
+    // Build HTML content with all booking details
+    const content = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -2195,7 +2195,7 @@ const generatePDFFromData = (data: any) => {
           </thead>
           <tbody>
             ${data.goodsItems && data.goodsItems.length > 0
-              ? data.goodsItems.map((item: any, idx: number) => `
+        ? data.goodsItems.map((item: any, idx: number) => `
                 <tr>
                   <td>${idx + 1}</td>
                   <td>${item.noOfPckgs}</td>
@@ -2206,8 +2206,8 @@ const generatePDFFromData = (data: any) => {
                   <td>${Number(item.chargeWeight).toFixed(2)}</td>
                 </tr>
               `).join('')
-              : `<tr><td colspan="7" style="text-align:center; padding:12px;">No goods items</td></tr>`
-            }
+        : `<tr><td colspan="7" style="text-align:center; padding:12px;">No goods items</td></tr>`
+      }
           </tbody>
         </table>
 
@@ -2272,7 +2272,7 @@ const generatePDFFromData = (data: any) => {
 
         <!-- REMARKS & INSURANCE -->
         ${(data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo ||
-           data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany || data.insuranceDate) ? `
+        data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany || data.insuranceDate) ? `
           <div class="remarks-box">
             <div class="title">REMARKS &amp; INSURANCE</div>
             ${data.remarks ? `<div class="line"><span class="lbl">Remarks:</span> ${data.remarks}</div>` : ''}
@@ -2296,48 +2296,46 @@ const generatePDFFromData = (data: any) => {
     </html>
   `;
 
-  // Create a hidden container to render the HTML
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-9999px';
-  container.style.top = '0';
-  container.style.width = '210mm';
-  container.style.background = '#fff';
-  container.style.zIndex = '-1';
-  container.innerHTML = content;
-  document.body.appendChild(container);
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.width = '210mm';
+    container.style.background = '#fff';
+    container.style.zIndex = '-1';
+    container.innerHTML = content;
+    document.body.appendChild(container);
 
-  const element = container.querySelector('#pdf-content');
-  if (!element) {
-    document.body.removeChild(container);
-    toast.error('PDF content not found');
-    return;
-  }
+    const element = container.querySelector('#pdf-content') as HTMLElement;
+    if (!element) {
+      document.body.removeChild(container);
+      toast.error('PDF content not found');
+      return;
+    }
 
-  // PDF options
-  const opt = {
-    margin:        [8, 8, 8, 8],
-    filename:      `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
-    image:         { type: 'jpeg', quality: 0.98 },
-    html2canvas:   { scale: 2, useCORS: true, logging: false },
-    jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:     { mode: 'avoid-all' }  // to prevent content breaking inside elements
+    const opt: any = {
+      margin: [8, 8, 8, 8],
+      filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: 'avoid-all' }
+    };
+
+    html2pdf()
+      .from(element)
+      .set(opt)
+      .save()
+      .then(() => {
+        document.body.removeChild(container);
+        toast.success('PDF downloaded successfully!');
+      })
+      .catch((err: any) => {
+        console.error('PDF generation error:', err);
+        document.body.removeChild(container);
+        toast.error('Failed to generate PDF');
+      });
   };
-
-  html2pdf()
-    .from(element)
-    .set(opt)
-    .save()
-    .then(() => {
-      document.body.removeChild(container);
-      toast.success('PDF downloaded successfully!');
-    })
-    .catch((err: any) => {
-      console.error('PDF generation error:', err);
-      document.body.removeChild(container);
-      toast.error('Failed to generate PDF');
-    });
-};
 
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
@@ -2618,12 +2616,12 @@ const generatePDFFromData = (data: any) => {
           {loading ? (<Card><CardContent className="py-12 text-center"><Loader2 className="h-12 w-12 mx-auto text-red-500 animate-spin" /><p className="text-gray-500 mt-2">Loading cancelled bookings...</p></CardContent></Card>
           ) : cancelledSearchResults.length > 0 ? (
             <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm p-3">#</TableHead><TableHead className="text-sm p-3">GR No.</TableHead><TableHead className="text-sm p-3">Date</TableHead><TableHead className="text-sm p-3">From</TableHead><TableHead className="text-sm p-3">To</TableHead><TableHead className="text-sm p-3">Consignor</TableHead><TableHead className="text-sm p-3">Consignee</TableHead><TableHead className="text-sm p-3 text-right">Freight</TableHead><TableHead className="text-sm p-3">Cancel Date</TableHead><TableHead className="text-sm p-3">Reason</TableHead><TableHead className="text-sm p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{paginatedCancelledResults.map((r, idx) => (<TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50"><TableCell className="text-sm p-3">{(cancelledCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="text-sm p-3"><Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge></TableCell><TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell><TableCell className="text-sm p-3">{r.bookingFrom}</TableCell><TableCell className="text-sm p-3">{r.destination}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consignorName}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consigneeName}</TableCell><TableCell className="text-sm p-3 text-right">₹{r.totalFreight.toLocaleString()}</TableCell><TableCell className="text-sm p-3">{r.cancelledDate ? format(new Date(r.cancelledDate), "dd-MM-yyyy") : "-"}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]" title={r.cancelledReason}>{r.cancelledReason}</TableCell><TableCell className="text-sm p-3 text-center">
-                <div className="flex gap-1 justify-center">
-                  <Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button>
-                  {/* DOWNLOAD BUTTON IN CANCELLED */}
-                  <Button variant="ghost" size="sm" onClick={() => downloadBookingPDF(r)} className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50" title="Download PDF"><Download className="h-4 w-4" /></Button>
-                </div>
-              </TableCell></TableRow>))}</TableBody></Table></div>
+              <div className="flex gap-1 justify-center">
+                <Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button>
+                {/* DOWNLOAD BUTTON IN CANCELLED */}
+                <Button variant="ghost" size="sm" onClick={() => downloadBookingPDF(r)} className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50" title="Download PDF"><Download className="h-4 w-4" /></Button>
+              </div>
+            </TableCell></TableRow>))}</TableBody></Table></div>
               {cancelledTotalPages > 1 && (<div className="flex justify-center gap-2 p-4 border-t"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage - 1)} disabled={cancelledCurrentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledCurrentPage} of {cancelledTotalPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage + 1)} disabled={cancelledCurrentPage === cancelledTotalPages}>Next</Button></div>)}
             </CardContent></Card>
           ) : (<Card><CardContent className="py-12 text-center"><X className="h-12 w-12 mx-auto text-gray-400" /><p className="text-gray-500 mt-2">No cancelled bookings found</p></CardContent></Card>)}
@@ -2921,145 +2919,145 @@ const generatePDFFromData = (data: any) => {
               <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center"><h3 className="text-base font-semibold flex items-center gap-2"><Package className="h-5 w-5" /> GOODS DETAILS</h3><Button onClick={addGoodsRow} variant="ghost" size="sm" className="h-8 text-sm"><Plus className="mr-1 h-4 w-4" />ADD GOODS</Button></div>
               <div className="overflow-x-auto p-4">
                 <div className="overflow-x-auto p-4 max-h-[300px] overflow-y-auto">
-                <Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">#</TableHead><TableHead className="text-sm">No Of Pckgs</TableHead><TableHead className="text-sm">Content Category</TableHead><TableHead className="text-sm">Content (Sub)</TableHead><TableHead className="text-sm">Packing</TableHead><TableHead className="text-sm">Actual Weight</TableHead><TableHead className="text-sm">Charge Weight</TableHead><TableHead className="text-sm">Status</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
-                  <TableBody>{goodsItems.map((item, idx) => {
-                    const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory));
-                    return (
-                      <TableRow key={item.id} className={!item.isWeightValid ? "bg-red-50" : ""}>
-                        <TableCell className="text-sm">{idx + 1}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.noOfPckgs || ""}
-                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "noOfPckgs", val))}
-                            className="h-8 w-24 text-sm"
-                            min="0"
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        {/* POINT 12: Content Category with Search */}
-                        {/* Content Category with Search - COMPLETE FIXED */}
-                        <TableCell className="relative min-w-[180px]">
-                          <div className="relative">
+                  <Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm w-12">#</TableHead><TableHead className="text-sm">No Of Pckgs</TableHead><TableHead className="text-sm">Content Category</TableHead><TableHead className="text-sm">Content (Sub)</TableHead><TableHead className="text-sm">Packing</TableHead><TableHead className="text-sm">Actual Weight</TableHead><TableHead className="text-sm">Charge Weight</TableHead><TableHead className="text-sm">Status</TableHead><TableHead className="text-sm w-12">Action</TableHead></TableRow></TableHeader>
+                    <TableBody>{goodsItems.map((item, idx) => {
+                      const selectedCategory = contentCategories.find(c => c.id === Number(item.contentCategory));
+                      return (
+                        <TableRow key={item.id} className={!item.isWeightValid ? "bg-red-50" : ""}>
+                          <TableCell className="text-sm">{idx + 1}</TableCell>
+                          <TableCell>
                             <Input
-                              value={contentCategorySearch || ""}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setContentCategorySearch(value);
-                                if (value.length >= 1) {
-                                  const filtered = contentCategories.filter(cat =>
-                                    cat.name.toLowerCase().includes(value.toLowerCase())
-                                  );
-                                  setContentCategoryResults(filtered);
-                                  setShowContentCategoryDropdown(true);
-                                } else {
-                                  setContentCategoryResults([]);
-                                  setShowContentCategoryDropdown(false);
-                                  // Clear the category from goods item when search is empty
-                                  setGoodsItems(prevItems =>
-                                    prevItems.map(item => ({
-                                      ...item,
-                                      contentCategory: "",
-                                      content: "",
-                                      contentSubCategory: ""
-                                    }))
-                                  );
-                                }
-                              }}
-                              className="h-8 w-32 text-sm pr-7"
-                              placeholder="Search category..."
+                              type="number"
+                              value={item.noOfPckgs || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "noOfPckgs", val))}
+                              className="h-8 w-24 text-sm"
+                              min="0"
+                              placeholder="0"
                             />
-                            {/* Clear button */}
-                            {contentCategorySearch && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setContentCategorySearch("");
-                                  setContentCategoryResults([]);
-                                  setShowContentCategoryDropdown(false);
-                                  // Clear the category from goods item
-                                  setGoodsItems(prevItems =>
-                                    prevItems.map(item => ({
-                                      ...item,
-                                      contentCategory: "",
-                                      content: "",
-                                      contentSubCategory: ""
-                                    }))
-                                  );
+                          </TableCell>
+                          {/* POINT 12: Content Category with Search */}
+                          {/* Content Category with Search - COMPLETE FIXED */}
+                          <TableCell className="relative min-w-[180px]">
+                            <div className="relative">
+                              <Input
+                                value={contentCategorySearch || ""}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setContentCategorySearch(value);
+                                  if (value.length >= 1) {
+                                    const filtered = contentCategories.filter(cat =>
+                                      cat.name.toLowerCase().includes(value.toLowerCase())
+                                    );
+                                    setContentCategoryResults(filtered);
+                                    setShowContentCategoryDropdown(true);
+                                  } else {
+                                    setContentCategoryResults([]);
+                                    setShowContentCategoryDropdown(false);
+                                    // Clear the category from goods item when search is empty
+                                    setGoodsItems(prevItems =>
+                                      prevItems.map(item => ({
+                                        ...item,
+                                        contentCategory: "",
+                                        content: "",
+                                        contentSubCategory: ""
+                                      }))
+                                    );
+                                  }
                                 }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
-                          </div>
-
-                          {showContentCategoryDropdown && contentCategoryResults.length > 0 && (
-                            <div className="absolute z-50 mt-1 w-64 bg-white border rounded-md shadow-lg max-h-40 overflow-auto">
-                              {contentCategoryResults.map((cat) => (
-                                <div
-                                  key={cat.id}
-                                  className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm"
-                                  onClick={() => handleContentCategorySelect(cat)}
+                                className="h-8 w-32 text-sm pr-7"
+                                placeholder="Search category..."
+                              />
+                              {/* Clear button */}
+                              {contentCategorySearch && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setContentCategorySearch("");
+                                    setContentCategoryResults([]);
+                                    setShowContentCategoryDropdown(false);
+                                    // Clear the category from goods item
+                                    setGoodsItems(prevItems =>
+                                      prevItems.map(item => ({
+                                        ...item,
+                                        contentCategory: "",
+                                        content: "",
+                                        contentSubCategory: ""
+                                      }))
+                                    );
+                                  }}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                                 >
-                                  {cat.name}
-                                </div>
-                              ))}
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
                             </div>
-                          )}
-                        </TableCell>
-                        {/* POINT 13: Content (Sub) LOCKED */}
-                        <TableCell>
-                          <Select
-                            value={item.contentSubCategory}
-                            onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)}
-                            disabled
-                          >
-                            <SelectTrigger className="h-8 w-32 text-sm bg-gray-100">
-                              <SelectValue placeholder="Locked" />
-                            </SelectTrigger>
-                          </Select>
-                        </TableCell>
-                        {/* POINT 14: Packing LOCKED */}
-                        <TableCell>
-                          <Select
-                            value={item.packing}
-                            onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}
-                            disabled
-                          >
-                            <SelectTrigger className="h-8 w-28 text-sm bg-gray-100">
-                              <SelectValue placeholder="Locked" />
-                            </SelectTrigger>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.actualWeight || ""}
-                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "actualWeight", val))}
-                            className="h-8 w-24 text-sm"
-                            step="0.01"
-                            min="0"
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.chargeWeight || ""}
-                            onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "chargeWeight", val))}
-                            className="h-8 w-24 text-sm"
-                            step="0.01"
-                            min="0"
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        <TableCell>{!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}{item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}</TableCell>
-                        <TableCell><Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell>
-                      </TableRow>
-                    );
-                  })}</TableBody>
-                </Table>
+
+                            {showContentCategoryDropdown && contentCategoryResults.length > 0 && (
+                              <div className="absolute z-50 mt-1 w-64 bg-white border rounded-md shadow-lg max-h-40 overflow-auto">
+                                {contentCategoryResults.map((cat) => (
+                                  <div
+                                    key={cat.id}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 text-sm"
+                                    onClick={() => handleContentCategorySelect(cat)}
+                                  >
+                                    {cat.name}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </TableCell>
+                          {/* POINT 13: Content (Sub) LOCKED */}
+                          <TableCell>
+                            <Select
+                              value={item.contentSubCategory}
+                              onValueChange={(val) => updateGoodsItem(item.id, "contentSubCategory", val)}
+                              disabled
+                            >
+                              <SelectTrigger className="h-8 w-32 text-sm bg-gray-100">
+                                <SelectValue placeholder="Locked" />
+                              </SelectTrigger>
+                            </Select>
+                          </TableCell>
+                          {/* POINT 14: Packing LOCKED */}
+                          <TableCell>
+                            <Select
+                              value={item.packing}
+                              onValueChange={(val) => updateGoodsItem(item.id, "packing", val)}
+                              disabled
+                            >
+                              <SelectTrigger className="h-8 w-28 text-sm bg-gray-100">
+                                <SelectValue placeholder="Locked" />
+                              </SelectTrigger>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.actualWeight || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "actualWeight", val))}
+                              className="h-8 w-24 text-sm"
+                              step="0.01"
+                              min="0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.chargeWeight || ""}
+                              onChange={(e) => handleNumberChange(e, (val) => updateGoodsItem(item.id, "chargeWeight", val))}
+                              className="h-8 w-24 text-sm"
+                              step="0.01"
+                              min="0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>{!item.isWeightValid && <span className="text-red-500 text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4" />{item.weightError?.substring(0, 40)}</span>}{item.isWeightValid && item.chargeWeight > 0 && <span className="text-green-500 text-sm flex items-center gap-1"><CheckCircle className="h-4 w-4" />Valid</span>}</TableCell>
+                          <TableCell><Button variant="ghost" size="sm" onClick={() => removeGoodsRow(item.id)} disabled={goodsItems.length === 1} className="h-8 w-8 p-0 text-red-500"><Trash2 className="h-4 w-4" /></Button></TableCell>
+                        </TableRow>
+                      );
+                    })}</TableBody>
+                  </Table>
                 </div>
               </div>
               <div className="p-3 bg-gray-50 flex flex-wrap gap-4 justify-between items-center border-t"><div className="flex flex-wrap gap-4 items-center"><span className="text-sm font-medium">Total Pckgs: <strong className="text-blue-600">{totalPckgs}</strong></span><span className="text-sm font-medium">Total Actual Weight: <strong className="text-blue-600">{totalActualWeight.toFixed(2)} kg</strong></span><span className="text-sm font-medium">Total Charge Weight: <strong className="text-blue-600">{totalChargeWeight.toFixed(2)} kg</strong></span>{!manualRates && (<span className="text-sm font-medium">Total Freight: <strong className="text-green-600">₹{(totalChargeWeight * 5).toFixed(2)}</strong></span>)}</div><div className="flex items-center gap-4"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={manualRates} onChange={(e) => setManualRates(e.target.checked)} className="h-4 w-4 rounded" /><span className="text-sm font-medium">Manual Rates</span></label></div></div>
