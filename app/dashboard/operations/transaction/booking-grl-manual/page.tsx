@@ -1115,9 +1115,9 @@ export default function BookingGRLManual() {
 
   const loadCurrentUser = () => {
     if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user');
-      const selectedBranchStr = localStorage.getItem('selectedBranch');
-      const branchCode = localStorage.getItem('branchCode');
+      const userStr = sessionStorage.getItem('user');
+      const selectedBranchStr = sessionStorage.getItem('selectedBranch');
+      const branchCode = sessionStorage.getItem('branchCode');
 
       if (userStr) {
         try {
