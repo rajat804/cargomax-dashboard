@@ -1934,7 +1934,17 @@ export default function BookingGRLManual() {
   // ============================================
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
-  const generatePDFFromData = (data: any) => {
+const generatePDFFromData = async (data: any) => {
+  // ✅ FIX 1: Guard against server-side execution
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    console.warn('PDF generation skipped - running on server');
+    return;
+  }
+
+  try {
+    // ✅ FIX 2: Dynamic import - only loads on client
+    const html2pdf = (await import('html2pdf.js')).default;
+
     // Build HTML content with all booking details
     const content = `
     <!DOCTYPE html>
@@ -1951,14 +1961,14 @@ export default function BookingGRLManual() {
         body {
           font-family: 'Helvetica', 'Arial', sans-serif;
           background: #fff;
-          padding: 15px;
+          padding: 12px;
           color: #000;
         }
         .page {
           max-width: 210mm;
           margin: 0 auto;
           background: #fff;
-          padding: 12px;
+          padding: 10px 12px 8px 12px;
           border: 2px solid #000;
           position: relative;
         }
@@ -1966,17 +1976,17 @@ export default function BookingGRLManual() {
         .header {
           text-align: center;
           border-bottom: 3px double #000;
-          padding-bottom: 10px;
-          margin-bottom: 14px;
+          padding-bottom: 8px;
+          margin-bottom: 10px;
         }
         .header h1 {
-          font-size: 22px;
+          font-size: 20px;
           font-weight: 700;
           letter-spacing: 1px;
         }
         .header p {
-          font-size: 10px;
-          margin: 3px 0;
+          font-size: 9px;
+          margin: 2px 0;
           color: #333;
         }
         /* Title & Status */
@@ -1984,28 +1994,27 @@ export default function BookingGRLManual() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 12px;
+          margin-bottom: 10px;
           border-bottom: 1px solid #ccc;
-          padding-bottom: 6px;
+          padding-bottom: 5px;
         }
         .title-section h2 {
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 700;
         }
         .status-badge {
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           color: #cc0000;
           border: 1px solid #cc0000;
           padding: 2px 12px;
           border-radius: 3px;
-          display: inline-block;
         }
         /* Two-column layout */
         .row {
           display: flex;
           flex-wrap: wrap;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
         }
         .col {
           flex: 1 1 45%;
@@ -2013,13 +2022,13 @@ export default function BookingGRLManual() {
         }
         .field {
           display: flex;
-          font-size: 10px;
-          line-height: 1.7;
+          font-size: 9px;
+          line-height: 1.6;
           padding: 1px 0;
         }
         .field .label {
           font-weight: 700;
-          width: 100px;
+          width: 90px;
           flex-shrink: 0;
         }
         .field .value {
@@ -2029,30 +2038,30 @@ export default function BookingGRLManual() {
         }
         /* Section Title */
         .section-title {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           background: #eee;
-          padding: 4px 10px;
-          margin: 12px 0 6px 0;
+          padding: 3px 10px;
+          margin: 10px 0 5px 0;
           border-left: 4px solid #000;
         }
         /* Tables */
         .grid-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9px;
-          margin: 6px 0 10px 0;
+          font-size: 8.5px;
+          margin: 5px 0 8px 0;
         }
         .grid-table th {
           background: #333;
           color: #fff;
-          padding: 5px 6px;
+          padding: 4px 5px;
           text-align: center;
           font-weight: 700;
           border: 1px solid #000;
         }
         .grid-table td {
-          padding: 4px 6px;
+          padding: 3px 5px;
           border: 1px solid #000;
           text-align: center;
         }
@@ -2062,59 +2071,64 @@ export default function BookingGRLManual() {
         /* Totals Box */
         .totals-box {
           border: 1px solid #000;
-          padding: 10px 14px;
-          margin: 8px 0 12px 0;
+          padding: 8px 12px;
+          margin: 6px 0 10px 0;
           background: #f9f9f9;
         }
         .totals-box .label {
           font-weight: 700;
           display: inline-block;
-          width: 160px;
+          width: 150px;
         }
         .totals-box .line {
           padding: 2px 0;
-          font-size: 10px;
+          font-size: 9px;
+        }
+        .totals-box .title {
+          font-weight: 700;
+          font-size: 11px;
+          margin-bottom: 3px;
         }
         /* Damage & Remarks Boxes */
         .damage-box, .remarks-box {
           border: 1px solid #000;
-          padding: 10px 14px;
-          margin: 8px 0;
+          padding: 8px 12px;
+          margin: 6px 0;
           background: #fcfcfc;
         }
         .damage-box .title, .remarks-box .title {
           font-weight: 700;
-          font-size: 12px;
+          font-size: 11px;
           background: #eee;
-          padding: 3px 8px;
-          margin: -10px -14px 8px -14px;
+          padding: 2px 8px;
+          margin: -8px -12px 6px -12px;
           border-bottom: 1px solid #000;
         }
         .damage-box .line, .remarks-box .line {
-          font-size: 10px;
+          font-size: 9px;
           padding: 2px 0;
         }
         .damage-box .line .lbl, .remarks-box .line .lbl {
           font-weight: 700;
           display: inline-block;
-          width: 120px;
+          width: 110px;
         }
         /* Footer */
         .footer {
           text-align: center;
-          font-size: 8px;
+          font-size: 7.5px;
           color: #666;
           border-top: 1px solid #ccc;
-          padding-top: 8px;
-          margin-top: 14px;
+          padding-top: 6px;
+          margin-top: 10px;
         }
         .footer .page-number {
           font-weight: 700;
         }
-        /* Responsive adjustments */
+        /* Responsive */
         @media (max-width: 600px) {
           .col { flex: 1 1 100%; }
-          .field .label { width: 80px; }
+          .field .label { width: 70px; }
         }
         @media print {
           .page { border: none; padding: 0; }
@@ -2156,9 +2170,9 @@ export default function BookingGRLManual() {
         </div>
 
         <!-- CONSIGNOR & CONSIGNEE -->
-        <div style="display:flex; flex-wrap:wrap; gap:16px; margin:6px 0 10px 0;">
-          <div style="flex:1; min-width:200px; border:1px solid #000; padding:8px;">
-            <div style="font-weight:700; background:#eee; padding:3px 8px; margin:-8px -8px 6px -8px; border-bottom:1px solid #000;">CONSIGNOR DETAILS</div>
+        <div style="display:flex; flex-wrap:wrap; gap:14px; margin:6px 0 8px 0;">
+          <div style="flex:1; min-width:190px; border:1px solid #000; padding:7px;">
+            <div style="font-weight:700; background:#eee; padding:2px 8px; margin:-7px -7px 5px -7px; border-bottom:1px solid #000;">CONSIGNOR DETAILS</div>
             <div class="field"><span class="label">Name</span><span class="value">${data.consignorName || '-'}</span></div>
             <div class="field"><span class="label">Mobile</span><span class="value">${data.consignorMobile || '-'}</span></div>
             <div class="field"><span class="label">GST</span><span class="value">${data.consignorGst || '-'}</span></div>
@@ -2167,8 +2181,8 @@ export default function BookingGRLManual() {
             <div class="field"><span class="label">City</span><span class="value">${data.consignorCity || '-'}</span></div>
             <div class="field"><span class="label">State</span><span class="value">${data.consignorState || '-'}</span></div>
           </div>
-          <div style="flex:1; min-width:200px; border:1px solid #000; padding:8px;">
-            <div style="font-weight:700; background:#eee; padding:3px 8px; margin:-8px -8px 6px -8px; border-bottom:1px solid #000;">CONSIGNEE DETAILS</div>
+          <div style="flex:1; min-width:190px; border:1px solid #000; padding:7px;">
+            <div style="font-weight:700; background:#eee; padding:2px 8px; margin:-7px -7px 5px -7px; border-bottom:1px solid #000;">CONSIGNEE DETAILS</div>
             <div class="field"><span class="label">Name</span><span class="value">${data.consigneeName || '-'}</span></div>
             <div class="field"><span class="label">Mobile</span><span class="value">${data.consigneeMobile || '-'}</span></div>
             <div class="field"><span class="label">GST</span><span class="value">${data.consigneeGst || '-'}</span></div>
@@ -2199,21 +2213,21 @@ export default function BookingGRLManual() {
                 <tr>
                   <td>${idx + 1}</td>
                   <td>${item.noOfPckgs}</td>
-                  <td>${item.contentCategory || '-'}</td>
+                  <td>${item.contentCategoryName || item.contentCategory || '-'}</td>
                   <td>${item.content || '-'}</td>
                   <td>${item.packing || '-'}</td>
                   <td>${Number(item.actualWeight).toFixed(2)}</td>
                   <td>${Number(item.chargeWeight).toFixed(2)}</td>
                 </tr>
               `).join('')
-        : `<tr><td colspan="7" style="text-align:center; padding:12px;">No goods items</td></tr>`
+        : `<tr><td colspan="7" style="text-align:center; padding:10px;">No goods items</td></tr>`
       }
           </tbody>
         </table>
 
         <!-- TOTALS -->
         <div class="totals-box">
-          <div style="font-weight:700; font-size:12px; margin-bottom:4px;">TOTALS</div>
+          <div class="title">TOTALS</div>
           <div class="line"><span class="label">Total Packages:</span> ${data.totalPckgs}</div>
           <div class="line"><span class="label">Total Actual Weight:</span> ${Number(data.totalActualWeight).toFixed(2)} kg</div>
           <div class="line"><span class="label">Total Charge Weight:</span> ${Number(data.totalChargeWeight).toFixed(2)} kg</div>
@@ -2296,6 +2310,7 @@ export default function BookingGRLManual() {
     </html>
   `;
 
+    // Create a hidden container to render the HTML
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
@@ -2313,6 +2328,7 @@ export default function BookingGRLManual() {
       return;
     }
 
+    // PDF options
     const opt: any = {
       margin: [8, 8, 8, 8],
       filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
@@ -2322,7 +2338,7 @@ export default function BookingGRLManual() {
       pagebreak: { mode: 'avoid-all' }
     };
 
-    html2pdf()
+    await html2pdf()
       .from(element)
       .set(opt)
       .save()
@@ -2335,8 +2351,11 @@ export default function BookingGRLManual() {
         document.body.removeChild(container);
         toast.error('Failed to generate PDF');
       });
-  };
-
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    toast.error('Failed to generate PDF');
+  }
+};
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
   // ============================================
