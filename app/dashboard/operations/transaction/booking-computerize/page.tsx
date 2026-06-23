@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import html2pdf from 'html2pdf.js';
-// import jsPDF from 'jspdf';
-// import autoTable from 'jspdf-autotable';
+
 
 import {
   Table,
@@ -2042,8 +2040,9 @@ export default function BookingComputerizedGRL() {
   // ============================================
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
-  const generatePDFFromData = (data: any) => {
+  const generatePDFFromData = async (data: any) => {
     // Build HTML content with all booking details
+    const html2pdf = (await import('html2pdf.js')).default;
     const content = `
     <!DOCTYPE html>
     <html>
@@ -2450,6 +2449,8 @@ export default function BookingComputerizedGRL() {
         toast.error('Failed to generate PDF');
       });
   };
+
+  
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
   // ============================================
