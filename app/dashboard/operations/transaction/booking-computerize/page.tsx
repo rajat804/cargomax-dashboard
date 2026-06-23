@@ -2041,8 +2041,17 @@ export default function BookingComputerizedGRL() {
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
   const generatePDFFromData = async (data: any) => {
-    // Build HTML content with all booking details
+  // Guard against server-side execution
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    console.warn('PDF generation skipped - running on server');
+    return;
+  }
+
+  try {
+    // Dynamically import html2pdf only on client
     const html2pdf = (await import('html2pdf.js')).default;
+
+    // Build HTML content with all booking details
     const content = `
     <!DOCTYPE html>
     <html>
@@ -2435,7 +2444,7 @@ export default function BookingComputerizedGRL() {
       pagebreak: { mode: 'avoid-all' }
     };
 
-    html2pdf()
+    await html2pdf()
       .from(element)
       .set(opt)
       .save()
@@ -2448,7 +2457,11 @@ export default function BookingComputerizedGRL() {
         document.body.removeChild(container);
         toast.error('Failed to generate PDF');
       });
-  };
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    toast.error('Failed to generate PDF');
+  }
+};
 
   
   // ============================================
