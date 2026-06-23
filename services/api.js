@@ -16,7 +16,7 @@ const api = axios.create({
 // ✅ FIX: Get token from sessionStorage first
 const getToken = () => {
   if (typeof window !== 'undefined') {
-    return sessionStorage.getItem('token') || localStorage.getItem('token');
+    return sessionStorage.getItem('token');
   }
   return null;
 };
@@ -26,7 +26,7 @@ const getToken = () => {
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -51,15 +51,15 @@ api.interceptors.response.use(
     console.error('API Error:', error.response?.data || error.message);
     
     if (typeof window !== 'undefined' && error.response?.status === 401) {
-      // Clear both sessionStorage and localStorage
+      // Clear both sessionStorage
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
       sessionStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('selectedBranch');
-      localStorage.removeItem('branchCode');
+      // localStorage.removeItem('token');
+      // localStorage.removeItem('user');
+      // localStorage.removeItem('isLoggedIn');
+      // localStorage.removeItem('selectedBranch');
+      // localStorage.removeItem('branchCode');
       window.location.href = '/auth/login';
     }
     
@@ -77,10 +77,10 @@ export const login = async (email, password) => {
     sessionStorage.setItem('user', JSON.stringify(response.data.data));
     sessionStorage.setItem('isLoggedIn', 'true');
     
-    // ✅ Branch localStorage mein (shared)
+    // ✅ Branch sessionStorage mein (shared)
     if (response.data.data.branch) {
-      localStorage.setItem('selectedBranch', response.data.data.branch);
-      localStorage.setItem('branchCode', response.data.data.branchCode);
+      sessionStorage.setItem('selectedBranch', response.data.data.branch);
+      sessionStorage.setItem('branchCode', response.data.data.branchCode);
     }
   }
   return response.data;
@@ -90,15 +90,15 @@ export const login = async (email, password) => {
 export const userSelectBranch = async (branch, branchCode) => {
   const response = await api.post('/auth/user-select-branch', { branch, branchCode });
   if (typeof window !== 'undefined' && response.data.success) {
-    localStorage.setItem('selectedBranch', branch);
-    localStorage.setItem('branchCode', branchCode);
+    sessionStorage.setItem('selectedBranch', branch);
+    sessionStorage.setItem('branchCode', branchCode);
     
     // Update user data with branch info
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
     userData.branch = branch;
     userData.branchCode = branchCode;
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('userData', JSON.stringify(userData));
+    sessionStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('userData', JSON.stringify(userData));
   }
   return response.data;
 };
@@ -107,14 +107,14 @@ export const userSelectBranch = async (branch, branchCode) => {
 export const selectBranch = async (branch, branchCode) => {
   const response = await api.post('/auth/select-branch', { branch, branchCode });
   if (typeof window !== 'undefined' && response.data.success) {
-    localStorage.setItem('selectedBranch', branch);
-    localStorage.setItem('branchCode', branchCode);
+    sessionStorage.setItem('selectedBranch', branch);
+    sessionStorage.setItem('branchCode', branchCode);
     
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const userData = JSON.parse(sessionStorage.getItem('user') || '{}');
     userData.branch = branch;
     userData.branchCode = branchCode;
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('userData', JSON.stringify(userData));
+    sessionStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem('userData', JSON.stringify(userData));
   }
   return response.data;
 };
@@ -125,9 +125,9 @@ export const getCurrentUser = async () => {
   if (typeof window !== 'undefined' && response.data.success) {
     const userData = response.data.data;
     if (userData.branch && userData.branchCode) {
-      localStorage.setItem('selectedBranch', userData.branch);
-      localStorage.setItem('branchCode', userData.branchCode);
-      localStorage.setItem('userData', JSON.stringify(userData));
+      sessionStorage.setItem('selectedBranch', userData.branch);
+      sessionStorage.setItem('branchCode', userData.branchCode);
+      sessionStorage.setItem('userData', JSON.stringify(userData));
     }
   }
   return response.data;
@@ -145,14 +145,14 @@ export const logout = async () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('isLoggedIn');
-    // ✅ localStorage REMOVE MAT KARO
+    
   }
 };
 
 // ✅ FIX: Check authentication safely
 export const isAuthenticated = () => {
   if (typeof window !== 'undefined') {
-    return !!localStorage.getItem('token');
+    return !!sessionStorage.getItem('token');
   }
   return false;
 };
@@ -160,7 +160,7 @@ export const isAuthenticated = () => {
 // ✅ FIX: Get auth token safely
 export const getAuthToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
+    return sessionStorage.getItem('token');
   }
   return null;
 };
@@ -171,8 +171,8 @@ export const register = async (userData) => {
   try {
     const response = await api.post("/auth/register", userData);
     if (response.data.success) {
-      localStorage.setItem("token", response.data.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.data));
+      sessionStorage.setItem("token", response.data.data.token);
+      sessionStorage.setItem("user", JSON.stringify(response.data.data));
     }
     return response.data;
   } catch (error) {
@@ -191,11 +191,11 @@ export const userLogin = async (email, password) => {
       sessionStorage.setItem('user', JSON.stringify(userData));
       sessionStorage.setItem('isLoggedIn', 'true');
       
-      // ✅ Branch localStorage mein (shared)
+      // ✅ Branch sessionStorage mein (shared)
       if (userData.branch && userData.branchCode) {
-        localStorage.setItem('selectedBranch', userData.branch);
-        localStorage.setItem('branchCode', userData.branchCode);
-        localStorage.setItem('userData', JSON.stringify(userData));
+        sessionStorage.setItem('selectedBranch', userData.branch);
+        sessionStorage.setItem('branchCode', userData.branchCode);
+        sessionStorage.setItem('userData', JSON.stringify(userData));
       }
     }
     return response.data;
@@ -217,7 +217,7 @@ export const updateUserProfile = async (userData) => {
   try {
     const response = await api.put("/auth/profile", userData);
     if (response.data.success) {
-      localStorage.setItem("user", JSON.stringify(response.data.data));
+      sessionStorage.setItem("user", JSON.stringify(response.data.data));
     }
     return response.data;
   } catch (error) {
@@ -273,7 +273,7 @@ const getUserData = () => {
   if (typeof window !== 'undefined') {
     const user = sessionStorage.getItem('user');
     if (user) return JSON.parse(user);
-    const localUser = localStorage.getItem('user');
+    const localUser = sessionStorage.getItem('user');
     if (localUser) return JSON.parse(localUser);
     return null;
   }
@@ -283,7 +283,7 @@ const getUserData = () => {
 // ✅ NEW: Check if user has branch
 export const hasUserBranch = () => {
   if (typeof window !== 'undefined') {
-    const userData = localStorage.getItem('user');
+    const userData = sessionStorage.getItem('user');
     if (userData) {
       try {
         const user = JSON.parse(userData);
@@ -300,8 +300,8 @@ export const hasUserBranch = () => {
 export const getUserBranch = () => {
   if (typeof window !== 'undefined') {
     return {
-      branch: localStorage.getItem('selectedBranch') || '',
-      branchCode: localStorage.getItem('branchCode') || ''
+      branch: sessionStorage.getItem('selectedBranch') || '',
+      branchCode: sessionStorage.getItem('branchCode') || ''
     };
   }
   return { branch: '', branchCode: '' };
