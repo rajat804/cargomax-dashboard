@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Table,
   TableBody,
@@ -66,6 +68,7 @@ import {
   Mic,
   MicOff,
   Camera,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -1927,6 +1930,304 @@ export default function BookingGRLManual() {
     setIsCancelledDialogOpen(true);
   };
 
+  // ============================================
+  // PDF GENERATION HELPER
+  // ============================================
+  const generatePDFFromData = (data: any) => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Company Header
+    doc.setFontSize(16);
+    doc.setTextColor(40, 40, 80);
+    doc.text('GOLDEN ROADWAYS & LOGISTICS PVT LTD', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text('Corporate Office: Golden Roadways Building, NH-24, Delhi', pageWidth / 2, 27, { align: 'center' });
+    doc.text('Phone: 011-12345678 | Email: info@goldenroadways.com', pageWidth / 2, 32, { align: 'center' });
+
+    // Booking Title
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text(data.editMode ? 'EDIT BOOKING' : 'BOOKING CONFIRMATION', pageWidth / 2, 42, { align: 'center' });
+
+    // Booking Info (2 columns)
+    const leftColX = 14;
+    const rightColX = pageWidth / 2 + 10;
+    let yPos = 50;
+
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+
+    const addField = (label: string, value: any, x: number, y: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', x, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), x + 30, y);
+      return y + 6;
+    };
+
+    yPos = addField('GR No.', data.grNo || 'Auto-generated', leftColX, yPos);
+    yPos = addField('Booking From', data.bookingFrom, leftColX, yPos);
+    yPos = addField('Booking Date', format(data.bookingDate, 'dd-MM-yyyy'), leftColX, yPos);
+    yPos = addField('Destination', data.destination, leftColX, yPos);
+    yPos = addField('Booking Type', data.bookingType, leftColX, yPos);
+    yPos = addField('Collection At', data.collectionAt, leftColX, yPos);
+
+    let yPosRight = 50;
+    const addFieldRight = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', rightColX, yPosRight);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), rightColX + 30, yPosRight);
+      yPosRight += 6;
+    };
+
+    addFieldRight('Service Product', data.serviceProduct);
+    addFieldRight('Delivery Type', data.deliveryType);
+    addFieldRight('Load Type', data.loadType);
+    addFieldRight('Freight On', data.freightOn);
+    addFieldRight('Pvt Marka/Seal', data.pvtMarkaSealNo);
+
+    // Consignor & Consignee
+    yPos = Math.max(yPos, yPosRight) + 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('CONSIGNOR DETAILS', leftColX, yPos);
+    doc.text('CONSIGNEE DETAILS', pageWidth / 2 + 10, yPos);
+    yPos += 6;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    let cy = yPos;
+    const addConsignorField = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', leftColX, cy);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), leftColX + 25, cy);
+      cy += 5;
+    };
+    addConsignorField('Name', data.consignorName);
+    addConsignorField('Mobile', data.consignorMobile);
+    addConsignorField('GST', data.consignorGst);
+    addConsignorField('PAN', data.consignorPan);
+    addConsignorField('Address', data.consignorAddress);
+    addConsignorField('City', data.consignorCity);
+    addConsignorField('State', data.consignorState);
+
+    let cy2 = yPos;
+    const addConsigneeField = (label: string, value: any) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label + ':', pageWidth / 2 + 10, cy2);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(value || '-'), pageWidth / 2 + 35, cy2);
+      cy2 += 5;
+    };
+    addConsigneeField('Name', data.consigneeName);
+    addConsigneeField('Mobile', data.consigneeMobile);
+    addConsigneeField('GST', data.consigneeGst);
+    addConsigneeField('PAN', data.consigneePan);
+    addConsigneeField('Address', data.consigneeAddress);
+    addConsigneeField('City', data.consigneeCity);
+    addConsigneeField('State', data.consigneeState);
+
+    // Goods Table
+    const goodsStartY = Math.max(cy, cy2) + 6;
+    if (data.goodsItems && data.goodsItems.length > 0) {
+      autoTable(doc, {
+        startY: goodsStartY,
+        head: [['#', 'Pckgs', 'Category', 'Content', 'Packing', 'Act. Wt', 'Chg. Wt']],
+        body: data.goodsItems.map((item: any, idx: number) => [
+          idx + 1,
+          item.noOfPckgs,
+          item.contentCategory || '',
+          item.content || '',
+          item.packing,
+          item.actualWeight.toFixed(2),
+          item.chargeWeight.toFixed(2)
+        ]),
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [41, 128, 185], textColor: [255, 255, 255] },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 15 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 20 }
+        },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // Totals
+    let finalY = (doc as any).lastAutoTable?.finalY || goodsStartY + 20;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Packages: ${data.totalPckgs}`, 14, finalY + 6);
+    doc.text(`Total Actual Weight: ${data.totalActualWeight.toFixed(2)} kg`, 14, finalY + 12);
+    doc.text(`Total Charge Weight: ${data.totalChargeWeight.toFixed(2)} kg`, 14, finalY + 18);
+    if (data.manualRates) {
+      doc.text(`Freight: ₹${data.calculatedFreight?.toFixed(0) || 0}`, 14, finalY + 24);
+      doc.text(`GST (${data.gstRate || 0}%): ₹${data.gstAmount?.toFixed(0) || 0}`, 14, finalY + 30);
+      doc.text(`Total Amount: ₹${data.totalAmount?.toFixed(0) || 0}`, 14, finalY + 36);
+      doc.text(`Advance: ₹${data.advanceAmount?.toFixed(0) || 0}`, 14, finalY + 42);
+      doc.text(`Balance: ₹${data.balanceAmount?.toFixed(0) || 0}`, 14, finalY + 48);
+    } else {
+      doc.text(`Freight: ₹${(data.totalChargeWeight * 5).toFixed(2)}`, 14, finalY + 24);
+    }
+
+    // Invoices Table
+    const invoiceStartY = finalY + (data.manualRates ? 54 : 30);
+    if (data.invoices && data.invoices.length > 0) {
+      autoTable(doc, {
+        startY: invoiceStartY,
+        head: [['S#', 'Invoice #', 'Date', 'Value', 'Eway Bill #', 'Eway Date', 'Valid Upto']],
+        body: data.invoices.map((inv: any, idx: number) => [
+          idx + 1,
+          inv.invoiceNo || '-',
+          format(inv.date, 'dd-MM-yyyy'),
+          inv.value || '0',
+          inv.ewayBillNo || '-',
+          format(inv.ewayBillDate, 'dd-MM-yyyy'),
+          inv.validUpto || '-'
+        ]),
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [46, 204, 113], textColor: [255, 255, 255] },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    // Damage Section (if any)
+    let damageY = (doc as any).lastAutoTable?.finalY || invoiceStartY + 20;
+    if (data.damageType && data.damageType.length > 0) {
+      damageY += 6;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(200, 0, 0);
+      doc.text('DAMAGE / MISSING REPORT', 14, damageY);
+      doc.setTextColor(0);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Type: ${data.damageType.join(', ')}`, 14, damageY + 6);
+      doc.text(`Reason: ${data.damageReason || 'N/A'}`, 14, damageY + 12);
+      doc.text(`Packages: ${data.damagePackageCount || 0}`, 14, damageY + 18);
+      if (data.damageOtherRemark) doc.text(`Other Remark: ${data.damageOtherRemark}`, 14, damageY + 24);
+      damageY += 36;
+    }
+
+    // Remarks & Insurance
+    let remarksY = damageY + 6;
+    if (data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo) {
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('REMARKS & BILLING', 14, remarksY);
+      doc.setFont('helvetica', 'normal');
+      let ry = remarksY + 6;
+      if (data.remarks) { doc.text(`Remarks: ${data.remarks}`, 14, ry); ry += 5; }
+      if (data.roRemarks) { doc.text(`RO Remarks: ${data.roRemarks}`, 14, ry); ry += 5; }
+      if (data.billNo) { doc.text(`Bill No: ${data.billNo}`, 14, ry); ry += 5; }
+      if (data.supplementaryBillNo) { doc.text(`Suppl. Bill No: ${data.supplementaryBillNo}`, 14, ry); ry += 5; }
+      remarksY = ry;
+    }
+
+    if (data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany) {
+      const insY = remarksY + 4;
+      doc.setFont('helvetica', 'bold');
+      doc.text('INSURANCE', 14, insY);
+      doc.setFont('helvetica', 'normal');
+      let iy = insY + 6;
+      if (data.insuranceCoveredBy) { doc.text(`Covered By: ${data.insuranceCoveredBy}`, 14, iy); iy += 5; }
+      if (data.insuranceNo) { doc.text(`Insurance #: ${data.insuranceNo}`, 14, iy); iy += 5; }
+      if (data.insuranceCompany) { doc.text(`Company: ${data.insuranceCompany}`, 14, iy); iy += 5; }
+      if (data.insuranceDate) { doc.text(`Date: ${format(data.insuranceDate, 'dd-MM-yyyy')}`, 14, iy); }
+    }
+
+    // Footer
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Generated on ${format(new Date(), 'dd-MM-yyyy HH:mm')} | Page ${i} of ${totalPages}`,
+        pageWidth / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: 'center' }
+      );
+    }
+
+    // Save PDF
+    const filename = `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`;
+    doc.save(filename);
+    toast.success('PDF downloaded successfully!');
+  };
+
+  // ============================================
+  // DOWNLOAD PDF FOR A SPECIFIC BOOKING
+  // ============================================
+  const downloadBookingPDF = (record: BookingRecord) => {
+    const data = {
+      editMode: false,
+      grNo: record.grNo,
+      bookingFrom: record.bookingFrom,
+      bookingDate: record.bookingDate,
+      destination: record.destination,
+      bookingType: record.bookingType,
+      collectionAt: record.collectionAt,
+      serviceProduct: record.serviceProduct,
+      deliveryType: record.deliveryType,
+      loadType: record.loadType,
+      freightOn: record.freightOn || 'CHARGE WEIGHT',
+      pvtMarkaSealNo: record.pvtMarkaSealNo || '',
+      consignorName: record.consignorName,
+      consignorMobile: record.consignorMobile || '',
+      consignorGst: record.consignorGst || '',
+      consignorPan: record.consignorPan || '',
+      consignorAddress: record.consignorAddress || '',
+      consignorCity: record.consignorCity || '',
+      consignorState: record.consignorState || '',
+      consigneeName: record.consigneeName,
+      consigneeMobile: record.consigneeMobile || '',
+      consigneeGst: record.consigneeGst || '',
+      consigneePan: record.consigneePan || '',
+      consigneeAddress: record.consigneeAddress || '',
+      consigneeCity: record.consigneeCity || '',
+      consigneeState: record.consigneeState || '',
+      goodsItems: record.goodsItems.map(item => ({
+        ...item,
+        contentCategory: item.contentCategory || item.content || ''
+      })),
+      invoices: record.invoices || [],
+      totalPckgs: record.totalPckgs,
+      totalActualWeight: record.totalActualWeight,
+      totalChargeWeight: record.totalChargeWeight,
+      manualRates: record.manualRates || false,
+      calculatedFreight: record.totalFreight || 0,
+      gstRate: 0,
+      gstAmount: 0,
+      totalAmount: 0,
+      advanceAmount: 0,
+      balanceAmount: 0,
+      damageType: record.damageType || [],
+      damageReason: record.damageReason || '',
+      damageOtherRemark: record.damageOtherRemark || '',
+      damagePackageCount: record.damagePackageCount || 0,
+      remarks: record.remarks || '',
+      roRemarks: record.roRemarks || '',
+      billNo: record.billNo || '',
+      supplementaryBillNo: record.supplementaryBillNo || '',
+      insuranceCoveredBy: record.insuranceCoveredBy || '',
+      insuranceNo: record.insuranceNo || '',
+      insuranceCompany: record.insuranceCompany || '',
+      insuranceDate: record.insuranceDate || new Date(),
+    };
+    generatePDFFromData(data);
+  };
+
+  // Stats
   const activeStats = { total: stats.active.count, totalFreight: stats.active.totalFreight };
   const cancelledStats = { total: stats.cancelled.count, totalFreight: stats.cancelled.totalFreight };
 
@@ -2105,6 +2406,8 @@ export default function BookingGRLManual() {
                             <Button variant="ghost" size="sm" onClick={() => handleEdit(r)} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50"><Pencil className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => openCancelDialog(r)} className="h-8 w-8 p-0 text-orange-500 hover:text-orange-700 hover:bg-orange-50"><X className="h-4 w-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => handleDelete(r._id!)} className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"><Trash2 className="h-4 w-4" /></Button>
+                            {/* DOWNLOAD BUTTON */}
+                            <Button variant="ghost" size="sm" onClick={() => downloadBookingPDF(r)} className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50" title="Download PDF"><Download className="h-4 w-4" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2140,7 +2443,13 @@ export default function BookingGRLManual() {
 
           {loading ? (<Card><CardContent className="py-12 text-center"><Loader2 className="h-12 w-12 mx-auto text-red-500 animate-spin" /><p className="text-gray-500 mt-2">Loading cancelled bookings...</p></CardContent></Card>
           ) : cancelledSearchResults.length > 0 ? (
-            <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm p-3">#</TableHead><TableHead className="text-sm p-3">GR No.</TableHead><TableHead className="text-sm p-3">Date</TableHead><TableHead className="text-sm p-3">From</TableHead><TableHead className="text-sm p-3">To</TableHead><TableHead className="text-sm p-3">Consignor</TableHead><TableHead className="text-sm p-3">Consignee</TableHead><TableHead className="text-sm p-3 text-right">Freight</TableHead><TableHead className="text-sm p-3">Cancel Date</TableHead><TableHead className="text-sm p-3">Reason</TableHead><TableHead className="text-sm p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{paginatedCancelledResults.map((r, idx) => (<TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50"><TableCell className="text-sm p-3">{(cancelledCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="text-sm p-3"><Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge></TableCell><TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell><TableCell className="text-sm p-3">{r.bookingFrom}</TableCell><TableCell className="text-sm p-3">{r.destination}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consignorName}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consigneeName}</TableCell><TableCell className="text-sm p-3 text-right">₹{r.totalFreight.toLocaleString()}</TableCell><TableCell className="text-sm p-3">{r.cancelledDate ? format(new Date(r.cancelledDate), "dd-MM-yyyy") : "-"}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]" title={r.cancelledReason}>{r.cancelledReason}</TableCell><TableCell className="text-sm p-3 text-center"><Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table></div>
+            <Card><CardContent className="p-0"><div className="overflow-x-auto"><Table><TableHeader><TableRow className="bg-gray-50"><TableHead className="text-sm p-3">#</TableHead><TableHead className="text-sm p-3">GR No.</TableHead><TableHead className="text-sm p-3">Date</TableHead><TableHead className="text-sm p-3">From</TableHead><TableHead className="text-sm p-3">To</TableHead><TableHead className="text-sm p-3">Consignor</TableHead><TableHead className="text-sm p-3">Consignee</TableHead><TableHead className="text-sm p-3 text-right">Freight</TableHead><TableHead className="text-sm p-3">Cancel Date</TableHead><TableHead className="text-sm p-3">Reason</TableHead><TableHead className="text-sm p-3 text-center">Actions</TableHead></TableRow></TableHeader><TableBody>{paginatedCancelledResults.map((r, idx) => (<TableRow key={r._id} className="bg-red-50/30 hover:bg-red-50"><TableCell className="text-sm p-3">{(cancelledCurrentPage - 1) * itemsPerPage + idx + 1}</TableCell><TableCell className="text-sm p-3"><Badge variant="secondary" className="bg-red-100 text-red-700">{r.grNo}</Badge></TableCell><TableCell className="text-sm p-3">{format(new Date(r.bookingDate), "dd-MM-yyyy")}</TableCell><TableCell className="text-sm p-3">{r.bookingFrom}</TableCell><TableCell className="text-sm p-3">{r.destination}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consignorName}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]">{r.consigneeName}</TableCell><TableCell className="text-sm p-3 text-right">₹{r.totalFreight.toLocaleString()}</TableCell><TableCell className="text-sm p-3">{r.cancelledDate ? format(new Date(r.cancelledDate), "dd-MM-yyyy") : "-"}</TableCell><TableCell className="text-sm p-3 truncate max-w-[150px]" title={r.cancelledReason}>{r.cancelledReason}</TableCell><TableCell className="text-sm p-3 text-center">
+                <div className="flex gap-1 justify-center">
+                  <Button variant="ghost" size="sm" onClick={() => handleRestoreBooking(r)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Restore Booking"><RefreshCw className="h-4 w-4" /></Button>
+                  {/* DOWNLOAD BUTTON IN CANCELLED */}
+                  <Button variant="ghost" size="sm" onClick={() => downloadBookingPDF(r)} className="h-8 w-8 p-0 text-purple-500 hover:text-purple-700 hover:bg-purple-50" title="Download PDF"><Download className="h-4 w-4" /></Button>
+                </div>
+              </TableCell></TableRow>))}</TableBody></Table></div>
               {cancelledTotalPages > 1 && (<div className="flex justify-center gap-2 p-4 border-t"><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage - 1)} disabled={cancelledCurrentPage === 1}>Previous</Button><span className="px-4 py-2 text-sm">Page {cancelledCurrentPage} of {cancelledTotalPages}</span><Button variant="outline" size="sm" onClick={() => goToCancelledPage(cancelledCurrentPage + 1)} disabled={cancelledCurrentPage === cancelledTotalPages}>Next</Button></div>)}
             </CardContent></Card>
           ) : (<Card><CardContent className="py-12 text-center"><X className="h-12 w-12 mx-auto text-gray-400" /><p className="text-gray-500 mt-2">No cancelled bookings found</p></CardContent></Card>)}
