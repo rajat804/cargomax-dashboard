@@ -70,6 +70,7 @@ import {
   History,
   AlertCircle,
   Loader2,
+  Download,  // added for PDF download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -646,6 +647,309 @@ export default function LongRouteManifestGRL() {
     }
   };
 
+  // ============================================
+  // PDF GENERATION FOR LONG ROUTE MANIFEST
+  // ============================================
+  const generateManifestPDF = async (
+    record: LongRouteManifest,
+    action: "print" | "download"
+  ) => {
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      console.warn("PDF generation skipped - running on server");
+      return;
+    }
+
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+
+      const {
+        manifestNo,
+        manifestDateTime,
+        manifestTime,
+        branch,
+        toStation,
+        vehicleNo,
+        driver,
+        loadedBy,
+        dispatchedPckgs,
+        dispatchedWt,
+        deliveryLocation,
+        vehicleType,
+        vendor,
+        capacity,
+        mobileNo,
+        consolidatedEwaybillNo,
+        ewaybillDate,
+        estimateArrivalAtDestination,
+        remarks,
+      } = record;
+
+      const content = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8" />
+          <title>Manifest ${manifestNo}</title>
+          <style>
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body {
+              font-family: 'Helvetica', 'Arial', sans-serif;
+              background: #fff;
+              padding: 12px;
+              color: #000;
+            }
+            .page {
+              max-width: 210mm;
+              margin: 0 auto;
+              background: #fff;
+              padding: 12px 14px 10px 14px;
+              border: 2px solid #000;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 3px double #000;
+              padding-bottom: 6px;
+              margin-bottom: 8px;
+            }
+            .header h1 {
+              font-size: 20px;
+              font-weight: 700;
+              letter-spacing: 1px;
+            }
+            .header .address {
+              font-size: 9px;
+              margin: 2px 0;
+              color: #333;
+            }
+            .header .title {
+              font-size: 16px;
+              font-weight: 700;
+              margin-top: 4px;
+              letter-spacing: 2px;
+            }
+            .details-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 4px 20px;
+              font-size: 9px;
+              margin-bottom: 8px;
+              padding: 4px 0;
+            }
+            .details-grid .field {
+              display: flex;
+              padding: 1px 0;
+            }
+            .details-grid .field .label {
+              font-weight: 700;
+              width: 130px;
+              flex-shrink: 0;
+            }
+            .details-grid .field .value {
+              flex: 1;
+            }
+            .table-section {
+              margin: 8px 0;
+            }
+            .table-section table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 8px;
+            }
+            .table-section th {
+              background: #333;
+              color: #fff;
+              padding: 4px 3px;
+              border: 1px solid #000;
+              text-align: center;
+              font-weight: 700;
+            }
+            .table-section td {
+              padding: 3px 3px;
+              border: 1px solid #000;
+              text-align: center;
+            }
+            .table-section tr:nth-child(even) td {
+              background: #f8f8f8;
+            }
+            .footer {
+              margin-top: 12px;
+              padding-top: 8px;
+              border-top: 1px solid #ccc;
+              display: grid;
+              grid-template-columns: 1fr 1fr 1fr;
+              gap: 10px;
+              font-size: 9px;
+            }
+            .footer .signature {
+              text-align: center;
+            }
+            .footer .signature .line {
+              border-top: 1px solid #000;
+              margin: 4px 0 2px 0;
+            }
+            .footer .signature .name {
+              font-weight: 700;
+              font-size: 8px;
+            }
+            .footer .signature .designation {
+              font-size: 7px;
+              color: #555;
+            }
+            @media print {
+              .page { border: none; padding: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page">
+            <!-- HEADER -->
+            <div class="header">
+              <h1>GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD</h1>
+              <div class="address">INDORARYA WALI GALI U P BORDER GZB, U P BORDER - 201010</div>
+              <div class="title">LONG ROUTE MANIFEST</div>
+            </div>
+
+            <!-- DETAILS -->
+            <div class="details-grid">
+              <div class="field"><span class="label">Manifest No.</span><span class="value">${manifestNo}</span></div>
+              <div class="field"><span class="label">Date</span><span class="value">${format(new Date(manifestDateTime), "dd-MM-yyyy")}</span></div>
+              <div class="field"><span class="label">Time</span><span class="value">${manifestTime || "-"}</span></div>
+              <div class="field"><span class="label">Branch</span><span class="value">${branch}</span></div>
+              <div class="field"><span class="label">To Station</span><span class="value">${toStation}</span></div>
+              <div class="field"><span class="label">Vehicle #</span><span class="value">${vehicleNo}</span></div>
+              <div class="field"><span class="label">Driver</span><span class="value">${driver}</span></div>
+              <div class="field"><span class="label">Mobile #</span><span class="value">${mobileNo || "-"}</span></div>
+              <div class="field"><span class="label">Loaded By</span><span class="value">${loadedBy}</span></div>
+              <div class="field"><span class="label">Delivery Location</span><span class="value">${deliveryLocation || "-"}</span></div>
+              <div class="field"><span class="label">Vehicle Type</span><span class="value">${vehicleType || "-"}</span></div>
+              <div class="field"><span class="label">Vendor</span><span class="value">${vendor || "-"}</span></div>
+              <div class="field"><span class="label">Capacity</span><span class="value">${capacity || "-"}</span></div>
+              <div class="field"><span class="label">Ewaybill #</span><span class="value">${consolidatedEwaybillNo || "-"}</span></div>
+              <div class="field"><span class="label">Ewaybill Date</span><span class="value">${format(new Date(ewaybillDate), "dd-MM-yyyy")}</span></div>
+              <div class="field"><span class="label">Est. Arrival</span><span class="value">${estimateArrivalAtDestination || "-"}</span></div>
+              <div class="field"><span class="label">Total Packages</span><span class="value">${dispatchedPckgs || 0}</span></div>
+              <div class="field"><span class="label">Total Weight</span><span class="value">${dispatchedWt || 0} kg</span></div>
+            </div>
+
+            <!-- REMARKS -->
+            ${remarks ? `
+              <div style="font-size:9px; margin-top:6px; padding:4px 8px; background:#f5f5f5; border-left:3px solid #333;">
+                <strong>Remarks:</strong> ${remarks}
+              </div>
+            ` : ''}
+
+            <!-- PLACEHOLDER FOR GRs (if any) – not available in this version -->
+            <div class="table-section">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Sr#</th>
+                    <th>GR #</th>
+                    <th>Origin</th>
+                    <th>Destination</th>
+                    <th>Consignor</th>
+                    <th>Consignee</th>
+                    <th>Packages</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="7" style="text-align:center; padding:12px; font-style:italic; color:#666;">
+                      GR details not available for this manifest.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="footer">
+              <div class="signature">
+                <div>Prepared By</div>
+                <div class="line"></div>
+                <div class="name">${loadedBy || "_______________"}</div>
+                <div class="designation">(Name &amp; Sign)</div>
+              </div>
+              <div class="signature">
+                <div>Loaded By</div>
+                <div class="line"></div>
+                <div class="name">${loadedBy || "_______________"}</div>
+                <div class="designation">(Name &amp; Sign)</div>
+              </div>
+              <div class="signature">
+                <div>Despatch Manager</div>
+                <div class="line"></div>
+                <div class="name">_______________</div>
+                <div class="designation">(Name &amp; Sign)</div>
+              </div>
+            </div>
+
+            <div style="text-align:right; font-size:7px; color:#888; margin-top:8px;">
+              Generated on ${format(new Date(), "dd-MM-yyyy HH:mm:ss")}
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "210mm";
+      container.style.background = "#fff";
+      container.style.zIndex = "-1";
+      container.innerHTML = content;
+      document.body.appendChild(container);
+
+      const element = container.querySelector(".page") as HTMLElement;
+      if (!element) {
+        document.body.removeChild(container);
+        toast.error("PDF content not found");
+        return;
+      }
+
+      const opt: any = {
+        margin: [8, 8, 8, 8],
+        filename: `Manifest_${manifestNo}_${format(new Date(), "dd-MM-yyyy")}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: "avoid-all" },
+      };
+
+      if (action === "download") {
+        await html2pdf().from(element).set(opt).save();
+        document.body.removeChild(container);
+        toast.success("PDF downloaded!");
+      } else {
+        const pdf = await html2pdf().from(element).set(opt).outputPdf("blob");
+        const url = URL.createObjectURL(pdf);
+        const win = window.open(url);
+        if (win) {
+          win.onload = () => {
+            win.print();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+          };
+        } else {
+          toast.error("Please allow popups to print the PDF.");
+        }
+        document.body.removeChild(container);
+      }
+    } catch (error) {
+      console.error("PDF generation error:", error);
+      toast.error("Failed to generate PDF");
+    }
+  };
+
+  const handlePrintManifest = (record: LongRouteManifest) => {
+    generateManifestPDF(record, "print");
+  };
+
+  const handleDownloadManifest = (record: LongRouteManifest) => {
+    generateManifestPDF(record, "download");
+  };
+
   const activeStats = {
     total: stats.active.count,
     totalPckgs: stats.active.totalPckgs,
@@ -871,7 +1175,7 @@ export default function LongRouteManifestGRL() {
                         <TableHead className="text-xs py-3 px-2 min-w-[100px]">Driver</TableHead>
                         <TableHead className="text-xs py-3 px-2 w-[60px] text-center">Pckgs</TableHead>
                         <TableHead className="text-xs py-3 px-2 w-[80px] text-right">Weight</TableHead>
-                        <TableHead className="text-xs py-3 px-2 w-32 text-center">Actions</TableHead>
+                        <TableHead className="text-xs py-3 px-2 w-40 text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -919,6 +1223,26 @@ export default function LongRouteManifestGRL() {
                                   title="Edit"
                                 >
                                   <Edit className="h-4 w-4" />
+                                </Button>
+                                {/* NEW: Print button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handlePrintManifest(record)}
+                                  className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50"
+                                  title="Print"
+                                >
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                                {/* NEW: Download button */}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownloadManifest(record)}
+                                  className="h-8 w-8 p-0 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50"
+                                  title="Download PDF"
+                                >
+                                  <Download className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
