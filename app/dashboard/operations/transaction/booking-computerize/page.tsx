@@ -2040,19 +2040,19 @@ export default function BookingComputerizedGRL() {
   // ============================================
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
-const generatePDFFromData = async (data: any) => {
-  // ✅ FIX 1: Guard against server-side execution
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    console.warn('PDF generation skipped - running on server');
-    return;
-  }
+  const generatePDFFromData = async (data: any) => {
+    // ✅ FIX 1: Guard against server-side execution
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      console.warn('PDF generation skipped - running on server');
+      return;
+    }
 
-  try {
-    // ✅ FIX 2: Dynamic import - only loads on client
-    const html2pdf = (await import('html2pdf.js')).default;
+    try {
+      // ✅ FIX 2: Dynamic import - only loads on client
+      const html2pdf = (await import('html2pdf.js')).default;
 
-    // Build HTML content with all booking details
-    const content = `
+      // Build HTML content with all booking details
+      const content = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -2315,7 +2315,7 @@ const generatePDFFromData = async (data: any) => {
           </thead>
           <tbody>
             ${data.goodsItems && data.goodsItems.length > 0
-        ? data.goodsItems.map((item: any, idx: number) => `
+          ? data.goodsItems.map((item: any, idx: number) => `
                 <tr>
                   <td>${idx + 1}</td>
                   <td>${item.noOfPckgs}</td>
@@ -2326,8 +2326,8 @@ const generatePDFFromData = async (data: any) => {
                   <td>${Number(item.chargeWeight).toFixed(2)}</td>
                 </tr>
               `).join('')
-        : `<tr><td colspan="7" style="text-align:center; padding:10px;">No goods items</td></tr>`
-      }
+          : `<tr><td colspan="7" style="text-align:center; padding:10px;">No goods items</td></tr>`
+        }
           </tbody>
         </table>
 
@@ -2392,7 +2392,7 @@ const generatePDFFromData = async (data: any) => {
 
         <!-- REMARKS & INSURANCE -->
         ${(data.remarks || data.roRemarks || data.billNo || data.supplementaryBillNo ||
-        data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany || data.insuranceDate) ? `
+          data.insuranceCoveredBy || data.insuranceNo || data.insuranceCompany || data.insuranceDate) ? `
           <div class="remarks-box">
             <div class="title">REMARKS &amp; INSURANCE</div>
             ${data.remarks ? `<div class="line"><span class="lbl">Remarks:</span> ${data.remarks}</div>` : ''}
@@ -2416,54 +2416,54 @@ const generatePDFFromData = async (data: any) => {
     </html>
   `;
 
-    // Create a hidden container to render the HTML
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '210mm';
-    container.style.background = '#fff';
-    container.style.zIndex = '-1';
-    container.innerHTML = content;
-    document.body.appendChild(container);
+      // Create a hidden container to render the HTML
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '210mm';
+      container.style.background = '#fff';
+      container.style.zIndex = '-1';
+      container.innerHTML = content;
+      document.body.appendChild(container);
 
-    const element = container.querySelector('#pdf-content') as HTMLElement;
-    if (!element) {
-      document.body.removeChild(container);
-      toast.error('PDF content not found');
-      return;
+      const element = container.querySelector('#pdf-content') as HTMLElement;
+      if (!element) {
+        document.body.removeChild(container);
+        toast.error('PDF content not found');
+        return;
+      }
+
+      // PDF options
+      const opt: any = {
+        margin: [8, 8, 8, 8],
+        filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'avoid-all' }
+      };
+
+      await html2pdf()
+        .from(element)
+        .set(opt)
+        .save()
+        .then(() => {
+          document.body.removeChild(container);
+          toast.success('PDF downloaded successfully!');
+        })
+        .catch((err: any) => {
+          console.error('PDF generation error:', err);
+          document.body.removeChild(container);
+          toast.error('Failed to generate PDF');
+        });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF');
     }
+  };
 
-    // PDF options
-    const opt: any = {
-      margin: [8, 8, 8, 8],
-      filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'avoid-all' }
-    };
 
-    await html2pdf()
-      .from(element)
-      .set(opt)
-      .save()
-      .then(() => {
-        document.body.removeChild(container);
-        toast.success('PDF downloaded successfully!');
-      })
-      .catch((err: any) => {
-        console.error('PDF generation error:', err);
-        document.body.removeChild(container);
-        toast.error('Failed to generate PDF');
-      });
-  } catch (error) {
-    console.error('PDF generation error:', error);
-    toast.error('Failed to generate PDF');
-  }
-};
-
-  
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
   // ============================================
