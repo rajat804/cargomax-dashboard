@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,148 +29,234 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { CalendarIcon, Eye, Settings, Search, RefreshCw, Truck, CheckCircle, XCircle, Clock, Filter, ChevronRight } from "lucide-react";
+import {
+  CalendarIcon,
+  Settings,
+  Search,
+  RefreshCw,
+  Truck,
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronRight,
+  Edit,
+} from "lucide-react";
+import {
+  getAllDispatches,
+  updateDispatch,
+  receiveDespatch,
+  cancelDespatch,
+} from "@/services/api";
 
-// ==================== TYPE DEFINITIONS ====================
-
-interface DespatchRecord {
-  id: number;
-  sNo: number;
-  despatchId: string;
-  despatchFrom: string;
-  despatchedTo: string;
-  despatchOn: string;
-  courierVendor: string;
-  wayBillNo: string;
-  date: string;
-  noOfItems: number;
-  status: "Pending" | "Received" | "In Transit" | "Delayed";
-  receivedOn: string;
-  receivedBy: string;
+// ==================== TYPES ====================
+interface DispatchRecord {
+  _id?: string;
+  dispatchId: string;          // ✅ changed from despatchId
+  branchName: string;
+  dispatchedTo: string;
+  dispatchDate: string;
+  dispatchThrough?: string;
+  vendorGrNo?: string;
+  noOfItems?: number;
+  status: string;
+  receivedOn?: string;
+  receivedBy?: string;
+  remarks?: string;
+  items?: any[];
 }
 
-// ==================== MOCK DATA ====================
-
-const initialDespatchData: DespatchRecord[] = [
-  { id: 1, sNo: 1, despatchId: "DISP/2026-27/001", despatchFrom: "HEAD OFFICE", despatchedTo: "JAGADARI", despatchOn: "25-05-2026", courierVendor: "DTDC", wayBillNo: "WB123456", date: "25-05-2026", noOfItems: 5, status: "Pending", receivedOn: "", receivedBy: "" },
-  { id: 2, sNo: 2, despatchId: "DISP/2026-27/002", despatchFrom: "HEAD OFFICE", despatchedTo: "CHANDIGARH (GANESH)", despatchOn: "26-05-2026", courierVendor: "BLUEDART", wayBillNo: "WB789012", date: "26-05-2026", noOfItems: 3, status: "In Transit", receivedOn: "", receivedBy: "" },
-  { id: 3, sNo: 3, despatchId: "DISP/2026-27/003", despatchFrom: "HEAD OFFICE", despatchedTo: "LUDHIANA", despatchOn: "27-05-2026", courierVendor: "DELHIVERY", wayBillNo: "WB345678", date: "27-05-2026", noOfItems: 8, status: "Pending", receivedOn: "", receivedBy: "" },
-  { id: 4, sNo: 4, despatchId: "DISP/2026-27/004", despatchFrom: "HEAD OFFICE", despatchedTo: "JAGADARI", despatchOn: "27-05-2025", courierVendor: "", wayBillNo: "", date: "27-05-2025", noOfItems: 1, status: "Received", receivedOn: "27-05-2025", receivedBy: "MAYANK.GRLOGISTICS@GMAIL.COM" },
-  { id: 5, sNo: 5, despatchId: "DISP/2026-27/005", despatchFrom: "HEAD OFFICE", despatchedTo: "CHANDIGARH (GANESH)", despatchOn: "27-05-2025", courierVendor: "", wayBillNo: "", date: "27-05-2025", noOfItems: 1, status: "Received", receivedOn: "27-05-2025", receivedBy: "MAYANK.GRLOGISTICS@GMAIL.COM" },
-  { id: 6, sNo: 6, despatchId: "DISP/2026-27/006", despatchFrom: "HEAD OFFICE", despatchedTo: "PANIPAT", despatchOn: "28-05-2026", courierVendor: "PROFESSIONAL COURIER", wayBillNo: "WB901234", date: "28-05-2026", noOfItems: 4, status: "Pending", receivedOn: "", receivedBy: "" },
+// ==================== OPTIONS ====================
+const branchOptions = [
+  "HEAD OFFICE",
+  "DELHI BRANCH",
+  "MUMBAI BRANCH",
+  "BANGALORE BRANCH",
+  "CHANDIGARH BRANCH",
+  "KOLKATA BRANCH",
 ];
 
-// Dropdown options
-const branchOptions = ["HEAD OFFICE", "DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHANDIGARH BRANCH"];
-const courierVendorOptions = ["DTDC", "BLUEDART", "DELHIVERY", "PROFESSIONAL COURIER", "FEDEX", "DHL", "XPRESSBEES"];
+const statusOptions = ["Dispatched", "In Transit", "Delivered", "Cancelled", "Received"];
 
 export default function ItemDespatchReceive() {
-  // ==================== PENDING TAB STATE ====================
+  // ==================== PENDING TAB ====================
   const [pendingBranchName, setPendingBranchName] = useState("");
-  const [asOnDate, setAsOnDate] = useState<Date>(new Date(2026, 4, 18));
-  const [pendingRecords, setPendingRecords] = useState<DespatchRecord[]>([]);
+  const [asOnDate, setAsOnDate] = useState<Date>(new Date());
+  const [pendingRecords, setPendingRecords] = useState<DispatchRecord[]>([]);
   const [showPendingGrid, setShowPendingGrid] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pendingLoading, setPendingLoading] = useState(false);
 
-  // ==================== SEARCH TAB STATE ====================
-  const [searchRecords, setSearchRecords] = useState<DespatchRecord[]>(initialDespatchData);
-  const [filteredSearchRecords, setFilteredSearchRecords] = useState<DespatchRecord[]>(initialDespatchData);
+  // ==================== SEARCH TAB ====================
+  const [allRecords, setAllRecords] = useState<DispatchRecord[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<DispatchRecord[]>([]);
   const [searchInput, setSearchInput] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
 
-  // Active tab
+  // ==================== EDIT MODAL ====================
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState<DispatchRecord | null>(null);
+  const [editForm, setEditForm] = useState<Partial<DispatchRecord>>({});
+  const [editLoading, setEditLoading] = useState(false);
+
+  // ==================== TAB STATE ====================
   const [activeTab, setActiveTab] = useState("pending");
 
-  // Column visibility settings for both tabs
-  const [pendingColumnSettings, setPendingColumnSettings] = useState({
+  // ==================== COLUMN SETTINGS ====================
+  const [pendingCols, setPendingCols] = useState({
     sNo: true,
-    despatchId: true,
-    despatchFrom: true,
-    despatchedTo: true,
-    despatchOn: true,
+    dispatchId: true,
+    branchName: true,
+    dispatchedTo: true,
+    dispatchDate: true,
     courierVendor: true,
     wayBillNo: true,
-    date: true,
     noOfItems: true,
     status: true,
     receivedOn: true,
-    received: true,
+    // ✅ Action column removed from pending tab
   });
 
-  const [searchColumnSettings, setSearchColumnSettings] = useState({
+  const [searchCols, setSearchCols] = useState({
     sNo: true,
-    despatchId: true,
-    despatchFrom: true,
-    despatchedTo: true,
-    despatchOn: true,
+    dispatchId: true,
+    branchName: true,
+    dispatchedTo: true,
+    dispatchDate: true,
     courierVendor: true,
     wayBillNo: true,
-    date: true,
     noOfItems: true,
     status: true,
     receivedOn: true,
     receivedBy: true,
   });
 
-  // ==================== FUNCTIONS ====================
+  // ==================== LOAD ALL RECORDS (for Search) ====================
+  const loadAllRecords = async () => {
+    setSearchLoading(true);
+    try {
+      const data = await getAllDispatches();
+      const records = Array.isArray(data) ? data : data?.data || [];
+      setAllRecords(records);
+      setFilteredRecords(records);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load records.");
+    } finally {
+      setSearchLoading(false);
+    }
+  };
 
-  // Handle Proceed button in Pending Tab
-  const handleProceed = () => {
+  // ==================== LOAD PENDING RECORDS ====================
+  const loadPendingRecords = async (branch?: string) => {
+    setPendingLoading(true);
+    try {
+      const data = await getAllDispatches({ branchName: branch || "" });
+      const records = Array.isArray(data) ? data : data?.data || [];
+      const pending = records.filter(
+        (r: any) => r.status !== "Received" && r.status !== "Cancelled"
+      );
+      setPendingRecords(pending);
+      setShowPendingGrid(true);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load pending records.");
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  // Auto-load on mount & tab change
+  useEffect(() => {
+    loadPendingRecords();
+    loadAllRecords();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "pending") {
+      loadPendingRecords(pendingBranchName || undefined);
+    }
+  }, [activeTab]);
+
+  // ==================== HANDLE PROCEED (filter by branch) ====================
+  const handleProceed = async () => {
     if (!pendingBranchName) {
-      alert("Please select Branch Name");
+      await loadPendingRecords();
+    } else {
+      await loadPendingRecords(pendingBranchName);
+    }
+  };
+
+  // ==================== RECEIVE (now via Edit modal, but keeping for direct use if needed) ====================
+  // ✅ Removed direct receive from pending tab, but keeping function for other use
+  const handleReceive = async (record: DispatchRecord) => {
+    if (!confirm(`Mark ${record.dispatchId} as received?`)) return;
+    try {
+      const updated = await receiveDespatch(record._id!, "CURRENT_USER");
+      await loadAllRecords();
+      await loadPendingRecords(pendingBranchName || undefined);
+      alert(`✅ ${record.dispatchId} received.`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to receive.");
+    }
+  };
+
+  // ==================== CANCEL (Search tab) ====================
+  const handleCancel = async (record: DispatchRecord) => {
+    if (!confirm(`Cancel ${record.dispatchId}?`)) return;
+    try {
+      await cancelDespatch(record._id!);
+      await loadAllRecords();
+      await loadPendingRecords(pendingBranchName || undefined);
+      alert(`✅ ${record.dispatchId} cancelled.`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to cancel.");
+    }
+  };
+
+  // ==================== SEARCH (frontend) ====================
+  const handleSearch = () => {
+    if (!searchInput.trim()) {
+      setFilteredRecords(allRecords);
       return;
     }
-
-    // Filter records that are not received and match the branch
-    const filtered = initialDespatchData.filter(record => 
-      record.status !== "Received" && 
-      record.despatchFrom === pendingBranchName
+    const term = searchInput.trim().toLowerCase();
+    const filtered = allRecords.filter(
+      (r) =>
+        r.dispatchId.toLowerCase().includes(term) ||
+        r.branchName.toLowerCase().includes(term) ||
+        r.dispatchedTo.toLowerCase().includes(term) ||
+        (r.dispatchThrough && r.dispatchThrough.toLowerCase().includes(term)) ||
+        (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term))
     );
-    
-    setPendingRecords(filtered);
-    setShowPendingGrid(true);
+    setFilteredRecords(filtered);
   };
 
-  // Handle Receive action
-  const handleReceive = (record: DespatchRecord) => {
-    const confirmed = confirm(`Are you sure you want to mark despatch ${record.despatchId} as received?`);
-    if (confirmed) {
-      // Update the record status
-      const updatedRecord = {
-        ...record,
-        status: "Received" as const,
-        receivedOn: format(new Date(), "dd-MM-yyyy"),
-        receivedBy: "CURRENT_USER@GMAIL.COM"
-      };
-      
-      // Update in pending records
-      setPendingRecords(prevRecords => 
-        prevRecords.map(r => r.id === record.id ? updatedRecord : r)
-      );
-      
-      // Update in master data
-      const index = initialDespatchData.findIndex(r => r.id === record.id);
-      if (index !== -1) {
-        initialDespatchData[index] = updatedRecord;
-      }
-      
-      // Also update search records
-      setSearchRecords([...initialDespatchData]);
-      setFilteredSearchRecords([...initialDespatchData]);
-      
-      alert(`Despatch ${record.despatchId} has been marked as received successfully!`);
-    }
+  const clearSearch = () => {
+    setSearchInput("");
+    setFilteredRecords(allRecords);
   };
 
-  // Handle Search in Pending Tab
+  // ==================== PENDING SEARCH ====================
   const handlePendingSearch = () => {
     if (!searchTerm.trim()) {
-      setPendingRecords(initialDespatchData.filter(r => r.status !== "Received" && r.despatchFrom === pendingBranchName));
+      loadPendingRecords(pendingBranchName || undefined);
     } else {
-      const filtered = pendingRecords.filter(record =>
-        record.despatchId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.despatchedTo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.wayBillNo.toLowerCase().includes(searchTerm.toLowerCase())
+      const term = searchTerm.trim().toLowerCase();
+      const filtered = pendingRecords.filter(
+        (r) =>
+          r.dispatchId.toLowerCase().includes(term) ||
+          r.dispatchedTo.toLowerCase().includes(term) ||
+          (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term))
       );
       setPendingRecords(filtered);
     }
@@ -178,58 +264,105 @@ export default function ItemDespatchReceive() {
 
   const clearPendingSearch = () => {
     setSearchTerm("");
-    handleProceed();
+    loadPendingRecords(pendingBranchName || undefined);
   };
 
-  // Handle Search in Search Tab
-  const handleSearchTabSearch = () => {
-    if (!searchInput.trim()) {
-      setFilteredSearchRecords(searchRecords);
-    } else {
-      const filtered = searchRecords.filter(record =>
-        record.despatchId.toLowerCase().includes(searchInput.toLowerCase()) ||
-        record.despatchFrom.toLowerCase().includes(searchInput.toLowerCase()) ||
-        record.despatchedTo.toLowerCase().includes(searchInput.toLowerCase()) ||
-        record.wayBillNo.toLowerCase().includes(searchInput.toLowerCase()) ||
-        record.courierVendor.toLowerCase().includes(searchInput.toLowerCase())
-      );
-      setFilteredSearchRecords(filtered);
+  // ==================== EDIT MODAL ====================
+  const openEditModal = (record: DispatchRecord) => {
+    setEditRecord(record);
+    setEditForm({
+      branchName: record.branchName,
+      dispatchedTo: record.dispatchedTo,
+      dispatchDate: record.dispatchDate,
+      dispatchThrough: record.dispatchThrough || "",
+      vendorGrNo: record.vendorGrNo || "",
+      noOfItems: record.noOfItems || 0,
+      status: record.status,
+      receivedOn: record.receivedOn || "",
+      receivedBy: record.receivedBy || "",
+      remarks: record.remarks || "",
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditSave = async () => {
+    if (!editRecord || !editRecord._id) return;
+    setEditLoading(true);
+    try {
+      const payload = {
+        branchName: editForm.branchName,
+        dispatchedTo: editForm.dispatchedTo,
+        dispatchDate: editForm.dispatchDate,
+        dispatchThrough: editForm.dispatchThrough,
+        vendorGrNo: editForm.vendorGrNo,
+        noOfItems: editForm.noOfItems,
+        status: editForm.status,
+        receivedOn: editForm.receivedOn,
+        receivedBy: editForm.receivedBy,
+        remarks: editForm.remarks,
+      };
+      await updateDispatch(editRecord._id, payload);
+      await loadAllRecords();
+      await loadPendingRecords(pendingBranchName || undefined);
+      alert("✅ Record updated successfully.");
+      setEditModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update record.");
+    } finally {
+      setEditLoading(false);
     }
   };
 
-  const clearSearchTabSearch = () => {
-    setSearchInput("");
-    setFilteredSearchRecords(searchRecords);
-  };
-
-  // Handle Cancel in Search Tab
-  const handleCancel = (record: DespatchRecord) => {
-    const confirmed = confirm(`Are you sure you want to cancel despatch ${record.despatchId}? This action cannot be undone.`);
-    if (confirmed) {
-      // Update status to cancelled or remove
-      alert(`Despatch ${record.despatchId} has been cancelled.`);
-    }
-  };
-
-  // Get status badge
+  // ==================== STATUS BADGE ====================
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Received":
-        return <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Received</span>;
-      case "Pending":
-        return <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Clock className="h-3 w-3" /> Pending</span>;
-      case "In Transit":
-        return <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Truck className="h-3 w-3" /> In Transit</span>;
-      case "Delayed":
-        return <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><XCircle className="h-3 w-3" /> Delayed</span>;
-      default:
-        return <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">{status}</span>;
-    }
+    const s = status?.toLowerCase() || "";
+    if (s === "received")
+      return (
+        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" /> Received
+        </span>
+      );
+    if (s === "pending")
+      return (
+        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <Clock className="h-3 w-3" /> Pending
+        </span>
+      );
+    if (s === "in transit")
+      return (
+        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <Truck className="h-3 w-3" /> In Transit
+        </span>
+      );
+    if (s === "cancelled")
+      return (
+        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <XCircle className="h-3 w-3" /> Cancelled
+        </span>
+      );
+    if (s === "delivered")
+      return (
+        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" /> Delivered
+        </span>
+      );
+    if (s === "dispatched")
+      return (
+        <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+          <Truck className="h-3 w-3" /> Dispatched
+        </span>
+      );
+    return (
+      <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+        {status}
+      </span>
+    );
   };
 
+  // ==================== RENDER ====================
   return (
     <div className="space-y-6 p-4">
-      {/* Header */}
       <div className="border-b pb-4">
         <h1 className="text-2xl font-bold text-primary">ITEM DESPATCH RECEIVE</h1>
         <div className="text-xs text-muted-foreground mt-1">
@@ -239,14 +372,13 @@ export default function ItemDespatchReceive() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="search">Search</TabsTrigger>
         </TabsList>
 
-        {/* ==================== PENDING TAB ==================== */}
+        {/* ====== PENDING TAB (No Action Column) ====== */}
         <TabsContent value="pending" className="mt-6">
           <Card>
             <CardHeader>
@@ -256,52 +388,61 @@ export default function ItemDespatchReceive() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Filter Section */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <Label>Branch Name <span className="text-red-500">*</span></Label>
+                  <Label>Branch Name</Label>
                   <Select value={pendingBranchName} onValueChange={setPendingBranchName}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Branch" />
+                      <SelectValue placeholder="All Branches" />
                     </SelectTrigger>
                     <SelectContent>
-                      {branchOptions.map((branch) => (
-                        <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                      <SelectItem value="All">ALL</SelectItem>
+                      {branchOptions.map((b) => (
+                        <SelectItem key={b} value={b}>
+                          {b}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-400 mt-1">Select branch to filter</p>
                 </div>
-
                 <div>
-                  <Label>As On Date <span className="text-red-500">*</span></Label>
+                  <Label>As On Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button variant="outline" className="w-full justify-start">
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {format(asOnDate, "dd-MM-yyyy")}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
+                    <PopoverContent>
+                      <Calendar
+                        mode="single"
+                        selected={asOnDate}
+                        onSelect={(d) => d && setAsOnDate(d)}
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
               </div>
 
               <div className="flex gap-3 mb-6">
-                <Button onClick={handleProceed} className="bg-blue-600 hover:bg-blue-700">
-                  <ChevronRight className="mr-2 h-4 w-4" /> Proceed
+                <Button
+                  onClick={handleProceed}
+                  disabled={pendingLoading}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <ChevronRight className="mr-2 h-4 w-4" />
+                  {pendingLoading ? "Loading..." : "Apply Filter"}
                 </Button>
               </div>
 
-              {/* Search Bar - Only shown after proceed */}
               {showPendingGrid && (
                 <>
                   <div className="flex gap-3 mb-4">
                     <div className="flex-1">
                       <Input
-                        type="text"
-                        placeholder="Search by Despatch ID, Despatched To, WayBill #..."
+                        placeholder="Search by ID, To, WayBill..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && handlePendingSearch()}
@@ -315,101 +456,100 @@ export default function ItemDespatchReceive() {
                     </Button>
                   </div>
 
-                  {/* Column Settings */}
                   <div className="mb-4 p-3 bg-gray-100 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Settings className="h-4 w-4 text-gray-600" />
                       <span className="text-sm font-medium">Column Settings</span>
                     </div>
                     <div className="flex flex-wrap gap-4">
-                      {Object.keys(pendingColumnSettings).map((key) => (
+                      {Object.keys(pendingCols).map((key) => (
                         <div key={key} className="flex items-center gap-2">
                           <Checkbox
-                            checked={pendingColumnSettings[key as keyof typeof pendingColumnSettings]}
-                            onCheckedChange={(c) => setPendingColumnSettings({ ...pendingColumnSettings, [key]: !!c })}
+                            checked={pendingCols[key as keyof typeof pendingCols]}
+                            onCheckedChange={(c) =>
+                              setPendingCols({ ...pendingCols, [key]: !!c })
+                            }
                           />
                           <Label className="text-sm cursor-pointer">
-                            {key === "despatchId" ? "Despatch ID" :
-                             key === "despatchFrom" ? "Despatch From" :
-                             key === "despatchedTo" ? "Despatched To" :
-                             key === "despatchOn" ? "Despatch on" :
-                             key === "courierVendor" ? "Courier Vendor" :
-                             key === "wayBillNo" ? "WayBill #" :
-                             key === "noOfItems" ? "No of Items" :
-                             key === "receivedOn" ? "Received On" :
-                             key === "received" ? "Received" :
-                             key.replace(/([A-Z])/g, ' $1').trim()}
+                            {key === "dispatchId"
+                              ? "Dispatch ID"
+                              : key === "branchName"
+                              ? "Branch"
+                              : key === "dispatchedTo"
+                              ? "Dispatched To"
+                              : key === "dispatchDate"
+                              ? "Dispatch Date"
+                              : key === "courierVendor"
+                              ? "Courier/Vendor"
+                              : key === "wayBillNo"
+                              ? "WayBill"
+                              : key === "noOfItems"
+                              ? "Items"
+                              : key === "receivedOn"
+                              ? "Received On"
+                              : key.replace(/([A-Z])/g, " $1").trim()}
                           </Label>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Pending Despatch Table */}
                   <div className="overflow-x-auto border rounded-lg">
                     <Table>
                       <TableHeader className="bg-gray-100">
                         <TableRow>
-                          {pendingColumnSettings.sNo && <TableHead className="w-16">S#</TableHead>}
-                          {pendingColumnSettings.despatchId && <TableHead>Despatch ID</TableHead>}
-                          {pendingColumnSettings.despatchFrom && <TableHead>Despatch From</TableHead>}
-                          {pendingColumnSettings.despatchedTo && <TableHead>Despatched To</TableHead>}
-                          {pendingColumnSettings.despatchOn && <TableHead>Despatch on</TableHead>}
-                          {pendingColumnSettings.courierVendor && <TableHead>Courier Vendor</TableHead>}
-                          {pendingColumnSettings.wayBillNo && <TableHead>WayBill #</TableHead>}
-                          {pendingColumnSettings.date && <TableHead>Date</TableHead>}
-                          {pendingColumnSettings.noOfItems && <TableHead>No of Items</TableHead>}
-                          {pendingColumnSettings.status && <TableHead>Status</TableHead>}
-                          {pendingColumnSettings.receivedOn && <TableHead>Received On</TableHead>}
-                          {pendingColumnSettings.received && <TableHead>Received</TableHead>}
+                          {pendingCols.sNo && <TableHead className="w-12">S#</TableHead>}
+                          {pendingCols.dispatchId && <TableHead>Dispatch ID</TableHead>}
+                          {pendingCols.branchName && <TableHead>Branch</TableHead>}
+                          {pendingCols.dispatchedTo && <TableHead>Dispatched To</TableHead>}
+                          {pendingCols.dispatchDate && <TableHead>Dispatch Date</TableHead>}
+                          {pendingCols.courierVendor && <TableHead>Courier/Vendor</TableHead>}
+                          {pendingCols.wayBillNo && <TableHead>WayBill</TableHead>}
+                          {pendingCols.noOfItems && <TableHead>Items</TableHead>}
+                          {pendingCols.status && <TableHead>Status</TableHead>}
+                          {pendingCols.receivedOn && <TableHead>Received On</TableHead>}
+                          {/* ✅ NO ACTION COLUMN IN PENDING TAB */}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {pendingRecords.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                              No pending despatch records found for the selected branch.
+                            <TableCell
+                              colSpan={Object.values(pendingCols).filter(Boolean).length}
+                              className="text-center py-8 text-gray-500"
+                            >
+                              No pending records.
                             </TableCell>
                           </TableRow>
                         ) : (
-                          pendingRecords.map((record) => (
-                            <TableRow key={record.id} className="hover:bg-gray-50">
-                              {pendingColumnSettings.sNo && <TableCell>{record.sNo}</TableCell>}
-                              {pendingColumnSettings.despatchId && <TableCell className="font-medium text-blue-600">{record.despatchId}</TableCell>}
-                              {pendingColumnSettings.despatchFrom && <TableCell>{record.despatchFrom}</TableCell>}
-                              {pendingColumnSettings.despatchedTo && <TableCell>{record.despatchedTo}</TableCell>}
-                              {pendingColumnSettings.despatchOn && <TableCell>{record.despatchOn}</TableCell>}
-                              {pendingColumnSettings.courierVendor && <TableCell>{record.courierVendor || "-"}</TableCell>}
-                              {pendingColumnSettings.wayBillNo && <TableCell>{record.wayBillNo || "-"}</TableCell>}
-                              {pendingColumnSettings.date && <TableCell>{record.date}</TableCell>}
-                              {pendingColumnSettings.noOfItems && <TableCell>{record.noOfItems}</TableCell>}
-                              {pendingColumnSettings.status && <TableCell>{getStatusBadge(record.status)}</TableCell>}
-                              {pendingColumnSettings.receivedOn && <TableCell>{record.receivedOn || "-"}</TableCell>}
-                              {pendingColumnSettings.received && (
-                                <TableCell>
-                                  {record.status !== "Received" ? (
-                                    <Button
-                                      size="sm"
-                                      onClick={() => handleReceive(record)}
-                                      className="bg-green-600 hover:bg-green-700"
-                                    >
-                                      <CheckCircle className="mr-1 h-3 w-3" /> Receive
-                                    </Button>
-                                  ) : (
-                                    <span className="text-green-600 text-sm">✓ Received</span>
-                                  )}
+                          pendingRecords.map((rec, idx) => (
+                            <TableRow key={rec._id || idx} className="hover:bg-gray-50">
+                              {pendingCols.sNo && <TableCell>{idx + 1}</TableCell>}
+                              {pendingCols.dispatchId && (
+                                <TableCell className="font-medium text-blue-600">
+                                  {rec.dispatchId}
                                 </TableCell>
                               )}
+                              {pendingCols.branchName && <TableCell>{rec.branchName}</TableCell>}
+                              {pendingCols.dispatchedTo && <TableCell>{rec.dispatchedTo}</TableCell>}
+                              {pendingCols.dispatchDate && <TableCell>{rec.dispatchDate}</TableCell>}
+                              {pendingCols.courierVendor && (
+                                <TableCell>{rec.dispatchThrough || "-"}</TableCell>
+                              )}
+                              {pendingCols.wayBillNo && (
+                                <TableCell>{rec.vendorGrNo || "-"}</TableCell>
+                              )}
+                              {pendingCols.noOfItems && <TableCell>{rec.noOfItems || 0}</TableCell>}
+                              {pendingCols.status && <TableCell>{getStatusBadge(rec.status)}</TableCell>}
+                              {pendingCols.receivedOn && <TableCell>{rec.receivedOn || "-"}</TableCell>}
                             </TableRow>
                           ))
                         )}
                       </TableBody>
                     </Table>
                   </div>
-
-                  {/* Summary */}
                   <div className="mt-4 text-sm text-gray-600">
-                    Total Pending Records: {pendingRecords.length}
+                    Total pending: {pendingRecords.length}
                   </div>
                 </>
               )}
@@ -417,7 +557,7 @@ export default function ItemDespatchReceive() {
           </Card>
         </TabsContent>
 
-        {/* ==================== SEARCH TAB ==================== */}
+        {/* ====== SEARCH TAB ====== */}
         <TabsContent value="search" className="mt-6">
           <Card>
             <CardHeader>
@@ -427,110 +567,136 @@ export default function ItemDespatchReceive() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Search Bar */}
               <div className="flex gap-3 mb-6">
                 <div className="flex-1">
                   <Input
-                    type="text"
-                    placeholder="Search by Despatch ID, Despatch From, Despatched To, WayBill #, Courier Vendor..."
+                    placeholder="Search by ID, Branch, To, Vendor, WayBill..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSearchTabSearch()}
+                    onKeyPress={(e) => e.key === "Enter" && handleSearch()}
                   />
                 </div>
-                <Button onClick={handleSearchTabSearch} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleSearch} disabled={searchLoading} className="bg-blue-600 hover:bg-blue-700">
                   <Search className="mr-2 h-4 w-4" /> Search
                 </Button>
-                <Button variant="outline" onClick={clearSearchTabSearch}>
+                <Button variant="outline" onClick={clearSearch}>
                   <RefreshCw className="mr-2 h-4 w-4" /> Clear
                 </Button>
               </div>
 
-              {/* Column Settings */}
               <div className="mb-4 p-3 bg-gray-100 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Settings className="h-4 w-4 text-gray-600" />
                   <span className="text-sm font-medium">Column Settings</span>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                  {Object.keys(searchColumnSettings).map((key) => (
+                  {Object.keys(searchCols).map((key) => (
                     <div key={key} className="flex items-center gap-2">
                       <Checkbox
-                        checked={searchColumnSettings[key as keyof typeof searchColumnSettings]}
-                        onCheckedChange={(c) => setSearchColumnSettings({ ...searchColumnSettings, [key]: !!c })}
+                        checked={searchCols[key as keyof typeof searchCols]}
+                        onCheckedChange={(c) =>
+                          setSearchCols({ ...searchCols, [key]: !!c })
+                        }
                       />
                       <Label className="text-sm cursor-pointer">
-                        {key === "despatchId" ? "Despatch ID" :
-                         key === "despatchFrom" ? "Despatch From" :
-                         key === "despatchedTo" ? "Despatched To" :
-                         key === "despatchOn" ? "Despatch on" :
-                         key === "courierVendor" ? "Courier Vendor" :
-                         key === "wayBillNo" ? "WayBill #" :
-                         key === "noOfItems" ? "No of Items" :
-                         key === "receivedOn" ? "Received On" :
-                         key === "receivedBy" ? "Received By" :
-                         key.replace(/([A-Z])/g, ' $1').trim()}
+                        {key === "dispatchId"
+                          ? "Dispatch ID"
+                          : key === "branchName"
+                          ? "Branch"
+                          : key === "dispatchedTo"
+                          ? "Dispatched To"
+                          : key === "dispatchDate"
+                          ? "Dispatch Date"
+                          : key === "courierVendor"
+                          ? "Courier/Vendor"
+                          : key === "wayBillNo"
+                          ? "WayBill"
+                          : key === "noOfItems"
+                          ? "Items"
+                          : key === "receivedOn"
+                          ? "Received On"
+                          : key === "receivedBy"
+                          ? "Received By"
+                          : key.replace(/([A-Z])/g, " $1").trim()}
                       </Label>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Search Results Table */}
               <div className="overflow-x-auto border rounded-lg">
                 <Table>
                   <TableHeader className="bg-gray-100">
                     <TableRow>
-                      {searchColumnSettings.sNo && <TableHead className="w-16">S#</TableHead>}
-                      {searchColumnSettings.despatchId && <TableHead>Despatch ID</TableHead>}
-                      {searchColumnSettings.despatchFrom && <TableHead>Despatch From</TableHead>}
-                      {searchColumnSettings.despatchedTo && <TableHead>Despatched To</TableHead>}
-                      {searchColumnSettings.despatchOn && <TableHead>Despatch on</TableHead>}
-                      {searchColumnSettings.courierVendor && <TableHead>Courier Vendor</TableHead>}
-                      {searchColumnSettings.wayBillNo && <TableHead>WayBill #</TableHead>}
-                      {searchColumnSettings.date && <TableHead>Date</TableHead>}
-                      {searchColumnSettings.noOfItems && <TableHead>No of Items</TableHead>}
-                      {searchColumnSettings.status && <TableHead>Status</TableHead>}
-                      {searchColumnSettings.receivedOn && <TableHead>Received On</TableHead>}
-                      {searchColumnSettings.receivedBy && <TableHead>Received By</TableHead>}
-                      <TableHead>Action</TableHead>
+                      {searchCols.sNo && <TableHead className="w-12">S#</TableHead>}
+                      {searchCols.dispatchId && <TableHead>Dispatch ID</TableHead>}
+                      {searchCols.branchName && <TableHead>Branch</TableHead>}
+                      {searchCols.dispatchedTo && <TableHead>Dispatched To</TableHead>}
+                      {searchCols.dispatchDate && <TableHead>Dispatch Date</TableHead>}
+                      {searchCols.courierVendor && <TableHead>Courier/Vendor</TableHead>}
+                      {searchCols.wayBillNo && <TableHead>WayBill</TableHead>}
+                      {searchCols.noOfItems && <TableHead>Items</TableHead>}
+                      {searchCols.status && <TableHead>Status</TableHead>}
+                      {searchCols.receivedOn && <TableHead>Received On</TableHead>}
+                      {searchCols.receivedBy && <TableHead>Received By</TableHead>}
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSearchRecords.length === 0 ? (
+                    {filteredRecords.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={13} className="text-center py-8 text-gray-500">
-                          No despatch records found.
+                        <TableCell
+                          colSpan={Object.values(searchCols).filter(Boolean).length + 2}
+                          className="text-center py-8 text-gray-500"
+                        >
+                          No records found.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredSearchRecords.map((record) => (
-                        <TableRow key={record.id} className="hover:bg-gray-50">
-                          {searchColumnSettings.sNo && <TableCell>{record.sNo}</TableCell>}
-                          {searchColumnSettings.despatchId && <TableCell className="font-medium text-blue-600">{record.despatchId}</TableCell>}
-                          {searchColumnSettings.despatchFrom && <TableCell>{record.despatchFrom}</TableCell>}
-                          {searchColumnSettings.despatchedTo && <TableCell>{record.despatchedTo}</TableCell>}
-                          {searchColumnSettings.despatchOn && <TableCell>{record.despatchOn}</TableCell>}
-                          {searchColumnSettings.courierVendor && <TableCell>{record.courierVendor || "-"}</TableCell>}
-                          {searchColumnSettings.wayBillNo && <TableCell>{record.wayBillNo || "-"}</TableCell>}
-                          {searchColumnSettings.date && <TableCell>{record.date}</TableCell>}
-                          {searchColumnSettings.noOfItems && <TableCell>{record.noOfItems}</TableCell>}
-                          {searchColumnSettings.status && <TableCell>{getStatusBadge(record.status)}</TableCell>}
-                          {searchColumnSettings.receivedOn && <TableCell>{record.receivedOn || "-"}</TableCell>}
-                          {searchColumnSettings.receivedBy && <TableCell>{record.receivedBy || "-"}</TableCell>}
+                      filteredRecords.map((rec, idx) => (
+                        <TableRow key={rec._id || idx} className="hover:bg-gray-50">
+                          {searchCols.sNo && <TableCell>{idx + 1}</TableCell>}
+                          {searchCols.dispatchId && (
+                            <TableCell className="font-medium text-blue-600">
+                              {rec.dispatchId}
+                            </TableCell>
+                          )}
+                          {searchCols.branchName && <TableCell>{rec.branchName}</TableCell>}
+                          {searchCols.dispatchedTo && <TableCell>{rec.dispatchedTo}</TableCell>}
+                          {searchCols.dispatchDate && <TableCell>{rec.dispatchDate}</TableCell>}
+                          {searchCols.courierVendor && (
+                            <TableCell>{rec.dispatchThrough || "-"}</TableCell>
+                          )}
+                          {searchCols.wayBillNo && (
+                            <TableCell>{rec.vendorGrNo || "-"}</TableCell>
+                          )}
+                          {searchCols.noOfItems && <TableCell>{rec.noOfItems || 0}</TableCell>}
+                          {searchCols.status && <TableCell>{getStatusBadge(rec.status)}</TableCell>}
+                          {searchCols.receivedOn && <TableCell>{rec.receivedOn || "-"}</TableCell>}
+                          {searchCols.receivedBy && <TableCell>{rec.receivedBy || "-"}</TableCell>}
                           <TableCell>
-                            {record.status !== "Received" ? (
+                            <div className="flex items-center gap-1">
+                              {/* ✏️ Edit button */}
                               <Button
                                 size="sm"
-                                variant="outline"
-                                onClick={() => handleCancel(record)}
-                                className="text-red-600 border-red-300 hover:bg-red-50"
+                                variant="ghost"
+                                onClick={() => openEditModal(rec)}
+                                className="text-blue-600 hover:text-blue-800"
                               >
-                                <XCircle className="mr-1 h-3 w-3" /> Cancel
+                                <Edit className="h-4 w-4" />
                               </Button>
-                            ) : (
-                              <span className="text-green-600 text-sm">Completed</span>
-                            )}
+                              {/* ❌ Cancel button – only if not already received/cancelled */}
+                              {rec.status !== "Received" && rec.status !== "Cancelled" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleCancel(rec)}
+                                  className="text-red-600 hover:text-red-800"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -539,17 +705,18 @@ export default function ItemDespatchReceive() {
                 </Table>
               </div>
 
-              {/* Summary */}
               <div className="mt-4 flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Total Records: {filteredSearchRecords.length}
-                </div>
+                <div className="text-sm text-gray-600">Total: {filteredRecords.length}</div>
                 <div className="text-sm text-gray-600">
                   <span className="inline-flex items-center gap-2 mr-3">
-                    <CheckCircle className="h-3 w-3 text-green-600" /> Received: {filteredSearchRecords.filter(r => r.status === "Received").length}
+                    <CheckCircle className="h-3 w-3 text-green-600" /> Received:{" "}
+                    {filteredRecords.filter((r) => r.status === "Received").length}
                   </span>
                   <span className="inline-flex items-center gap-2">
-                    <Clock className="h-3 w-3 text-yellow-600" /> Pending: {filteredSearchRecords.filter(r => r.status === "Pending").length}
+                    <Clock className="h-3 w-3 text-yellow-600" /> Pending:{" "}
+                    {filteredRecords.filter(
+                      (r) => r.status !== "Received" && r.status !== "Cancelled"
+                    ).length}
                   </span>
                 </div>
               </div>
@@ -557,6 +724,152 @@ export default function ItemDespatchReceive() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* ==================== EDIT MODAL ==================== */}
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Dispatch Record – {editRecord?.dispatchId}</DialogTitle>
+          </DialogHeader>
+          {editRecord && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div>
+                <Label>Branch Name</Label>
+                <Select
+                  value={editForm.branchName || ""}
+                  onValueChange={(v) => setEditForm({ ...editForm, branchName: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branchOptions.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Dispatched To</Label>
+                <Input
+                  value={editForm.dispatchedTo || ""}
+                  onChange={(e) => setEditForm({ ...editForm, dispatchedTo: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Dispatch Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editForm.dispatchDate ? format(new Date(editForm.dispatchDate.split("-").reverse().join("-")), "dd-MM-yyyy") : "Select Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <Calendar
+                      mode="single"
+                      selected={editForm.dispatchDate ? new Date(editForm.dispatchDate.split("-").reverse().join("-")) : undefined}
+                      onSelect={(d) =>
+                        d && setEditForm({ ...editForm, dispatchDate: format(d, "dd-MM-yyyy") })
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label>Courier / Vendor</Label>
+                <Input
+                  value={editForm.dispatchThrough || ""}
+                  onChange={(e) => setEditForm({ ...editForm, dispatchThrough: e.target.value })}
+                  placeholder="e.g., DTDC"
+                />
+              </div>
+              <div>
+                <Label>WayBill #</Label>
+                <Input
+                  value={editForm.vendorGrNo || ""}
+                  onChange={(e) => setEditForm({ ...editForm, vendorGrNo: e.target.value })}
+                  placeholder="WayBill number"
+                />
+              </div>
+              <div>
+                <Label>No. of Items</Label>
+                <Input
+                  type="number"
+                  value={editForm.noOfItems || 0}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, noOfItems: parseInt(e.target.value) || 0 })
+                  }
+                />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select
+                  value={editForm.status || ""}
+                  onValueChange={(v) => setEditForm({ ...editForm, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Received On</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {editForm.receivedOn ? format(new Date(editForm.receivedOn.split("-").reverse().join("-")), "dd-MM-yyyy") : "Select Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    <Calendar
+                      mode="single"
+                      selected={editForm.receivedOn ? new Date(editForm.receivedOn.split("-").reverse().join("-")) : undefined}
+                      onSelect={(d) =>
+                        d && setEditForm({ ...editForm, receivedOn: format(d, "dd-MM-yyyy") })
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label>Received By</Label>
+                <Input
+                  value={editForm.receivedBy || ""}
+                  onChange={(e) => setEditForm({ ...editForm, receivedBy: e.target.value })}
+                  placeholder="e.g., ADMIN"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Remarks</Label>
+                <Input
+                  value={editForm.remarks || ""}
+                  onChange={(e) => setEditForm({ ...editForm, remarks: e.target.value })}
+                  placeholder="Additional remarks"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSave} disabled={editLoading}>
+              {editLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
