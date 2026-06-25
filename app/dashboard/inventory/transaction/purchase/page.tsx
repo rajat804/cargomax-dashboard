@@ -30,7 +30,31 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Edit, Save, X, Search, Trash2, Plus, Upload, FileSpreadsheet, Settings, Eye, PlusCircle, MinusCircle } from "lucide-react";
+import {
+  CalendarIcon,
+  Edit,
+  Save,
+  X,
+  Search,
+  Plus,
+  Upload,
+  FileSpreadsheet,
+  Settings,
+  Eye,
+  Loader2,
+  Trash2,
+  RefreshCw,
+} from "lucide-react";
+import toast from "react-hot-toast";
+
+import {
+  createPurchaseBill,
+  getPendingPurchaseOrders,
+  getVendorBillReceipts,
+  getPurchaseBillById,
+  updatePurchaseBill,
+  deletePurchaseBill,
+} from "@/services/api";
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -62,7 +86,7 @@ interface ParticularEntry {
 }
 
 interface PurchaseOrder {
-  id: number;
+  id: string;
   sNo: number;
   branchName: string;
   vendorName: string;
@@ -100,19 +124,7 @@ interface VendorBillReceipt {
   paymentTerms: string;
 }
 
-// ==================== MOCK DATA ====================
-const mockPurchaseOrders: PurchaseOrder[] = [
-  { id: 1, sNo: 1, branchName: "HEAD OFFICE", vendorName: "Sharma Suppliers", poId: "PO001", poNo: "PO/2026-27/001", poDate: "10-05-2026", noOfItems: 3, deliveryDate: "20-05-2026", purchaseValue: 50000, itemsList: "Printer Paper, Pens, Staplers" },
-  { id: 2, sNo: 2, branchName: "DELHI BRANCH", vendorName: "Tech Solutions", poId: "PO002", poNo: "PO/2026-27/002", poDate: "12-05-2026", noOfItems: 2, deliveryDate: "22-05-2026", purchaseValue: 75000, itemsList: "Laptop, Mouse" },
-  { id: 3, sNo: 3, branchName: "MUMBAI BRANCH", vendorName: "Goyal Transport", poId: "PO003", poNo: "PO/2026-27/003", poDate: "15-05-2026", noOfItems: 5, deliveryDate: "25-05-2026", purchaseValue: 35000, itemsList: "Vehicle Parts, Oil, Filters" },
-];
-
-const mockVendorBillReceipts: VendorBillReceipt[] = [
-  { id: 1, sNo: 1, receiptId: "RCP001", date: "18-05-2026", poNo: "PO/2026-27/001", referenceNo: "REF001", invoiceNo: "INV-101", invoiceCategory: "STATIONERY PURCHASE", branch: "HEAD OFFICE", divisionName: "Admin", vendor: "Sharma Suppliers", vendorDepartment: "Sales", subTotal: 50000, gstAmount: 9000, billAmount: 59000, tdsAmount: 1000, advanceAdjusted: 0, netPayable: 58000, billStatus: "Pending", voucherNo: "", balancePayable: 58000, paymentTerms: "Net 30" },
-  { id: 2, sNo: 2, receiptId: "RCP002", date: "18-05-2026", poNo: "PO/2026-27/002", referenceNo: "REF002", invoiceNo: "INV-102", invoiceCategory: "ELECTRONICS", branch: "DELHI BRANCH", divisionName: "IT", vendor: "Tech Solutions", vendorDepartment: "Sales", subTotal: 75000, gstAmount: 13500, billAmount: 88500, tdsAmount: 2000, advanceAdjusted: 5000, netPayable: 81500, billStatus: "Partially Paid", voucherNo: "VCH001", balancePayable: 31500, paymentTerms: "Net 45" },
-];
-
-// Dropdown options
+// ==================== DROPDOWN OPTIONS ====================
 const branchOptions = ["HEAD OFFICE", "DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHENNAI BRANCH"];
 const vendorOptions = ["Sharma Suppliers", "Tech Solutions", "Goyal Transport", "Patel Agencies", "Singh Enterprises"];
 const invoiceCategoryOptions = ["STATIONERY PURCHASE", "ELECTRONICS", "VEHICLE PARTS", "OFFICE SUPPLIES", "FURNITURE"];
@@ -121,11 +133,11 @@ const itemOptions = ["Printer Paper", "Pens", "Staplers", "Laptop", "Mouse", "Ke
 const filterOnOptions = ["ALL", "Today", "This Week", "This Month", "Custom"];
 
 export default function ItemPurchase() {
-  // ==================== ENTRY TAB STATE ====================
+  // ==================== ENTRY/EDIT FORM STATE ====================
   const [branch, setBranch] = useState("HEAD OFFICE");
-  const [branchGst, setBranchGst] = useState("07AAGCG5997B1ZE");
+  const [branchGst, setBranchGst] = useState("");
   const [receiptId, setReceiptId] = useState("");
-  const [receiptDate, setReceiptDate] = useState<Date>(new Date(2026, 4, 18));
+  const [receiptDate, setReceiptDate] = useState<Date>(new Date());
   const [storeName, setStoreName] = useState("");
   const [vendor, setVendor] = useState("");
   const [vendorGst, setVendorGst] = useState("");
@@ -133,7 +145,7 @@ export default function ItemPurchase() {
   const [subLedger, setSubLedger] = useState("");
   const [invoiceCategory, setInvoiceCategory] = useState("STATIONERY PURCHASE");
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState<Date>(new Date(2026, 4, 18));
+  const [invoiceDate, setInvoiceDate] = useState<Date>(new Date());
 
   // Purchase Items
   const [purchaseItems, setPurchaseItems] = useState<PurchaseItem[]>([
@@ -147,24 +159,35 @@ export default function ItemPurchase() {
 
   const [roundOff, setRoundOff] = useState(0);
   const [finalRemarks, setFinalRemarks] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // ==================== EDIT MODE STATE ====================
+  const [editBillId, setEditBillId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // ==================== PENDING PO TAB STATE ====================
-  const [pendingPoBranch, setPendingPoBranch] = useState("");
+  const [pendingPoBranch, setPendingPoBranch] = useState("HEAD OFFICE");
   const [pendingPoVendor, setPendingPoVendor] = useState("");
   const [vendorAll, setVendorAll] = useState(true);
-  const [asOnDate, setAsOnDate] = useState<Date>(new Date(2026, 4, 18));
+  const [asOnDate, setAsOnDate] = useState<Date>(new Date());
   const [showPendingPo, setShowPendingPo] = useState(false);
   const [filteredPurchaseOrders, setFilteredPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [poLoading, setPoLoading] = useState(false);
 
   // ==================== SEARCH TAB STATE ====================
-  const [periodFrom, setPeriodFrom] = useState<Date>(new Date(2026, 4, 18));
-  const [periodTo, setPeriodTo] = useState<Date>(new Date(2026, 4, 18));
-  const [filterOn, setFilterOn] = useState("ALL");
-  const [searchInvoiceCategory, setSearchInvoiceCategory] = useState("");
-  const [vendorBillReceipts, setVendorBillReceipts] = useState<VendorBillReceipt[]>(mockVendorBillReceipts);
-  const [filteredReceipts, setFilteredReceipts] = useState<VendorBillReceipt[]>(mockVendorBillReceipts);
+  const defaultFrom = new Date(2000, 0, 1);
+  defaultFrom.setHours(0, 0, 0, 0);
+  const defaultTo = new Date();
+  defaultTo.setHours(23, 59, 59, 999);
 
-  // Column visibility
+  const [periodFrom, setPeriodFrom] = useState<Date>(defaultFrom);
+  const [periodTo, setPeriodTo] = useState<Date>(defaultTo);
+  const [filterOn, setFilterOn] = useState("ALL");
+  const [searchInvoiceCategory, setSearchInvoiceCategory] = useState("all");
+  const [filteredReceipts, setFilteredReceipts] = useState<VendorBillReceipt[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const [columnSettings, setColumnSettings] = useState({
     receiptId: true, date: true, poNo: true, referenceNo: true, invoiceNo: true,
     invoiceCategory: true, branch: true, divisionName: true, vendor: true, vendorDepartment: true,
@@ -172,20 +195,11 @@ export default function ItemPurchase() {
     netPayable: true, billStatus: true, voucherNo: true, balancePayable: true, paymentTerms: true
   });
 
-  // Active tab
   const [activeTab, setActiveTab] = useState("entry");
+  const [pendingPoInitialized, setPendingPoInitialized] = useState(false);
+  const [searchInitialized, setSearchInitialized] = useState(false);
 
-  // Calculate totals for purchase items
-  const updateItemTotals = (items: PurchaseItem[]): PurchaseItem[] => {
-    return items.map(item => {
-      const subTotal = item.qty * item.rate;
-      const igstAmount = (subTotal * item.igstPercent) / 100;
-      const totalAmount = subTotal + igstAmount;
-      return { ...item, subTotal, igstAmount, totalAmount };
-    });
-  };
-
-  // Add new purchase item row
+  // ==================== ITEM ROW MANAGEMENT ====================
   const addPurchaseItem = () => {
     const newId = Math.max(...purchaseItems.map(i => i.id), 0) + 1;
     const newSNo = purchaseItems.length + 1;
@@ -205,8 +219,10 @@ export default function ItemPurchase() {
       if (item.id === id) {
         const updatedItem = { ...item, [field]: value };
         if (field === 'qty' || field === 'rate' || field === 'igstPercent') {
-          const subTotal = (field === 'qty' ? value : item.qty) * (field === 'rate' ? value : item.rate);
+          const qty = field === 'qty' ? value : item.qty;
+          const rate = field === 'rate' ? value : item.rate;
           const igstPercent = field === 'igstPercent' ? value : item.igstPercent;
+          const subTotal = qty * rate;
           const igstAmount = (subTotal * igstPercent) / 100;
           const totalAmount = subTotal + igstAmount;
           return { ...updatedItem, subTotal, igstAmount, totalAmount };
@@ -218,7 +234,7 @@ export default function ItemPurchase() {
     setPurchaseItems(updated);
   };
 
-  // Add new particular row
+  // ==================== PARTICULARS MANAGEMENT ====================
   const addParticular = () => {
     const newId = Math.max(...particulars.map(p => p.id), 0) + 1;
     setParticulars([...particulars, { id: newId, particulars: "", sign: "+", percent: 0, applicable: true, amount: 0, remarks: "" }]);
@@ -234,31 +250,165 @@ export default function ItemPurchase() {
     setParticulars(particulars.map(p => p.id === id ? { ...p, [field]: value } : p));
   };
 
-  // Calculate summary totals
+  // ==================== TOTALS ====================
   const totalQty = purchaseItems.reduce((sum, item) => sum + item.qty, 0);
   const totalSubTotal = purchaseItems.reduce((sum, item) => sum + item.subTotal, 0);
   const totalIgst = purchaseItems.reduce((sum, item) => sum + item.igstAmount, 0);
   const totalAmount = purchaseItems.reduce((sum, item) => sum + item.totalAmount, 0);
 
-  // Calculate subtotal from particulars
-  const getSubtotalAmount = () => {
-    const subtotalRow = particulars.find(p => p.particulars === "SUBTOTAL");
-    return subtotalRow ? subtotalRow.amount : totalAmount;
+  // ==================== SAVE / UPDATE ====================
+  const handleSave = async () => {
+    if (!branch) { toast.error("Branch is required!"); return; }
+    if (!vendor) { toast.error("Vendor is required!"); return; }
+    if (!invoiceCategory) { toast.error("Invoice Category is required!"); return; }
+    if (!invoiceNo) { toast.error("Invoice No. is required!"); return; }
+
+    // Recalculate totals from items to ensure consistency
+    const itemsWithRecalc = purchaseItems.map(item => {
+      const subTotal = item.qty * item.rate;
+      const igstAmount = (subTotal * item.igstPercent) / 100;
+      const totalAmount = subTotal + igstAmount;
+      return { ...item, subTotal, igstAmount, totalAmount };
+    });
+    const newTotalQty = itemsWithRecalc.reduce((sum, i) => sum + i.qty, 0);
+    const newTotalSubTotal = itemsWithRecalc.reduce((sum, i) => sum + i.subTotal, 0);
+    const newTotalIgst = itemsWithRecalc.reduce((sum, i) => sum + i.igstAmount, 0);
+    const newTotalAmount = itemsWithRecalc.reduce((sum, i) => sum + i.totalAmount, 0);
+
+    const payload = {
+      branch,
+      branchGst,
+      receiptDate: receiptDate.toISOString(),
+      storeName,
+      vendor,
+      vendorGst,
+      vendorDepartment,
+      subLedger,
+      invoiceCategory,
+      invoiceNo,
+      invoiceDate: invoiceDate.toISOString(),
+      items: itemsWithRecalc.map(({ id, sNo, ...rest }) => rest), // remove frontend-only fields
+      particulars: particulars.map(({ id, ...rest }) => rest),
+      roundOff,
+      finalRemarks,
+      totalQty: newTotalQty,
+      totalSubTotal: newTotalSubTotal,
+      totalIgst: newTotalIgst,
+      totalAmount: newTotalAmount,
+    };
+
+    setSaving(true);
+    try {
+      if (isEditing && editBillId) {
+        await updatePurchaseBill(editBillId, payload);
+        toast.success("Purchase Bill updated successfully!");
+        handleSearchReceipts();
+        setIsEditing(false);
+        setEditBillId(null);
+        handleClear();
+      } else {
+        const response = await createPurchaseBill(payload);
+        toast.success(`Purchase Bill created! Receipt ID: ${response.receiptId}`);
+        handleClear();
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || error.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  // Handle Save
-  const handleSave = () => {
-    if (!branch) { alert("Branch is required!"); return; }
-    if (!vendor) { alert("Vendor is required!"); return; }
-    if (!invoiceCategory) { alert("Invoice Category is required!"); return; }
-    if (!invoiceNo) { alert("Invoice No. & Date is required!"); return; }
-    alert("Purchase Bill saved successfully!");
+  // ==================== EDIT BILL ====================
+  const handleEditBill = async (receiptId: string) => {
+    setSaving(true);
+    try {
+      const data = await getPurchaseBillById(receiptId);
+      setBranch(data.branch);
+      setBranchGst(data.branchGst || "");
+      setReceiptId(data.receiptId);
+      setReceiptDate(new Date(data.receiptDate));
+      setStoreName(data.storeName || "");
+      setVendor(data.vendor);
+      setVendorGst(data.vendorGst || "");
+      setVendorDepartment(data.vendorDepartment || "");
+      setSubLedger(data.subLedger || "");
+      setInvoiceCategory(data.invoiceCategory);
+      setInvoiceNo(data.invoiceNo);
+      setInvoiceDate(new Date(data.invoiceDate));
+
+      if (data.items && data.items.length > 0) {
+        const mappedItems = data.items.map((item: any, idx: number) => ({
+          id: idx + 1,
+          sNo: idx + 1,
+          item: item.item,
+          unitType: item.unitType,
+          qty: item.qty,
+          rate: item.rate,
+          subTotal: item.subTotal,
+          igstPercent: item.igstPercent,
+          igstAmount: item.igstAmount,
+          totalAmount: item.totalAmount,
+          startNo: item.startNo || "",
+          endNo: item.endNo || "",
+          qualityChecked: item.qualityChecked || false,
+          remarks: item.remarks || "",
+        }));
+        setPurchaseItems(mappedItems);
+      } else {
+        setPurchaseItems([{ id: 1, sNo: 1, item: "", unitType: "", qty: 0, rate: 0, subTotal: 0, igstPercent: 0, igstAmount: 0, totalAmount: 0, startNo: "", endNo: "", qualityChecked: false, remarks: "" }]);
+      }
+
+      if (data.particulars && data.particulars.length > 0) {
+        const mappedParticulars = data.particulars.map((p: any, idx: number) => ({
+          id: idx + 1,
+          particulars: p.particulars,
+          sign: p.sign || "+",
+          percent: p.percent || 0,
+          applicable: p.applicable !== undefined ? p.applicable : true,
+          amount: p.amount || 0,
+          remarks: p.remarks || "",
+        }));
+        setParticulars(mappedParticulars);
+      } else {
+        setParticulars([{ id: 1, particulars: "SUBTOTAL", sign: "+", percent: 0, applicable: true, amount: 0, remarks: "" }]);
+      }
+
+      setRoundOff(data.roundOff || 0);
+      setFinalRemarks(data.finalRemarks || "");
+
+      setIsEditing(true);
+      setEditBillId(data.receiptId);
+      setActiveTab("entry");
+      toast.success("Bill loaded for editing");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to load bill details");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ==================== DELETE BILL ====================
+  const handleDeleteBill = async (receiptId: string) => {
+    if (!confirm(`Are you sure you want to delete receipt ${receiptId}? This action cannot be undone.`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deletePurchaseBill(receiptId);
+      toast.success("Purchase Bill deleted successfully!");
+      handleSearchReceipts();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to delete bill");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleClear = () => {
     setBranch("HEAD OFFICE");
+    setBranchGst("");
     setReceiptId("");
-    setReceiptDate(new Date(2026, 4, 18));
+    setReceiptDate(new Date());
     setStoreName("");
     setVendor("");
     setVendorGst("");
@@ -266,39 +416,75 @@ export default function ItemPurchase() {
     setSubLedger("");
     setInvoiceCategory("STATIONERY PURCHASE");
     setInvoiceNo("");
-    setInvoiceDate(new Date(2026, 4, 18));
+    setInvoiceDate(new Date());
     setPurchaseItems([{ id: 1, sNo: 1, item: "", unitType: "", qty: 0, rate: 0, subTotal: 0, igstPercent: 0, igstAmount: 0, totalAmount: 0, startNo: "", endNo: "", qualityChecked: false, remarks: "" }]);
     setParticulars([{ id: 1, particulars: "SUBTOTAL", sign: "+", percent: 0, applicable: true, amount: 0, remarks: "" }]);
     setRoundOff(0);
     setFinalRemarks("");
+    setIsEditing(false);
+    setEditBillId(null);
   };
 
-  // Handle Show Pending PO
-  const handleShowPendingPO = () => {
-    let filtered = [...mockPurchaseOrders];
-    if (pendingPoBranch) {
-      filtered = filtered.filter(po => po.branchName === pendingPoBranch);
+  // ==================== PENDING PO ====================
+  const handleShowPendingPO = async () => {
+    if (!pendingPoBranch) {
+      toast.error("Please select Branch");
+      return;
     }
-    if (!vendorAll && pendingPoVendor) {
-      filtered = filtered.filter(po => po.vendorName === pendingPoVendor);
+    setPoLoading(true);
+    try {
+      const params: any = { branch: pendingPoBranch };
+      if (!vendorAll && pendingPoVendor) params.vendor = pendingPoVendor;
+      if (asOnDate) params.asOnDate = asOnDate.toISOString();
+      const data = await getPendingPurchaseOrders(params);
+      setFilteredPurchaseOrders(data);
+      setShowPendingPo(true);
+      toast.success(`Found ${data.length} pending POs`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to fetch pending POs");
+    } finally {
+      setPoLoading(false);
     }
-    setFilteredPurchaseOrders(filtered);
-    setShowPendingPo(true);
   };
 
-  // Handle Search Vendor Bill Receipt
-  const handleSearchReceipts = () => {
-    let filtered = [...vendorBillReceipts];
-    filtered = filtered.filter(r => {
-      const rDate = new Date(r.date.split("-").reverse().join("-"));
-      return rDate >= periodFrom && rDate <= periodTo;
-    });
-    if (searchInvoiceCategory) {
-      filtered = filtered.filter(r => r.invoiceCategory === searchInvoiceCategory);
+  // ==================== SEARCH ====================
+  const handleSearchReceipts = async () => {
+    setSearchLoading(true);
+    try {
+      const params: any = {
+        fromDate: periodFrom.toISOString(),
+        toDate: periodTo.toISOString(),
+        filterOn,
+      };
+      if (searchInvoiceCategory && searchInvoiceCategory !== 'all') {
+        params.invoiceCategory = searchInvoiceCategory;
+      }
+      const data = await getVendorBillReceipts(params);
+      setFilteredReceipts(data);
+      toast.success(`Found ${data.length} receipts`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "Failed to search receipts");
+    } finally {
+      setSearchLoading(false);
     }
-    setFilteredReceipts(filtered);
   };
 
+  // ==================== AUTO‑LOAD ON TAB CHANGE ====================
+  useEffect(() => {
+    if (activeTab === 'pendingPo' && !pendingPoInitialized) {
+      handleShowPendingPO();
+      setPendingPoInitialized(true);
+    }
+  }, [activeTab, pendingPoInitialized]);
+
+  useEffect(() => {
+    if (activeTab === 'search' && !searchInitialized) {
+      handleSearchReceipts();
+      setSearchInitialized(true);
+    }
+  }, [activeTab, searchInitialized]);
+
+  // ==================== RENDER ====================
   return (
     <div className="space-y-6 p-4">
       {/* Header */}
@@ -311,7 +497,6 @@ export default function ItemPurchase() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="entry">Entry</TabsTrigger>
@@ -322,24 +507,103 @@ export default function ItemPurchase() {
         {/* ==================== ENTRY TAB ==================== */}
         <TabsContent value="entry" className="mt-6">
           <Card>
-            <CardHeader><CardTitle>Purchase Bill Entry</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>{isEditing ? "Edit Purchase Bill" : "Purchase Bill Entry"}</CardTitle>
+              {isEditing && (
+                <div className="text-sm text-muted-foreground">
+                  Editing receipt: <strong>{editBillId}</strong>
+                </div>
+              )}
+            </CardHeader>
             <CardContent>
-              {/* Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div><Label>Branch <span className="text-red-500">*</span></Label><Select value={branch} onValueChange={setBranch}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{branchOptions.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Branch GST#</Label><Input value={branchGst} readOnly className="bg-gray-50" /></div>
-                <div><Label>Receipt ID</Label><Input value={receiptId} onChange={(e) => setReceiptId(e.target.value)} placeholder="Auto generated" readOnly className="bg-gray-50" /></div>
-                <div><Label>Receipt Date</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(receiptDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={receiptDate} onSelect={(d) => d && setReceiptDate(d)} /></PopoverContent></Popover></div>
-                <div><Label>Store Name</Label><Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Enter store name" /></div>
-                <div><Label>Vendor <span className="text-red-500">*</span></Label><Select value={vendor} onValueChange={setVendor}><SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger><SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Vendor/Department GST #</Label><Input value={vendorGst} onChange={(e) => setVendorGst(e.target.value)} placeholder="Enter GST" /></div>
-                <div><Label>Vendor Department</Label><Input value={vendorDepartment} onChange={(e) => setVendorDepartment(e.target.value)} placeholder="Enter department" /></div>
-                <div><Label>Sub Ledger</Label><Input value={subLedger} onChange={(e) => setSubLedger(e.target.value)} placeholder="Enter sub ledger" /></div>
-                <div><Label>Invoice Category <span className="text-red-500">*</span></Label><Select value={invoiceCategory} onValueChange={setInvoiceCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Invoice No. & Date <span className="text-red-500">*</span></Label><div className="flex gap-2"><Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="Invoice No" className="flex-1" /><Popover><PopoverTrigger asChild><Button variant="outline"><CalendarIcon className="h-4 w-4" />{format(invoiceDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={invoiceDate} onSelect={(d) => d && setInvoiceDate(d)} /></PopoverContent></Popover></div></div>
+                <div>
+                  <Label>Branch <span className="text-red-500">*</span></Label>
+                  <Select value={branch} onValueChange={setBranch}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{branchOptions.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Branch GST#</Label>
+                  <Input
+                    value={branchGst}
+                    onChange={(e) => setBranchGst(e.target.value)}
+                    placeholder="Enter Branch GST"
+                  />
+                </div>
+                <div>
+                  <Label>Receipt ID</Label>
+                  <Input value={receiptId} readOnly placeholder="Auto generated" className="bg-gray-50" />
+                </div>
+                <div>
+                  <Label>Receipt Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(receiptDate, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Calendar mode="single" selected={receiptDate} onSelect={(d) => d && setReceiptDate(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Store Name</Label>
+                  <Input value={storeName} onChange={(e) => setStoreName(e.target.value)} placeholder="Enter store name" />
+                </div>
+                <div>
+                  <Label>Vendor <span className="text-red-500">*</span></Label>
+                  <Select value={vendor} onValueChange={setVendor}>
+                    <SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger>
+                    <SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Vendor/Department GST #</Label>
+                  <Input value={vendorGst} onChange={(e) => setVendorGst(e.target.value)} placeholder="Enter GST" />
+                </div>
+                <div>
+                  <Label>Vendor Department</Label>
+                  <Input value={vendorDepartment} onChange={(e) => setVendorDepartment(e.target.value)} placeholder="Enter department" />
+                </div>
+                <div>
+                  <Label>Sub Ledger</Label>
+                  <Input value={subLedger} onChange={(e) => setSubLedger(e.target.value)} placeholder="Enter sub ledger" />
+                </div>
+                <div>
+                  <Label>Invoice Category <span className="text-red-500">*</span></Label>
+                  <Select value={invoiceCategory} onValueChange={setInvoiceCategory}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-1 md:col-span-2">
+                  <Label>Invoice No. & Date <span className="text-red-500">*</span></Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={invoiceNo}
+                      onChange={(e) => setInvoiceNo(e.target.value)}
+                      placeholder="Invoice No"
+                      className="flex-1"
+                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline">
+                          <CalendarIcon className="h-4 w-4 mr-1" />
+                          {format(invoiceDate, "dd-MM-yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <Calendar mode="single" selected={invoiceDate} onSelect={(d) => d && setInvoiceDate(d)} />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
 
-              {/* Import/Export Buttons */}
               <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t">
                 <Button variant="outline"><Upload className="mr-2 h-4 w-4" /> Select Excel (Import)</Button>
                 <Button variant="outline"><FileSpreadsheet className="mr-2 h-4 w-4" /> Bill Details Export to Excel</Button>
@@ -347,37 +611,99 @@ export default function ItemPurchase() {
                 <Button variant="outline"><Eye className="mr-2 h-4 w-4" /> Select Purchase Order</Button>
               </div>
 
-              {/* Purchase Items Table */}
               <div className="mt-6">
                 <Label className="text-base font-medium">Purchase Items</Label>
                 <div className="overflow-x-auto mt-2 border rounded-lg">
                   <Table>
                     <TableHeader className="bg-gray-100">
-                      <TableRow><TableHead>S#</TableHead><TableHead>Item</TableHead><TableHead>Unit Type</TableHead><TableHead className="text-right">Qty</TableHead><TableHead className="text-right">Rate</TableHead><TableHead className="text-right">Sub Total</TableHead><TableHead>IGST @ %</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Start #</TableHead><TableHead>End #</TableHead><TableHead>Quality Checked</TableHead><TableHead>Remarks</TableHead><TableHead>Action</TableHead></TableRow>
+                      <TableRow>
+                        <TableHead>S#</TableHead>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Unit Type</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Rate</TableHead>
+                        <TableHead className="text-right">Sub Total</TableHead>
+                        <TableHead>IGST @ %</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Start #</TableHead>
+                        <TableHead>End #</TableHead>
+                        <TableHead>Quality Checked</TableHead>
+                        <TableHead>Remarks</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {purchaseItems.map((item) => (<TableRow key={item.id}>
-                        <TableCell>{item.sNo}</TableCell>
-                        <TableCell><Select value={item.item} onValueChange={(v) => updatePurchaseItem(item.id, 'item', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{itemOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent></Select></TableCell>
-                        <TableCell><Select value={item.unitType} onValueChange={(v) => updatePurchaseItem(item.id, 'unitType', v)}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{unitTypeOptions.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent></Select></TableCell>
-                        <TableCell><Input type="number" value={item.qty} onChange={(e) => updatePurchaseItem(item.id, 'qty', parseFloat(e.target.value) || 0)} className="w-20 text-right" /></TableCell>
-                        <TableCell><Input type="number" value={item.rate} onChange={(e) => updatePurchaseItem(item.id, 'rate', parseFloat(e.target.value) || 0)} className="w-24 text-right" /></TableCell>
-                        <TableCell className="text-right">{item.subTotal.toFixed(2)}</TableCell>
-                        <TableCell><Input type="number" value={item.igstPercent} onChange={(e) => updatePurchaseItem(item.id, 'igstPercent', parseFloat(e.target.value) || 0)} className="w-20" /> %</TableCell>
-                        <TableCell className="text-right">{item.totalAmount.toFixed(2)}</TableCell>
-                        <TableCell><Input value={item.startNo} onChange={(e) => updatePurchaseItem(item.id, 'startNo', e.target.value)} className="w-20" /></TableCell>
-                        <TableCell><Input value={item.endNo} onChange={(e) => updatePurchaseItem(item.id, 'endNo', e.target.value)} className="w-20" /></TableCell>
-                        <TableCell><Checkbox checked={item.qualityChecked} onCheckedChange={(c) => updatePurchaseItem(item.id, 'qualityChecked', !!c)} /></TableCell>
-                        <TableCell><Input value={item.remarks} onChange={(e) => updatePurchaseItem(item.id, 'remarks', e.target.value)} className="w-24" /></TableCell>
-                        <TableCell><Button variant="ghost" size="sm" onClick={() => removePurchaseItem(item.id)} className="text-red-600"><X className="h-4 w-4" /></Button></TableCell>
-                      </TableRow>))}
+                      {purchaseItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.sNo}</TableCell>
+                          <TableCell>
+                            <Select value={item.item} onValueChange={(v) => updatePurchaseItem(item.id, 'item', v)}>
+                              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                              <SelectContent>{itemOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Select value={item.unitType} onValueChange={(v) => updatePurchaseItem(item.id, 'unitType', v)}>
+                              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                              <SelectContent>{unitTypeOptions.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.qty || ""}
+                              onChange={(e) => updatePurchaseItem(item.id, 'qty', parseFloat(e.target.value) || 0)}
+                              className="w-20 text-right"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.rate || ""}
+                              onChange={(e) => updatePurchaseItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                              className="w-24 text-right"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">{item.subTotal.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.igstPercent || ""}
+                              onChange={(e) => updatePurchaseItem(item.id, 'igstPercent', parseFloat(e.target.value) || 0)}
+                              className="w-20"
+                              placeholder="0"
+                            /> %
+                          </TableCell>
+                          <TableCell className="text-right">{item.totalAmount.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Input value={item.startNo} onChange={(e) => updatePurchaseItem(item.id, 'startNo', e.target.value)} className="w-20" />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={item.endNo} onChange={(e) => updatePurchaseItem(item.id, 'endNo', e.target.value)} className="w-20" />
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox checked={item.qualityChecked} onCheckedChange={(c) => updatePurchaseItem(item.id, 'qualityChecked', !!c)} />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={item.remarks} onChange={(e) => updatePurchaseItem(item.id, 'remarks', e.target.value)} className="w-24" />
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => removePurchaseItem(item.id)} className="text-red-600">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
-                <Button variant="outline" size="sm" onClick={addPurchaseItem} className="mt-2"><Plus className="mr-1 h-3 w-3" /> Add more..</Button>
+                <Button variant="outline" size="sm" onClick={addPurchaseItem} className="mt-2">
+                  <Plus className="mr-1 h-3 w-3" /> Add more..
+                </Button>
               </div>
 
-              {/* Totals Row */}
               <div className="mt-4 p-3 bg-gray-50 rounded flex flex-wrap justify-between">
                 <span><strong>Total:</strong> Qty: {totalQty.toFixed(2)}</span>
                 <span><strong>SubTotal:</strong> ₹{totalSubTotal.toFixed(2)}</span>
@@ -385,39 +711,106 @@ export default function ItemPurchase() {
                 <span><strong>Amount:</strong> ₹{totalAmount.toFixed(2)}</span>
               </div>
 
-              {/* Particulars Table */}
               <div className="mt-6">
                 <Label className="text-base font-medium">Particulars</Label>
                 <div className="overflow-x-auto mt-2 border rounded-lg">
                   <Table>
-                    <TableHeader className="bg-gray-100"><TableRow><TableHead>Particulars</TableHead><TableHead>+/-</TableHead><TableHead>%</TableHead><TableHead>Applicable</TableHead><TableHead className="text-right">Amount</TableHead><TableHead>Remarks</TableHead><TableHead>Action</TableHead></TableRow></TableHeader>
+                    <TableHeader className="bg-gray-100">
+                      <TableRow>
+                        <TableHead>Particulars</TableHead>
+                        <TableHead>+/-</TableHead>
+                        <TableHead>%</TableHead>
+                        <TableHead>Applicable</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Remarks</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
                     <TableBody>
-                      {particulars.map((p) => (<TableRow key={p.id}>
-                        <TableCell><Input value={p.particulars} onChange={(e) => updateParticular(p.id, 'particulars', e.target.value)} placeholder="Particulars" /></TableCell>
-                        <TableCell><Select value={p.sign} onValueChange={(v) => updateParticular(p.id, 'sign', v)}><SelectTrigger className="w-16"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="+">+</SelectItem><SelectItem value="-">-</SelectItem></SelectContent></Select></TableCell>
-                        <TableCell><Input type="number" value={p.percent} onChange={(e) => updateParticular(p.id, 'percent', parseFloat(e.target.value) || 0)} className="w-20" /></TableCell>
-                        <TableCell><Checkbox checked={p.applicable} onCheckedChange={(c) => updateParticular(p.id, 'applicable', !!c)} /></TableCell>
-                        <TableCell className="text-right"><Input type="number" value={p.amount} onChange={(e) => updateParticular(p.id, 'amount', parseFloat(e.target.value) || 0)} className="w-24 text-right" /></TableCell>
-                        <TableCell><Input value={p.remarks} onChange={(e) => updateParticular(p.id, 'remarks', e.target.value)} placeholder="Remarks" /></TableCell>
-                        <TableCell><Button variant="ghost" size="sm" onClick={() => removeParticular(p.id)} className="text-red-600"><X className="h-4 w-4" /></Button></TableCell>
-                      </TableRow>))}
+                      {particulars.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell>
+                            <Input value={p.particulars} onChange={(e) => updateParticular(p.id, 'particulars', e.target.value)} placeholder="Particulars" />
+                          </TableCell>
+                          <TableCell>
+                            <Select value={p.sign} onValueChange={(v) => updateParticular(p.id, 'sign', v)}>
+                              <SelectTrigger className="w-16"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+">+</SelectItem>
+                                <SelectItem value="-">-</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={p.percent || ""}
+                              onChange={(e) => updateParticular(p.id, 'percent', parseFloat(e.target.value) || 0)}
+                              className="w-20"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Checkbox checked={p.applicable} onCheckedChange={(c) => updateParticular(p.id, 'applicable', !!c)} />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={p.amount || ""}
+                              onChange={(e) => updateParticular(p.id, 'amount', parseFloat(e.target.value) || 0)}
+                              className="w-24 text-right"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input value={p.remarks} onChange={(e) => updateParticular(p.id, 'remarks', e.target.value)} placeholder="Remarks" />
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm" onClick={() => removeParticular(p.id)} className="text-red-600">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
-                <Button variant="outline" size="sm" onClick={addParticular} className="mt-2"><Plus className="mr-1 h-3 w-3" /> Add more..</Button>
+                <Button variant="outline" size="sm" onClick={addParticular} className="mt-2">
+                  <Plus className="mr-1 h-3 w-3" /> Add more..
+                </Button>
               </div>
 
-              {/* Round Off and Remarks */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div><Label>RoundOff</Label><Input type="number" value={roundOff} onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)} /></div>
-                <div><Label>Remarks</Label><Input value={finalRemarks} onChange={(e) => setFinalRemarks(e.target.value)} placeholder="Please enter remarks here" /></div>
+                <div>
+                  <Label>RoundOff</Label>
+                  <Input
+                    type="number"
+                    value={roundOff || ""}
+                    onChange={(e) => setRoundOff(parseFloat(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label>Remarks</Label>
+                  <Input
+                    value={finalRemarks}
+                    onChange={(e) => setFinalRemarks(e.target.value)}
+                    placeholder="Please enter remarks here"
+                  />
+                </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 pt-6 border-t mt-6">
-                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700"><Save className="mr-2 h-4 w-4" /> Save</Button>
-                <Button variant="outline" onClick={handleClear}><X className="mr-2 h-4 w-4" /> Clear</Button>
-                <Button variant="outline" onClick={() => setActiveTab("search")}>Cancel</Button>
+                <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700" disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isEditing ? "Update" : "Save"}
+                </Button>
+                <Button variant="outline" onClick={handleClear}>
+                  <X className="mr-2 h-4 w-4" /> Clear
+                </Button>
+                <Button variant="outline" onClick={() => setActiveTab("search")}>
+                  Cancel
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -429,13 +822,84 @@ export default function ItemPurchase() {
             <CardHeader><CardTitle>Pending Purchase Orders</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div><Label>Branch <span className="text-red-500">*</span></Label><Select value={pendingPoBranch} onValueChange={setPendingPoBranch}><SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger><SelectContent>{branchOptions.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Vendor</Label><div className="flex items-center gap-2 mb-2"><Checkbox checked={vendorAll} onCheckedChange={(c) => setVendorAll(!!c)} /><Label className="cursor-pointer">ALL</Label></div><Select disabled={!vendorAll} value={pendingPoVendor} onValueChange={setPendingPoVendor}><SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger><SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>As On Date <span className="text-red-500">*</span></Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(asOnDate, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} /></PopoverContent></Popover></div>
+                <div>
+                  <Label>Branch <span className="text-red-500">*</span></Label>
+                  <Select value={pendingPoBranch} onValueChange={setPendingPoBranch}>
+                    <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
+                    <SelectContent>{branchOptions.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Vendor</Label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Checkbox checked={vendorAll} onCheckedChange={(c) => setVendorAll(!!c)} />
+                    <Label className="cursor-pointer">ALL</Label>
+                  </div>
+                  <Select disabled={!vendorAll} value={pendingPoVendor} onValueChange={setPendingPoVendor}>
+                    <SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger>
+                    <SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>As On Date <span className="text-red-500">*</span></Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(asOnDate, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Calendar mode="single" selected={asOnDate} onSelect={(d) => d && setAsOnDate(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div className="mt-4"><Button onClick={handleShowPendingPO} className="bg-blue-600"><Eye className="mr-2 h-4 w-4" /> Show Pending</Button></div>
+              <div className="mt-4">
+                <Button onClick={handleShowPendingPO} className="bg-blue-600" disabled={poLoading}>
+                  {poLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                  Show Pending
+                </Button>
+              </div>
 
-              {showPendingPo && (<div className="mt-6 overflow-x-auto border rounded-lg"><Table><TableHeader className="bg-gray-100"><TableRow><TableHead>S#</TableHead><TableHead>Branch Name</TableHead><TableHead>Vendor Name</TableHead><TableHead>PO Id</TableHead><TableHead>PO #</TableHead><TableHead>PO Date</TableHead><TableHead>No Of Items</TableHead><TableHead>Delivery Date</TableHead><TableHead className="text-right">Purchase Value</TableHead><TableHead>Items List</TableHead><TableHead>Select</TableHead></TableRow></TableHeader><TableBody>{filteredPurchaseOrders.map((po) => (<TableRow key={po.id}><TableCell>{po.sNo}</TableCell><TableCell>{po.branchName}</TableCell><TableCell>{po.vendorName}</TableCell><TableCell>{po.poId}</TableCell><TableCell className="text-blue-600">{po.poNo}</TableCell><TableCell>{po.poDate}</TableCell><TableCell>{po.noOfItems}</TableCell><TableCell>{po.deliveryDate}</TableCell><TableCell className="text-right">₹{po.purchaseValue.toLocaleString()}</TableCell><TableCell>{po.itemsList}</TableCell><TableCell><Checkbox /></TableCell></TableRow>))}</TableBody></Table></div>)}
+              {showPendingPo && (
+                <div className="mt-6 overflow-x-auto border rounded-lg">
+                  <Table>
+                    <TableHeader className="bg-gray-100">
+                      <TableRow>
+                        <TableHead>S#</TableHead>
+                        <TableHead>Branch Name</TableHead>
+                        <TableHead>Vendor Name</TableHead>
+                        <TableHead>PO Id</TableHead>
+                        <TableHead>PO #</TableHead>
+                        <TableHead>PO Date</TableHead>
+                        <TableHead>No Of Items</TableHead>
+                        <TableHead>Delivery Date</TableHead>
+                        <TableHead className="text-right">Purchase Value</TableHead>
+                        <TableHead>Items List</TableHead>
+                        <TableHead>Select</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPurchaseOrders.map((po, idx) => (
+                        <TableRow key={po.id}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>{po.branchName}</TableCell>
+                          <TableCell>{po.vendorName}</TableCell>
+                          <TableCell>{po.poId}</TableCell>
+                          <TableCell className="text-blue-600">{po.poNo}</TableCell>
+                          <TableCell>{po.poDate}</TableCell>
+                          <TableCell>{po.noOfItems}</TableCell>
+                          <TableCell>{po.deliveryDate}</TableCell>
+                          <TableCell className="text-right">₹{po.purchaseValue.toLocaleString()}</TableCell>
+                          <TableCell>{po.itemsList}</TableCell>
+                          <TableCell><Checkbox /></TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -446,18 +910,183 @@ export default function ItemPurchase() {
             <CardHeader><CardTitle>Vendor Bill Receipt Search</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div><Label>Period From</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(periodFrom, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={periodFrom} onSelect={(d) => d && setPeriodFrom(d)} /></PopoverContent></Popover></div>
-                <div><Label>Period To</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start"><CalendarIcon className="mr-2 h-4 w-4" />{format(periodTo, "dd-MM-yyyy")}</Button></PopoverTrigger><PopoverContent><Calendar mode="single" selected={periodTo} onSelect={(d) => d && setPeriodTo(d)} /></PopoverContent></Popover></div>
-                <div><Label>Filter On</Label><Select value={filterOn} onValueChange={setFilterOn}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{filterOnOptions.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent></Select></div>
-                <div><Label>Invoice Category</Label><Select value={searchInvoiceCategory} onValueChange={setSearchInvoiceCategory}><SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger><SelectContent><SelectItem value="ALL">ALL</SelectItem>{invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
+                <div>
+                  <Label>Period From</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(periodFrom, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Calendar mode="single" selected={periodFrom} onSelect={(d) => d && setPeriodFrom(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Period To</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(periodTo, "dd-MM-yyyy")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <Calendar mode="single" selected={periodTo} onSelect={(d) => d && setPeriodTo(d)} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label>Filter On</Label>
+                  <Select value={filterOn} onValueChange={setFilterOn}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{filterOnOptions.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Invoice Category</Label>
+                  <Select value={searchInvoiceCategory} onValueChange={setSearchInvoiceCategory}>
+                    <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">ALL</SelectItem>
+                      {invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="mt-4"><Button onClick={handleSearchReceipts} className="bg-blue-600"><Search className="mr-2 h-4 w-4" /> Show Vendor Bill Receipt</Button></div>
+              <div className="mt-4 flex gap-2">
+                <Button onClick={handleSearchReceipts} className="bg-blue-600" disabled={searchLoading}>
+                  {searchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+                  Show Vendor Bill Receipt
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const from = new Date(2000, 0, 1);
+                    from.setHours(0,0,0,0);
+                    const to = new Date();
+                    to.setHours(23,59,59,999);
+                    setPeriodFrom(from);
+                    setPeriodTo(to);
+                    setFilterOn("ALL");
+                    setSearchInvoiceCategory("all");
+                    handleSearchReceipts();
+                  }}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" /> Reset
+                </Button>
+              </div>
 
-              {/* Column Settings */}
-              <div className="mt-4 mb-4 p-3 bg-gray-50 rounded flex flex-wrap gap-2"><Settings className="h-5 w-5 text-gray-500" /><span className="text-sm font-medium">Column Settings:</span>{Object.keys(columnSettings).map((key) => (<div key={key} className="flex items-center gap-1"><Checkbox checked={columnSettings[key as keyof typeof columnSettings]} onCheckedChange={(c) => setColumnSettings({ ...columnSettings, [key]: !!c })} /><Label className="text-xs cursor-pointer">{key.replace(/([A-Z])/g, ' $1').trim()}</Label></div>))}</div>
+              <div className="mt-4 mb-4 p-3 bg-gray-50 rounded flex flex-wrap gap-2">
+                <Settings className="h-5 w-5 text-gray-500" />
+                <span className="text-sm font-medium">Column Settings:</span>
+                {Object.keys(columnSettings).map((key) => (
+                  <div key={key} className="flex items-center gap-1">
+                    <Checkbox
+                      checked={columnSettings[key as keyof typeof columnSettings]}
+                      onCheckedChange={(c) => setColumnSettings({ ...columnSettings, [key]: !!c })}
+                    />
+                    <Label className="text-xs cursor-pointer">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                    </Label>
+                  </div>
+                ))}
+              </div>
 
-              {/* Results Table */}
-              <div className="overflow-x-auto border rounded-lg"><Table><TableHeader className="bg-gray-100"><TableRow>{columnSettings.receiptId && <TableHead>Receipt ID</TableHead>}{columnSettings.date && <TableHead>Date</TableHead>}{columnSettings.poNo && <TableHead>PO #</TableHead>}{columnSettings.referenceNo && <TableHead>Reference #</TableHead>}{columnSettings.invoiceNo && <TableHead>Invoice #</TableHead>}{columnSettings.invoiceCategory && <TableHead>Invoice Category</TableHead>}{columnSettings.branch && <TableHead>Branch</TableHead>}{columnSettings.divisionName && <TableHead>Division Name</TableHead>}{columnSettings.vendor && <TableHead>Vendor</TableHead>}{columnSettings.vendorDepartment && <TableHead>Vendor Dept</TableHead>}{columnSettings.subTotal && <TableHead className="text-right">Sub Total</TableHead>}{columnSettings.gstAmount && <TableHead className="text-right">GST Amount</TableHead>}{columnSettings.billAmount && <TableHead className="text-right">Bill Amount</TableHead>}{columnSettings.tdsAmount && <TableHead className="text-right">TDS Amount</TableHead>}{columnSettings.advanceAdjusted && <TableHead className="text-right">Advance Adj.</TableHead>}{columnSettings.netPayable && <TableHead className="text-right">Net Payable</TableHead>}{columnSettings.billStatus && <TableHead>Bill Status</TableHead>}{columnSettings.voucherNo && <TableHead>Voucher #</TableHead>}{columnSettings.balancePayable && <TableHead className="text-right">Balance Payable</TableHead>}{columnSettings.paymentTerms && <TableHead>Payment Terms</TableHead>}<TableHead>Action</TableHead></TableRow></TableHeader><TableBody>{filteredReceipts.map((r) => (<TableRow key={r.id}>{columnSettings.receiptId && <TableCell>{r.receiptId}</TableCell>}{columnSettings.date && <TableCell>{r.date}</TableCell>}{columnSettings.poNo && <TableCell>{r.poNo}</TableCell>}{columnSettings.referenceNo && <TableCell>{r.referenceNo}</TableCell>}{columnSettings.invoiceNo && <TableCell>{r.invoiceNo}</TableCell>}{columnSettings.invoiceCategory && <TableCell>{r.invoiceCategory}</TableCell>}{columnSettings.branch && <TableCell>{r.branch}</TableCell>}{columnSettings.divisionName && <TableCell>{r.divisionName}</TableCell>}{columnSettings.vendor && <TableCell>{r.vendor}</TableCell>}{columnSettings.vendorDepartment && <TableCell>{r.vendorDepartment}</TableCell>}{columnSettings.subTotal && <TableCell className="text-right">₹{r.subTotal.toLocaleString()}</TableCell>}{columnSettings.gstAmount && <TableCell className="text-right">₹{r.gstAmount.toLocaleString()}</TableCell>}{columnSettings.billAmount && <TableCell className="text-right">₹{r.billAmount.toLocaleString()}</TableCell>}{columnSettings.tdsAmount && <TableCell className="text-right">₹{r.tdsAmount.toLocaleString()}</TableCell>}{columnSettings.advanceAdjusted && <TableCell className="text-right">₹{r.advanceAdjusted.toLocaleString()}</TableCell>}{columnSettings.netPayable && <TableCell className="text-right">₹{r.netPayable.toLocaleString()}</TableCell>}{columnSettings.billStatus && <TableCell><span className={`px-2 py-1 rounded-full text-xs ${r.billStatus === "Pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}`}>{r.billStatus}</span></TableCell>}{columnSettings.voucherNo && <TableCell>{r.voucherNo || "-"}</TableCell>}{columnSettings.balancePayable && <TableCell className="text-right">₹{r.balancePayable.toLocaleString()}</TableCell>}{columnSettings.paymentTerms && <TableCell>{r.paymentTerms}</TableCell>}<TableCell><Button variant="ghost" size="sm" className="text-blue-600"><Edit className="h-4 w-4" /></Button></TableCell></TableRow>))}</TableBody></Table></div>
+              <div className="overflow-x-auto border rounded-lg">
+                <Table>
+                  <TableHeader className="bg-gray-100">
+                    <TableRow>
+                      {columnSettings.receiptId && <TableHead>Receipt ID</TableHead>}
+                      {columnSettings.date && <TableHead>Date</TableHead>}
+                      {columnSettings.poNo && <TableHead>PO #</TableHead>}
+                      {columnSettings.referenceNo && <TableHead>Reference #</TableHead>}
+                      {columnSettings.invoiceNo && <TableHead>Invoice #</TableHead>}
+                      {columnSettings.invoiceCategory && <TableHead>Invoice Category</TableHead>}
+                      {columnSettings.branch && <TableHead>Branch</TableHead>}
+                      {columnSettings.divisionName && <TableHead>Division Name</TableHead>}
+                      {columnSettings.vendor && <TableHead>Vendor</TableHead>}
+                      {columnSettings.vendorDepartment && <TableHead>Vendor Dept</TableHead>}
+                      {columnSettings.subTotal && <TableHead className="text-right">Sub Total</TableHead>}
+                      {columnSettings.gstAmount && <TableHead className="text-right">GST Amount</TableHead>}
+                      {columnSettings.billAmount && <TableHead className="text-right">Bill Amount</TableHead>}
+                      {columnSettings.tdsAmount && <TableHead className="text-right">TDS Amount</TableHead>}
+                      {columnSettings.advanceAdjusted && <TableHead className="text-right">Advance Adj.</TableHead>}
+                      {columnSettings.netPayable && <TableHead className="text-right">Net Payable</TableHead>}
+                      {columnSettings.billStatus && <TableHead>Bill Status</TableHead>}
+                      {columnSettings.voucherNo && <TableHead>Voucher #</TableHead>}
+                      {columnSettings.balancePayable && <TableHead className="text-right">Balance Payable</TableHead>}
+                      {columnSettings.paymentTerms && <TableHead>Payment Terms</TableHead>}
+                      <TableHead className="text-center">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredReceipts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={Object.values(columnSettings).filter(Boolean).length + 1} className="text-center py-6 text-gray-500">
+                          No records found. Adjust filters and click Search.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredReceipts.map((r, idx) => (
+                        <TableRow key={idx}>
+                          {columnSettings.receiptId && <TableCell>{r.receiptId}</TableCell>}
+                          {columnSettings.date && <TableCell>{r.date}</TableCell>}
+                          {columnSettings.poNo && <TableCell>{r.poNo}</TableCell>}
+                          {columnSettings.referenceNo && <TableCell>{r.referenceNo}</TableCell>}
+                          {columnSettings.invoiceNo && <TableCell>{r.invoiceNo}</TableCell>}
+                          {columnSettings.invoiceCategory && <TableCell>{r.invoiceCategory}</TableCell>}
+                          {columnSettings.branch && <TableCell>{r.branch}</TableCell>}
+                          {columnSettings.divisionName && <TableCell>{r.divisionName}</TableCell>}
+                          {columnSettings.vendor && <TableCell>{r.vendor}</TableCell>}
+                          {columnSettings.vendorDepartment && <TableCell>{r.vendorDepartment}</TableCell>}
+                          {columnSettings.subTotal && <TableCell className="text-right">₹{r.subTotal.toLocaleString()}</TableCell>}
+                          {columnSettings.gstAmount && <TableCell className="text-right">₹{r.gstAmount.toLocaleString()}</TableCell>}
+                          {columnSettings.billAmount && <TableCell className="text-right">₹{r.billAmount.toLocaleString()}</TableCell>}
+                          {columnSettings.tdsAmount && <TableCell className="text-right">₹{r.tdsAmount.toLocaleString()}</TableCell>}
+                          {columnSettings.advanceAdjusted && <TableCell className="text-right">₹{r.advanceAdjusted.toLocaleString()}</TableCell>}
+                          {columnSettings.netPayable && <TableCell className="text-right">₹{r.netPayable.toLocaleString()}</TableCell>}
+                          {columnSettings.billStatus && (
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs ${r.billStatus === "Pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}`}>
+                                {r.billStatus}
+                              </span>
+                            </TableCell>
+                          )}
+                          {columnSettings.voucherNo && <TableCell>{r.voucherNo || "-"}</TableCell>}
+                          {columnSettings.balancePayable && <TableCell className="text-right">₹{r.balancePayable.toLocaleString()}</TableCell>}
+                          {columnSettings.paymentTerms && <TableCell>{r.paymentTerms}</TableCell>}
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEditBill(r.receiptId)}
+                                title="Edit"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDeleteBill(r.receiptId)}
+                                disabled={deleting}
+                                title="Delete"
+                              >
+                                {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
