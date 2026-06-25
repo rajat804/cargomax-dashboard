@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,21 +26,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon, Eye, Settings, Search, RefreshCw, Filter, ChevronRight, Package, Truck } from "lucide-react";
+import {
+  CalendarIcon,
+  Eye,
+  Settings,
+  Search,
+  RefreshCw,
+  Package,
+  Truck,
+  Plus,
+} from "lucide-react";
+import api from "@/services/api";
 
-// ==================== TYPE DEFINITIONS ====================
-
+// ==================== TYPES ====================
 interface StockIssue {
-  id: number;
-  sNo: number;
+  _id?: string;
   issueId: string;
   issueTo: string;
   issueDate: string;
-  itemCode: string;
-  itemName: string;
+  itemName: string;   // ✅ itemCode removed
   unitType: string;
   startNo: string;
   endNo: string;
@@ -49,164 +63,230 @@ interface StockIssue {
   remarks: string;
 }
 
-// ==================== MOCK DATA ====================
+interface StockItem {
+  itemName: string;
+  unitType: string;
+  stockInHand: number;
+}
 
-const initialStockIssueData: StockIssue[] = [
-  { id: 1, sNo: 1, issueId: "ISS/2026-27/001", issueTo: "DELHI BRANCH", issueDate: "15-05-2026", itemCode: "A0001", itemName: "A4 Printer Paper", unitType: "REAM", startNo: "R001", endNo: "R050", quantity: 50, status: "Issued", remarks: "Monthly supply" },
-  { id: 2, sNo: 2, issueId: "ISS/2026-27/002", issueTo: "MUMBAI BRANCH", issueDate: "16-05-2026", itemCode: "A0002", itemName: "Ballpoint Pen (Blue)", unitType: "BOX", startNo: "P001", endNo: "P020", quantity: 20, status: "Issued", remarks: "Stationery requirement" },
-  { id: 3, sNo: 3, issueId: "ISS/2026-27/003", issueTo: "BANGALORE BRANCH", issueDate: "17-05-2026", itemCode: "A0003", itemName: "Stapler", unitType: "PCS", startNo: "S001", endNo: "S010", quantity: 10, status: "Issued", remarks: "Office supplies" },
-  { id: 4, sNo: 4, issueId: "ISS/2026-27/004", issueTo: "DELHI BRANCH", issueDate: "18-05-2026", itemCode: "A0004", itemName: "Notebook (200 Pages)", unitType: "PCS", startNo: "N001", endNo: "N100", quantity: 100, status: "Issued", remarks: "Training material" },
-  { id: 5, sNo: 5, issueId: "ISS/2026-27/005", issueTo: "CHENNAI BRANCH", issueDate: "18-05-2026", itemCode: "A0005", itemName: "File Folders", unitType: "PCS", startNo: "F001", endNo: "F030", quantity: 30, status: "Issued", remarks: "Filing system" },
-  { id: 6, sNo: 6, issueId: "ISS/2026-27/006", issueTo: "KOLKATA BRANCH", issueDate: "14-05-2026", itemCode: "A0006", itemName: "Paper Clips", unitType: "BOX", startNo: "C001", endNo: "C015", quantity: 15, status: "Issued", remarks: "Stationery" },
-  { id: 7, sNo: 7, issueId: "ISS/2026-27/007", issueTo: "DELHI BRANCH", issueDate: "12-05-2026", itemCode: "A0007", itemName: "Whiteboard Marker", unitType: "PCS", startNo: "M001", endNo: "M025", quantity: 25, status: "Issued", remarks: "Meeting room" },
-  { id: 8, sNo: 8, issueId: "ISS/2026-27/008", issueTo: "MUMBAI BRANCH", issueDate: "10-05-2026", itemCode: "A0008", itemName: "Correction Pen", unitType: "PCS", startNo: "CP001", endNo: "CP020", quantity: 20, status: "Issued", remarks: "Office use" },
-  { id: 9, sNo: 9, issueId: "ISS/2026-27/009", issueTo: "PUNE BRANCH", issueDate: "18-05-2026", itemCode: "A0009", itemName: "Envelope (A4 Size)", unitType: "PACK", startNo: "E001", endNo: "E040", quantity: 40, status: "Issued", remarks: "Courier supplies" },
-  { id: 10, sNo: 10, issueId: "ISS/2026-27/010", issueTo: "DELHI BRANCH", issueDate: "08-05-2026", itemCode: "A0010", itemName: "Binding Covers", unitType: "PCS", startNo: "BC001", endNo: "BC050", quantity: 50, status: "Issued", remarks: "Document binding" },
-];
-
-// Dropdown options
-const branchOptions = ["DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHENNAI BRANCH", "KOLKATA BRANCH", "PUNE BRANCH", "JAIPUR BRANCH", "LUCKNOW BRANCH"];
-const itemOptions = [
-  { code: "A0001", name: "A4 Printer Paper" },
-  { code: "A0002", name: "Ballpoint Pen (Blue)" },
-  { code: "A0003", name: "Stapler" },
-  { code: "A0004", name: "Notebook (200 Pages)" },
-  { code: "A0005", name: "File Folders" },
-  { code: "A0006", name: "Paper Clips" },
-  { code: "A0007", name: "Whiteboard Marker" },
-  { code: "A0008", name: "Correction Pen" },
-  { code: "A0009", name: "Envelope (A4 Size)" },
-  { code: "A0010", name: "Binding Covers" },
-];
-
+// ==================== COMPONENT ====================
 export default function StockIssueToBranch() {
   // ==================== STATE ====================
-  
-  // Branch filter
-  const [selectedBranch, setSelectedBranch] = useState("");
-  const [branchAll, setBranchAll] = useState(true);
-  
-  // Item filter
-  const [selectedItem, setSelectedItem] = useState("");
-  const [itemAll, setItemAll] = useState(true);
-  
-  // Period filter
-  const [fromDate, setFromDate] = useState<Date>(new Date(2026, 4, 18));
-  const [toDate, setToDate] = useState<Date>(new Date(2026, 4, 18));
-  
-  // Search term
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // Data state
-  const [stockIssues, setStockIssues] = useState<StockIssue[]>(initialStockIssueData);
+  const [allData, setAllData] = useState<StockIssue[]>([]);
   const [filteredData, setFilteredData] = useState<StockIssue[]>([]);
   const [showResults, setShowResults] = useState(false);
-  
-  // Column visibility settings
+  const [loading, setLoading] = useState(false);
+  const [stockItems, setStockItems] = useState<StockItem[]>([]);
+
+  // Filters
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [branchAll, setBranchAll] = useState(true);
+  const [selectedItem, setSelectedItem] = useState("");
+  const [itemAll, setItemAll] = useState(true);
+  const [fromDate, setFromDate] = useState<Date>(new Date());
+  const [toDate, setToDate] = useState<Date>(new Date());
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Column settings – removed itemCode
   const [columnSettings, setColumnSettings] = useState({
     sNo: true,
     issueId: true,
     issueTo: true,
     issueDate: true,
-    itemCode: true,
     itemName: true,
     unitType: true,
     startNo: true,
     endNo: true,
   });
 
-  // ==================== FUNCTIONS ====================
+  // Add Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<StockIssue>>({
+    issueTo: "",
+    itemName: "",
+    unitType: "",
+    quantity: 1,
+    startNo: "",
+    endNo: "",
+    issueDate: format(new Date(), "dd-MM-yyyy"),
+    remarks: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
 
-  // Handle Show button click
-  const handleShow = () => {
-    let filtered = [...stockIssues];
-    
-    // Filter by branch
-    if (!branchAll && selectedBranch) {
-      filtered = filtered.filter(issue => issue.issueTo === selectedBranch);
+  // ==================== FETCH DATA ====================
+  const fetchStockItems = async () => {
+    try {
+      const response = await api.get("/stock-register", { params: { item: "ALL" } });
+      setStockItems(response.data || []);
+    } catch (error) {
+      console.error("Error fetching stock items:", error);
     }
-    
-    // Filter by item
-    if (!itemAll && selectedItem) {
-      filtered = filtered.filter(issue => issue.itemName === selectedItem);
-    }
-    
-    // Filter by date range
-    filtered = filtered.filter(issue => {
-      const issueDate = new Date(issue.issueDate.split("-").reverse().join("-"));
-      return issueDate >= fromDate && issueDate <= toDate;
-    });
-    
-    setFilteredData(filtered);
-    setShowResults(true);
   };
 
-  // Handle Search button click
+  const fetchData = async (params: any = {}) => {
+    setLoading(true);
+    try {
+      const response = await api.get("/stock-issue", { params });
+      const data = response.data || [];
+      setAllData(data);
+      setFilteredData(data);
+      setShowResults(true);
+    } catch (error) {
+      console.error("Error fetching stock issues:", error);
+      alert("Failed to load stock issues.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStockItems();
+    fetchData();
+  }, []);
+
+  // ==================== HANDLERS ====================
+
+  const handleShow = () => {
+    const params: any = {};
+    if (!branchAll && selectedBranch) params.branch = selectedBranch;
+    if (!itemAll && selectedItem) params.item = selectedItem;
+    params.fromDate = format(fromDate, "dd-MM-yyyy");
+    params.toDate = format(toDate, "dd-MM-yyyy");
+    fetchData(params);
+  };
+
   const handleSearch = () => {
     if (!searchTerm.trim()) {
-      handleShow();
+      setFilteredData(allData);
       return;
     }
-    
-    const searchLower = searchTerm.toLowerCase();
-    const filtered = filteredData.filter(issue =>
-      issue.issueId.toLowerCase().includes(searchLower) ||
-      issue.issueTo.toLowerCase().includes(searchLower) ||
-      issue.itemCode.toLowerCase().includes(searchLower) ||
-      issue.itemName.toLowerCase().includes(searchLower) ||
-      issue.unitType.toLowerCase().includes(searchLower) ||
-      issue.startNo.toLowerCase().includes(searchLower) ||
-      issue.endNo.toLowerCase().includes(searchLower)
+    const term = searchTerm.trim().toLowerCase();
+    const filtered = allData.filter(
+      (issue) =>
+        issue.issueId.toLowerCase().includes(term) ||
+        issue.issueTo.toLowerCase().includes(term) ||
+        issue.itemName.toLowerCase().includes(term) ||
+        issue.unitType.toLowerCase().includes(term) ||
+        issue.startNo.toLowerCase().includes(term) ||
+        issue.endNo.toLowerCase().includes(term)
     );
-    
     setFilteredData(filtered);
   };
 
-  // Handle Clear Search
-  const handleClearSearch = () => {
+  const clearSearch = () => {
     setSearchTerm("");
-    handleShow();
+    setFilteredData(allData);
   };
 
-  // Handle Clear All Filters
-  const handleClearAll = () => {
+  const clearAll = () => {
     setSelectedBranch("");
     setBranchAll(true);
     setSelectedItem("");
     setItemAll(true);
-    setFromDate(new Date(2026, 4, 18));
-    setToDate(new Date(2026, 4, 18));
+    setFromDate(new Date());
+    setToDate(new Date());
     setSearchTerm("");
     setFilteredData([]);
     setShowResults(false);
   };
 
-  // Handle View Details (Action)
-  const handleViewDetails = (issue: StockIssue) => {
-    alert(`Issue Details:\n\nIssue ID: ${issue.issueId}\nIssue To: ${issue.issueTo}\nIssue Date: ${issue.issueDate}\nItem: ${issue.itemName}\nQuantity: ${issue.quantity}\nStart No: ${issue.startNo}\nEnd No: ${issue.endNo}\nRemarks: ${issue.remarks || "N/A"}`);
+  const viewDetails = (issue: StockIssue) => {
+    alert(`📋 Issue Details
+━━━━━━━━━━━━━━━━━━
+Issue ID    : ${issue.issueId}
+Issue To    : ${issue.issueTo}
+Issue Date  : ${issue.issueDate}
+Item Name   : ${issue.itemName}
+Unit Type   : ${issue.unitType}
+Quantity    : ${issue.quantity}
+Start No    : ${issue.startNo || "N/A"}
+End No      : ${issue.endNo || "N/A"}
+Status      : ${issue.status}
+Remarks     : ${issue.remarks || "N/A"}`);
   };
 
-  // Calculate summary
-  const totalIssues = filteredData.length;
-  const totalQuantity = filteredData.reduce((sum, issue) => sum + issue.quantity, 0);
+  // ==================== ADD MODAL ====================
+  const openAddModal = () => {
+    setFormData({
+      issueTo: "",
+      itemName: "",
+      unitType: "",
+      quantity: 1,
+      startNo: "",
+      endNo: "",
+      issueDate: format(new Date(), "dd-MM-yyyy"),
+      remarks: "",
+    });
+    setIsAddModalOpen(true);
+  };
 
-  // Get unique branches and items for filters
-  const uniqueBranches = [...new Set(stockIssues.map(issue => issue.issueTo))];
-  const uniqueItems = [...new Map(stockIssues.map(issue => [issue.itemName, { code: issue.itemCode, name: issue.itemName }])).values()];
+  const handleItemSelect = (itemName: string) => {
+    const selected = stockItems.find((i) => i.itemName === itemName);
+    if (selected) {
+      setFormData({
+        ...formData,
+        itemName: selected.itemName,
+        unitType: selected.unitType || "PCS",
+      });
+    }
+  };
+
+  const handleSaveIssue = async () => {
+    if (!formData.issueTo || !formData.itemName || !formData.quantity) {
+      alert("Please fill all required fields (Branch, Item, Quantity)");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        issueTo: formData.issueTo,
+        issueDate: formData.issueDate || format(new Date(), "dd-MM-yyyy"),
+        itemName: formData.itemName,
+        unitType: formData.unitType || "PCS",
+        quantity: formData.quantity,
+        startNo: formData.startNo || "",
+        endNo: formData.endNo || "",
+        remarks: formData.remarks || "",
+        status: "Issued",
+      };
+
+      await api.post("/stock-issue", payload);
+      alert("✅ Stock issue created successfully!");
+      setIsAddModalOpen(false);
+      fetchData();
+      fetchStockItems();
+    } catch (error) {
+      console.error("Error creating stock issue:", error);
+      alert("Failed to create stock issue.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ==================== DERIVED DATA ====================
+  const uniqueBranches = [...new Set(allData.map((i) => i.issueTo))];
+  const totalIssues = filteredData.length;
+  const totalQuantity = filteredData.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <div className="space-y-6 p-4">
-      {/* Header */}
-      <div className="border-b pb-4">
-        <h1 className="text-2xl font-bold text-primary">STOCK ISSUE TO BRANCH</h1>
-        <div className="text-xs text-muted-foreground mt-1">
-          Company : GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD | Login By : ADMIN@GMAIL.COM
-          <br />
-          Login Branch : HEAD OFFICE | Financial Year : 2026-2027
+      {/* Header with Add Button */}
+      <div className="border-b pb-4 flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-primary">STOCK ISSUE TO BRANCH</h1>
+          <div className="text-xs text-muted-foreground mt-1">
+            Company : GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD | Login By : ADMIN@GMAIL.COM
+            <br />
+            Login Branch : HEAD OFFICE | Financial Year : 2026-2027
+          </div>
         </div>
+        <Button onClick={openAddModal} className="bg-green-600 hover:bg-green-700">
+          <Plus className="mr-2 h-4 w-4" /> Add Issue
+        </Button>
       </div>
 
-      {/* Main Card */}
+      {/* Filters Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -215,18 +295,15 @@ export default function StockIssueToBranch() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Filter Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            
-            {/* Branch Filter with ALL checkbox */}
             <div>
-              <Label className="text-base font-medium">Branch <span className="text-red-500">*</span></Label>
+              <Label>Branch</Label>
               <div className="flex items-center gap-3 mt-2 mb-2">
                 <Checkbox
                   checked={branchAll}
-                  onCheckedChange={(checked) => {
-                    setBranchAll(!!checked);
-                    if (!!checked) setSelectedBranch("");
+                  onCheckedChange={(c) => {
+                    setBranchAll(!!c);
+                    if (!!c) setSelectedBranch("");
                   }}
                 />
                 <Label className="cursor-pointer font-normal">ALL</Label>
@@ -237,23 +314,22 @@ export default function StockIssueToBranch() {
                     <SelectValue placeholder="Select Branch" />
                   </SelectTrigger>
                   <SelectContent>
-                    {uniqueBranches.map((branch) => (
-                      <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                    {uniqueBranches.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             </div>
 
-            {/* Item Filter with ALL checkbox */}
             <div>
-              <Label className="text-base font-medium">Item <span className="text-red-500">*</span></Label>
+              <Label>Item</Label>
               <div className="flex items-center gap-3 mt-2 mb-2">
                 <Checkbox
                   checked={itemAll}
-                  onCheckedChange={(checked) => {
-                    setItemAll(!!checked);
-                    if (!!checked) setSelectedItem("");
+                  onCheckedChange={(c) => {
+                    setItemAll(!!c);
+                    if (!!c) setSelectedItem("");
                   }}
                 />
                 <Label className="cursor-pointer font-normal">ALL</Label>
@@ -264,65 +340,62 @@ export default function StockIssueToBranch() {
                     <SelectValue placeholder="Select Item" />
                   </SelectTrigger>
                   <SelectContent>
-                    {uniqueItems.map((item) => (
-                      <SelectItem key={item.name} value={item.name}>{item.name} ({item.code})</SelectItem>
+                    {stockItems.map((item) => (
+                      <SelectItem key={item.itemName} value={item.itemName}>
+                        {item.itemName}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               )}
             </div>
 
-            {/* Period From */}
             <div>
-              <Label>Period From <span className="text-red-500">*</span></Label>
+              <Label>Period From</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
+                  <Button variant="outline" className="w-full justify-start mt-1">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(fromDate, "dd-MM-yyyy")}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent>
                   <Calendar mode="single" selected={fromDate} onSelect={(d) => d && setFromDate(d)} />
                 </PopoverContent>
               </Popover>
             </div>
 
-            {/* Period To */}
             <div>
-              <Label>Period To <span className="text-red-500">*</span></Label>
+              <Label>Period To</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal mt-1">
+                  <Button variant="outline" className="w-full justify-start mt-1">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(toDate, "dd-MM-yyyy")}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent>
                   <Calendar mode="single" selected={toDate} onSelect={(d) => d && setToDate(d)} />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 pt-4 border-t">
-            <Button onClick={handleShow} className="bg-blue-600 hover:bg-blue-700">
-              <Eye className="mr-2 h-4 w-4" /> Show
+            <Button onClick={handleShow} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+              <Eye className="mr-2 h-4 w-4" /> {loading ? "Loading..." : "Show"}
             </Button>
-            <Button variant="outline" onClick={handleClearAll}>
+            <Button variant="outline" onClick={clearAll}>
               <RefreshCw className="mr-2 h-4 w-4" /> Clear
             </Button>
           </div>
 
-          {/* Search Bar - Only shown after Show button click */}
           {showResults && (
             <>
               <div className="flex gap-3 mt-6 pt-4 border-t">
                 <div className="flex-1">
                   <Input
-                    type="text"
-                    placeholder="Search by Issue ID, Issue To, Item Code, Item Name, Unit Type, Start/End No..."
+                    placeholder="Search by ID, Branch, Item, etc..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -331,12 +404,12 @@ export default function StockIssueToBranch() {
                 <Button onClick={handleSearch} className="bg-green-600 hover:bg-green-700">
                   <Search className="mr-2 h-4 w-4" /> Search
                 </Button>
-                <Button variant="outline" onClick={handleClearSearch}>
+                <Button variant="outline" onClick={clearSearch}>
                   <RefreshCw className="mr-2 h-4 w-4" /> Clear
                 </Button>
               </div>
 
-              {/* Column Settings */}
+              {/* Column Settings – itemCode removed */}
               <div className="mt-4 mb-4 p-3 bg-gray-100 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Settings className="h-4 w-4 text-gray-600" />
@@ -347,13 +420,14 @@ export default function StockIssueToBranch() {
                     <div key={key} className="flex items-center gap-2">
                       <Checkbox
                         checked={columnSettings[key as keyof typeof columnSettings]}
-                        onCheckedChange={(c) => setColumnSettings({ ...columnSettings, [key]: !!c })}
+                        onCheckedChange={(c) =>
+                          setColumnSettings({ ...columnSettings, [key]: !!c })
+                        }
                       />
                       <Label className="text-sm cursor-pointer">
-                        {key === "issueId" ? "issueid #" :
+                        {key === "issueId" ? "Issue ID" :
                          key === "issueTo" ? "Issue To" :
                          key === "issueDate" ? "Issue Date" :
-                         key === "itemCode" ? "Item Code" :
                          key === "itemName" ? "Item Name" :
                          key === "unitType" ? "Unit Type" :
                          key === "startNo" ? "Start No" :
@@ -365,16 +439,15 @@ export default function StockIssueToBranch() {
                 </div>
               </div>
 
-              {/* Results Table */}
+              {/* Table */}
               <div className="overflow-x-auto border rounded-lg">
                 <Table>
                   <TableHeader className="bg-gray-100">
                     <TableRow>
-                      {columnSettings.sNo && <TableHead className="w-16 text-center">S#</TableHead>}
-                      {columnSettings.issueId && <TableHead>issueid #</TableHead>}
+                      {columnSettings.sNo && <TableHead className="w-12">S#</TableHead>}
+                      {columnSettings.issueId && <TableHead>Issue ID</TableHead>}
                       {columnSettings.issueTo && <TableHead>Issue To</TableHead>}
                       {columnSettings.issueDate && <TableHead>Issue Date</TableHead>}
-                      {columnSettings.itemCode && <TableHead>Item Code</TableHead>}
                       {columnSettings.itemName && <TableHead>Item Name</TableHead>}
                       {columnSettings.unitType && <TableHead>Unit Type</TableHead>}
                       {columnSettings.startNo && <TableHead>Start No</TableHead>}
@@ -385,33 +458,36 @@ export default function StockIssueToBranch() {
                   <TableBody>
                     {filteredData.length === 0 ? (
                       <TableRow>
-                        <TableCell 
-                          colSpan={Object.values(columnSettings).filter(Boolean).length + 1} 
+                        <TableCell
+                          colSpan={Object.values(columnSettings).filter(Boolean).length + 1}
                           className="text-center py-8 text-gray-500"
                         >
                           <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                          No stock issue records found for the selected criteria.
+                          No stock issue records found.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredData.map((issue) => (
-                        <TableRow key={issue.id} className="hover:bg-gray-50">
-                          {columnSettings.sNo && <TableCell className="text-center">{issue.sNo}</TableCell>}
-                          {columnSettings.issueId && <TableCell className="font-medium text-blue-600">{issue.issueId}</TableCell>}
+                      filteredData.map((issue, idx) => (
+                        <TableRow key={issue._id || idx} className="hover:bg-gray-50">
+                          {columnSettings.sNo && <TableCell>{idx + 1}</TableCell>}
+                          {columnSettings.issueId && (
+                            <TableCell className="font-medium text-blue-600">{issue.issueId}</TableCell>
+                          )}
                           {columnSettings.issueTo && <TableCell>{issue.issueTo}</TableCell>}
                           {columnSettings.issueDate && <TableCell>{issue.issueDate}</TableCell>}
-                          {columnSettings.itemCode && <TableCell>{issue.itemCode}</TableCell>}
                           {columnSettings.itemName && <TableCell>{issue.itemName}</TableCell>}
-                          {columnSettings.unitType && <TableCell>
-                            <span className="bg-gray-100 px-2 py-1 rounded text-xs">{issue.unitType}</span>
-                          </TableCell>}
-                          {columnSettings.startNo && <TableCell>{issue.startNo}</TableCell>}
-                          {columnSettings.endNo && <TableCell>{issue.endNo}</TableCell>}
+                          {columnSettings.unitType && (
+                            <TableCell>
+                              <span className="bg-gray-100 px-2 py-1 rounded text-xs">{issue.unitType}</span>
+                            </TableCell>
+                          )}
+                          {columnSettings.startNo && <TableCell>{issue.startNo || "-"}</TableCell>}
+                          {columnSettings.endNo && <TableCell>{issue.endNo || "-"}</TableCell>}
                           <TableCell className="text-center">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleViewDetails(issue)}
+                              onClick={() => viewDetails(issue)}
                               className="text-blue-600 hover:text-blue-800"
                             >
                               <Eye className="h-4 w-4" />
@@ -424,54 +500,161 @@ export default function StockIssueToBranch() {
                 </Table>
               </div>
 
-              {/* Summary Section */}
+              {/* Summary */}
               {filteredData.length > 0 && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Total Issues</div>
-                      <div className="text-xl font-bold text-blue-600">{totalIssues}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Total Quantity</div>
-                      <div className="text-xl font-bold text-green-600">{totalQuantity}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Unique Branches</div>
-                      <div className="text-xl font-bold text-purple-600">{new Set(filteredData.map(i => i.issueTo)).size}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500">Unique Items</div>
-                      <div className="text-xl font-bold text-orange-600">{new Set(filteredData.map(i => i.itemName)).size}</div>
-                    </div>
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Total Issues</div>
+                    <div className="text-xl font-bold text-blue-600">{totalIssues}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Total Quantity</div>
+                    <div className="text-xl font-bold text-green-600">{totalQuantity}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Unique Branches</div>
+                    <div className="text-xl font-bold text-purple-600">{new Set(filteredData.map(i => i.issueTo)).size}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-gray-500">Unique Items</div>
+                    <div className="text-xl font-bold text-orange-600">{new Set(filteredData.map(i => i.itemName)).size}</div>
                   </div>
                 </div>
               )}
 
-              {/* Footer Note */}
               <div className="mt-4 text-xs text-gray-400 text-center border-t pt-3">
-                <p>Stock Issue Report | Period: {format(fromDate, "dd-MM-yyyy")} to {format(toDate, "dd-MM-yyyy")}</p>
-                <p>Branch: {branchAll ? "ALL" : selectedBranch} | Item: {itemAll ? "ALL" : selectedItem}</p>
+                <p>Period: {format(fromDate, "dd-MM-yyyy")} to {format(toDate, "dd-MM-yyyy")}</p>
               </div>
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* Info Card - When no report is shown */}
-      {!showResults && (
-        <Card className="border-dashed border-2 border-gray-300 bg-gray-50">
-          <CardContent className="py-12 text-center">
-            <div className="text-gray-400 mb-2">
-              <Truck className="h-12 w-12 mx-auto" />
+      {/* Add Issue Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add New Stock Issue</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div>
+              <Label>Branch *</Label>
+              <Select
+                value={formData.issueTo || ""}
+                onValueChange={(v) => setFormData({ ...formData, issueTo: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueBranches.length > 0 ? (
+                    uniqueBranches.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="HEAD OFFICE">HEAD OFFICE</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-            <h3 className="text-lg font-medium text-gray-600">No Stock Issue Data Displayed</h3>
-            <p className="text-sm text-gray-400 mt-1">
-              Select Branch, Item, Period and click "Show" button to view stock issue records.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+
+            <div>
+              <Label>Item Name *</Label>
+              <Select
+                value={formData.itemName || ""}
+                onValueChange={(v) => {
+                  setFormData({ ...formData, itemName: v });
+                  handleItemSelect(v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stockItems.map((item) => (
+                    <SelectItem key={item.itemName} value={item.itemName}>
+                      {item.itemName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Unit Type</Label>
+              <Input value={formData.unitType || ""} readOnly className="bg-gray-100" />
+            </div>
+
+            <div>
+              <Label>Quantity *</Label>
+              <Input
+                type="number"
+                value={formData.quantity || 1}
+                onChange={(e) =>
+                  setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })
+                }
+                min="1"
+              />
+            </div>
+
+            <div>
+              <Label>Issue Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.issueDate ? format(new Date(formData.issueDate.split("-").reverse().join("-")), "dd-MM-yyyy") : "Select Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Calendar
+                    mode="single"
+                    selected={formData.issueDate ? new Date(formData.issueDate.split("-").reverse().join("-")) : undefined}
+                    onSelect={(d) =>
+                      d && setFormData({ ...formData, issueDate: format(d, "dd-MM-yyyy") })
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <Label>Start No</Label>
+              <Input
+                value={formData.startNo || ""}
+                onChange={(e) => setFormData({ ...formData, startNo: e.target.value })}
+                placeholder="e.g., S001"
+              />
+            </div>
+
+            <div>
+              <Label>End No</Label>
+              <Input
+                value={formData.endNo || ""}
+                onChange={(e) => setFormData({ ...formData, endNo: e.target.value })}
+                placeholder="e.g., S050"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label>Remarks</Label>
+              <Input
+                value={formData.remarks || ""}
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                placeholder="Optional remarks"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveIssue} disabled={submitting} className="bg-green-600 hover:bg-green-700">
+              {submitting ? "Saving..." : "Create Issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
