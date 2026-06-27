@@ -48,6 +48,7 @@ import {
   Clock,
   ChevronRight,
   Edit,
+  Package,
 } from "lucide-react";
 import {
   getAllDispatches,
@@ -56,10 +57,10 @@ import {
   cancelDespatch,
 } from "@/services/api";
 
-// ==================== TYPES ====================
+// ==================== TYPES (updated with GR fields) ====================
 interface DispatchRecord {
   _id?: string;
-  dispatchId: string;          // ✅ changed from despatchId
+  dispatchId: string;
   branchName: string;
   dispatchedTo: string;
   dispatchDate: string;
@@ -71,6 +72,15 @@ interface DispatchRecord {
   receivedBy?: string;
   remarks?: string;
   items?: any[];
+  // ─── NEW GR FIELDS ───
+  grBookNumber?: string;
+  fromLocation?: string;
+  toLocation?: string;
+  party?: string;
+  destination?: string;
+  containerDetails?: string;
+  isShortDocument?: boolean;
+  goodsType?: string;
 }
 
 // ==================== OPTIONS ====================
@@ -84,6 +94,8 @@ const branchOptions = [
 ];
 
 const statusOptions = ["Dispatched", "In Transit", "Delivered", "Cancelled", "Received"];
+const locationOptions = ["HEAD OFFICE", "DELHI", "MUMBAI", "BANGALORE", "CHENNAI", "KOLKATA", "PUNE", "External"];
+const partyOptions = ["ABC Traders", "XYZ Enterprises", "Golden Roadways", "Logistics India", "Pankhala Transport"];
 
 export default function ItemDespatchReceive() {
   // ==================== PENDING TAB ====================
@@ -121,7 +133,7 @@ export default function ItemDespatchReceive() {
     noOfItems: true,
     status: true,
     receivedOn: true,
-    // ✅ Action column removed from pending tab
+    grBookNumber: true,    // ✅ new
   });
 
   const [searchCols, setSearchCols] = useState({
@@ -136,6 +148,11 @@ export default function ItemDespatchReceive() {
     status: true,
     receivedOn: true,
     receivedBy: true,
+    // ─── NEW GR COLUMNS ───
+    grBookNumber: true,
+    fromLocation: true,
+    toLocation: true,
+    party: true,
   });
 
   // ==================== LOAD ALL RECORDS (for Search) ====================
@@ -194,12 +211,11 @@ export default function ItemDespatchReceive() {
     }
   };
 
-  // ==================== RECEIVE (now via Edit modal, but keeping for direct use if needed) ====================
-  // ✅ Removed direct receive from pending tab, but keeping function for other use
+  // ==================== RECEIVE ====================
   const handleReceive = async (record: DispatchRecord) => {
     if (!confirm(`Mark ${record.dispatchId} as received?`)) return;
     try {
-      const updated = await receiveDespatch(record._id!, "CURRENT_USER");
+      await receiveDespatch(record._id!, "CURRENT_USER");
       await loadAllRecords();
       await loadPendingRecords(pendingBranchName || undefined);
       alert(`✅ ${record.dispatchId} received.`);
@@ -236,7 +252,9 @@ export default function ItemDespatchReceive() {
         r.branchName.toLowerCase().includes(term) ||
         r.dispatchedTo.toLowerCase().includes(term) ||
         (r.dispatchThrough && r.dispatchThrough.toLowerCase().includes(term)) ||
-        (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term))
+        (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term)) ||
+        (r.grBookNumber && r.grBookNumber.toLowerCase().includes(term)) ||
+        (r.party && r.party.toLowerCase().includes(term))
     );
     setFilteredRecords(filtered);
   };
@@ -256,7 +274,8 @@ export default function ItemDespatchReceive() {
         (r) =>
           r.dispatchId.toLowerCase().includes(term) ||
           r.dispatchedTo.toLowerCase().includes(term) ||
-          (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term))
+          (r.vendorGrNo && r.vendorGrNo.toLowerCase().includes(term)) ||
+          (r.grBookNumber && r.grBookNumber.toLowerCase().includes(term))
       );
       setPendingRecords(filtered);
     }
@@ -267,7 +286,7 @@ export default function ItemDespatchReceive() {
     loadPendingRecords(pendingBranchName || undefined);
   };
 
-  // ==================== EDIT MODAL ====================
+  // ==================== EDIT MODAL (updated with GR fields) ====================
   const openEditModal = (record: DispatchRecord) => {
     setEditRecord(record);
     setEditForm({
@@ -281,6 +300,15 @@ export default function ItemDespatchReceive() {
       receivedOn: record.receivedOn || "",
       receivedBy: record.receivedBy || "",
       remarks: record.remarks || "",
+      // GR fields
+      grBookNumber: record.grBookNumber || "",
+      fromLocation: record.fromLocation || "",
+      toLocation: record.toLocation || "",
+      party: record.party || "",
+      destination: record.destination || "",
+      containerDetails: record.containerDetails || "",
+      isShortDocument: record.isShortDocument || false,
+      goodsType: record.goodsType || "",
     });
     setEditModalOpen(true);
   };
@@ -300,6 +328,15 @@ export default function ItemDespatchReceive() {
         receivedOn: editForm.receivedOn,
         receivedBy: editForm.receivedBy,
         remarks: editForm.remarks,
+        // GR fields
+        grBookNumber: editForm.grBookNumber,
+        fromLocation: editForm.fromLocation,
+        toLocation: editForm.toLocation,
+        party: editForm.party,
+        destination: editForm.destination,
+        containerDetails: editForm.containerDetails,
+        isShortDocument: editForm.isShortDocument,
+        goodsType: editForm.goodsType,
       };
       await updateDispatch(editRecord._id, payload);
       await loadAllRecords();
@@ -372,13 +409,29 @@ export default function ItemDespatchReceive() {
         </div>
       </div>
 
+      {/* ─── 📦 Logistics Workflow Note ─── */}
+      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+        <Package className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-amber-800">📋 Logistics Workflow Note</p>
+          <p className="text-sm text-gray-700">
+            All goods loaded to <span className="font-medium">Pankhala truck/vehicle</span> for dispatch will be fetched by
+            <span className="font-medium"> Tony</span> (route quantity) and
+            <span className="font-medium text-red-600"> chattanoo will be checked</span> (counted/verified).
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            ⚡ Ensure proper documentation before handover to Pankhala.
+          </p>
+        </div>
+      </div>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="pending">Pending</TabsTrigger>
           <TabsTrigger value="search">Search</TabsTrigger>
         </TabsList>
 
-        {/* ====== PENDING TAB (No Action Column) ====== */}
+        {/* ====== PENDING TAB ====== */}
         <TabsContent value="pending" className="mt-6">
           <Card>
             <CardHeader>
@@ -442,7 +495,7 @@ export default function ItemDespatchReceive() {
                   <div className="flex gap-3 mb-4">
                     <div className="flex-1">
                       <Input
-                        placeholder="Search by ID, To, WayBill..."
+                        placeholder="Search by ID, To, WayBill, GR Book..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && handlePendingSearch()}
@@ -487,6 +540,8 @@ export default function ItemDespatchReceive() {
                               ? "Items"
                               : key === "receivedOn"
                               ? "Received On"
+                              : key === "grBookNumber"
+                              ? "GR Book #"
                               : key.replace(/([A-Z])/g, " $1").trim()}
                           </Label>
                         </div>
@@ -508,6 +563,7 @@ export default function ItemDespatchReceive() {
                           {pendingCols.noOfItems && <TableHead>Items</TableHead>}
                           {pendingCols.status && <TableHead>Status</TableHead>}
                           {pendingCols.receivedOn && <TableHead>Received On</TableHead>}
+                          {pendingCols.grBookNumber && <TableHead>GR Book #</TableHead>}
                           {/* ✅ NO ACTION COLUMN IN PENDING TAB */}
                         </TableRow>
                       </TableHeader>
@@ -542,6 +598,7 @@ export default function ItemDespatchReceive() {
                               {pendingCols.noOfItems && <TableCell>{rec.noOfItems || 0}</TableCell>}
                               {pendingCols.status && <TableCell>{getStatusBadge(rec.status)}</TableCell>}
                               {pendingCols.receivedOn && <TableCell>{rec.receivedOn || "-"}</TableCell>}
+                              {pendingCols.grBookNumber && <TableCell>{rec.grBookNumber || "-"}</TableCell>}
                             </TableRow>
                           ))
                         )}
@@ -570,7 +627,7 @@ export default function ItemDespatchReceive() {
               <div className="flex gap-3 mb-6">
                 <div className="flex-1">
                   <Input
-                    placeholder="Search by ID, Branch, To, Vendor, WayBill..."
+                    placeholder="Search by ID, Branch, To, Vendor, WayBill, GR Book, Party..."
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -617,6 +674,14 @@ export default function ItemDespatchReceive() {
                           ? "Received On"
                           : key === "receivedBy"
                           ? "Received By"
+                          : key === "grBookNumber"
+                          ? "GR Book #"
+                          : key === "fromLocation"
+                          ? "From"
+                          : key === "toLocation"
+                          ? "To"
+                          : key === "party"
+                          ? "Party"
                           : key.replace(/([A-Z])/g, " $1").trim()}
                       </Label>
                     </div>
@@ -639,6 +704,10 @@ export default function ItemDespatchReceive() {
                       {searchCols.status && <TableHead>Status</TableHead>}
                       {searchCols.receivedOn && <TableHead>Received On</TableHead>}
                       {searchCols.receivedBy && <TableHead>Received By</TableHead>}
+                      {searchCols.grBookNumber && <TableHead>GR Book #</TableHead>}
+                      {searchCols.fromLocation && <TableHead>From</TableHead>}
+                      {searchCols.toLocation && <TableHead>To</TableHead>}
+                      {searchCols.party && <TableHead>Party</TableHead>}
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -674,9 +743,12 @@ export default function ItemDespatchReceive() {
                           {searchCols.status && <TableCell>{getStatusBadge(rec.status)}</TableCell>}
                           {searchCols.receivedOn && <TableCell>{rec.receivedOn || "-"}</TableCell>}
                           {searchCols.receivedBy && <TableCell>{rec.receivedBy || "-"}</TableCell>}
+                          {searchCols.grBookNumber && <TableCell>{rec.grBookNumber || "-"}</TableCell>}
+                          {searchCols.fromLocation && <TableCell>{rec.fromLocation || "-"}</TableCell>}
+                          {searchCols.toLocation && <TableCell>{rec.toLocation || "-"}</TableCell>}
+                          {searchCols.party && <TableCell>{rec.party || "-"}</TableCell>}
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              {/* ✏️ Edit button */}
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -685,7 +757,6 @@ export default function ItemDespatchReceive() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              {/* ❌ Cancel button – only if not already received/cancelled */}
                               {rec.status !== "Received" && rec.status !== "Cancelled" && (
                                 <Button
                                   size="sm"
@@ -725,14 +796,15 @@ export default function ItemDespatchReceive() {
         </TabsContent>
       </Tabs>
 
-      {/* ==================== EDIT MODAL ==================== */}
+      {/* ==================== EDIT MODAL (with GR fields) ==================== */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Dispatch Record – {editRecord?.dispatchId}</DialogTitle>
           </DialogHeader>
           {editRecord && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              {/* Basic fields */}
               <div>
                 <Label>Branch Name</Label>
                 <Select
@@ -848,6 +920,70 @@ export default function ItemDespatchReceive() {
                   value={editForm.receivedBy || ""}
                   onChange={(e) => setEditForm({ ...editForm, receivedBy: e.target.value })}
                   placeholder="e.g., ADMIN"
+                />
+              </div>
+              {/* ─── GR FIELDS ─── */}
+              <div>
+                <Label>GR Book Number</Label>
+                <Input
+                  value={editForm.grBookNumber || ""}
+                  onChange={(e) => setEditForm({ ...editForm, grBookNumber: e.target.value })}
+                  placeholder="GR Book #"
+                />
+              </div>
+              <div>
+                <Label>From</Label>
+                <Input
+                  value={editForm.fromLocation || ""}
+                  onChange={(e) => setEditForm({ ...editForm, fromLocation: e.target.value })}
+                  placeholder="Origin"
+                />
+              </div>
+              <div>
+                <Label>To</Label>
+                <Input
+                  value={editForm.toLocation || ""}
+                  onChange={(e) => setEditForm({ ...editForm, toLocation: e.target.value })}
+                  placeholder="Destination"
+                />
+              </div>
+              <div>
+                <Label>Party</Label>
+                <Input
+                  value={editForm.party || ""}
+                  onChange={(e) => setEditForm({ ...editForm, party: e.target.value })}
+                  placeholder="Party name"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Destination Address</Label>
+                <Input
+                  value={editForm.destination || ""}
+                  onChange={(e) => setEditForm({ ...editForm, destination: e.target.value })}
+                  placeholder="Detailed address"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Container Details</Label>
+                <Input
+                  value={editForm.containerDetails || ""}
+                  onChange={(e) => setEditForm({ ...editForm, containerDetails: e.target.value })}
+                  placeholder="Container no., type, weight"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={editForm.isShortDocument || false}
+                  onCheckedChange={(c) => setEditForm({ ...editForm, isShortDocument: !!c })}
+                />
+                <Label>Short Document</Label>
+              </div>
+              <div>
+                <Label>Goods Type</Label>
+                <Input
+                  value={editForm.goodsType || ""}
+                  onChange={(e) => setEditForm({ ...editForm, goodsType: e.target.value })}
+                  placeholder="Goods type"
                 />
               </div>
               <div className="md:col-span-2">
