@@ -45,12 +45,14 @@ import {
   Settings,
   Printer,
   Eye,
+  Loader2,
 } from "lucide-react";
 import {
   getAllDispatches,
   createDispatch,
   updateDispatch,
   deleteDispatch,
+  getNextGrNumber,   // ✅ import the new API function
 } from "@/services/api";
 
 // ==================== TYPES ====================
@@ -83,6 +85,15 @@ interface DispatchRecord {
   status: string;
   items: DispatchItem[];
   remarks: string;
+  // NEW GR fields
+  grBookNumber?: string;
+  fromLocation?: string;
+  toLocation?: string;
+  party?: string;
+  destination?: string;
+  containerDetails?: string;
+  isShortDocument?: boolean;
+  goodsType?: string;
 }
 
 // ==================== OPTIONS ====================
@@ -92,6 +103,8 @@ const dispatchThroughOptions = ["ROAD TRANSPORT", "AIR CARGO", "RAILWAY", "COURI
 const itemOptions = ["A4 Printer Paper", "Ballpoint Pen", "Laptop", "Mouse", "Keyboard", "Furniture", "Stapler", "Notebook", "File Folders", "Whiteboard Marker"];
 const unitTypeOptions = ["PCS", "BOX", "REAM", "SET", "DOZEN", "KG", "LTR", "ROLL"];
 const statusOptions = ["Dispatched", "In Transit", "Delivered", "Cancelled"];
+const locationOptions = ["HEAD OFFICE", "DELHI", "MUMBAI", "BANGALORE", "CHENNAI", "KOLKATA", "PUNE", "External"];
+const partyOptions = ["ABC Traders", "XYZ Enterprises", "Golden Roadways", "Logistics India", "Pankhala Transport"];
 
 export default function ItemDespatch() {
   // ==================== ENTRY TAB STATE ====================
@@ -103,6 +116,16 @@ export default function ItemDespatch() {
   const [vendorGrNo, setVendorGrNo] = useState("");
   const [vendorGrDate, setVendorGrDate] = useState<Date>(new Date());
   const [remarks, setRemarks] = useState("");
+
+  // NEW GR fields
+  const [grBookNumber, setGrBookNumber] = useState("");
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
+  const [party, setParty] = useState("");
+  const [destination, setDestination] = useState("");
+  const [containerDetails, setContainerDetails] = useState("");
+  const [isShortDocument, setIsShortDocument] = useState(false);
+  const [goodsType, setGoodsType] = useState("");
 
   const [dispatchItems, setDispatchItems] = useState<DispatchItem[]>([
     {
@@ -137,6 +160,10 @@ export default function ItemDespatch() {
     grDate: true,
     noOfItems: true,
     status: true,
+    grBookNumber: true,
+    fromLocation: true,
+    toLocation: true,
+    party: true,
   });
 
   const [activeTab, setActiveTab] = useState("entry");
@@ -153,6 +180,24 @@ export default function ItemDespatch() {
   const [viewRecord, setViewRecord] = useState<DispatchRecord | null>(null);
 
   const generateDispatchId = () => `DISP/2026-27/${Date.now().toString().slice(-6)}`;
+
+  // ==================== REAL GR GENERATION (BACKEND API) ====================
+  const handleGenerateGr = async () => {
+    if (!branchName) {
+      alert("Please select Branch Name first!");
+      return;
+    }
+    setLoading(true);
+    try {
+      const grNumber = await getNextGrNumber(branchName);
+      setGrBookNumber(grNumber);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.response?.data?.error || "Failed to generate GR number. Limit may be reached.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ==================== ENTRY FUNCTIONS ====================
   const addDispatchItem = () => {
@@ -236,6 +281,11 @@ export default function ItemDespatch() {
       return;
     }
 
+    if (!grBookNumber) {
+      alert("Please assign GR Book Number!");
+      return;
+    }
+
     setLoading(true);
     try {
       const newDispatchId = dispatchId || generateDispatchId();
@@ -251,10 +301,19 @@ export default function ItemDespatch() {
         status: "Dispatched",
         items: dispatchItems,
         remarks,
+        // NEW GR fields
+        grBookNumber,
+        fromLocation,
+        toLocation,
+        party,
+        destination,
+        containerDetails,
+        isShortDocument,
+        goodsType: isShortDocument ? "Auto-filled goods type (short document)" : goodsType,
       };
 
       await createDispatch(newDispatch);
-      alert(`✅ Dispatch Saved Successfully!\nID: ${newDispatchId}`);
+      alert(`✅ Dispatch Saved Successfully!\nID: ${newDispatchId}\nGR Book: ${grBookNumber}`);
       handleClear();
       loadSearchData();
     } catch (error) {
@@ -274,6 +333,14 @@ export default function ItemDespatch() {
     setVendorGrNo("");
     setVendorGrDate(new Date());
     setRemarks("");
+    setGrBookNumber("");
+    setFromLocation("");
+    setToLocation("");
+    setParty("");
+    setDestination("");
+    setContainerDetails("");
+    setIsShortDocument(false);
+    setGoodsType("");
     setDispatchItems([
       {
         id: 1,
@@ -299,7 +366,6 @@ export default function ItemDespatch() {
   const handleEdit = (record: DispatchRecord) => {
     setEditingRecord(record);
     const cloned = JSON.parse(JSON.stringify(record));
-    // Ensure each item has a valid numeric id
     if (cloned.items && Array.isArray(cloned.items)) {
       cloned.items = cloned.items.map((item: any, index: number) => ({
         ...item,
@@ -428,6 +494,100 @@ export default function ItemDespatch() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* GR Book & Basic Details Section */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4" /> GR Book Assignment
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <Label>GR Book Number <span className="text-red-500">*</span></Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={grBookNumber}
+                        onChange={(e) => setGrBookNumber(e.target.value)}
+                        placeholder="Auto-generated"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateGr}   // ✅ Real API call
+                        disabled={loading}
+                        className="shrink-0"
+                      >
+                        {loading ? (
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                        )}
+                        Generate
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Sequence: 1 to 50 (e.g., KH000001 → CC000001 → 050)</p>
+                  </div>
+                  <div>
+                    <Label>From <span className="text-red-500">*</span></Label>
+                    <Select value={fromLocation} onValueChange={setFromLocation}>
+                      <SelectTrigger><SelectValue placeholder="Select Origin" /></SelectTrigger>
+                      <SelectContent>{locationOptions.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>To <span className="text-red-500">*</span></Label>
+                    <Select value={toLocation} onValueChange={setToLocation}>
+                      <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
+                      <SelectContent>{locationOptions.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Party <span className="text-red-500">*</span></Label>
+                    <Select value={party} onValueChange={setParty}>
+                      <SelectTrigger><SelectValue placeholder="Select Party" /></SelectTrigger>
+                      <SelectContent>{partyOptions.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Destination Address</Label>
+                    <Input
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="Detailed destination address"
+                    />
+                  </div>
+                  <div>
+                    <Label>Container Details</Label>
+                    <Input
+                      value={containerDetails}
+                      onChange={(e) => setContainerDetails(e.target.value)}
+                      placeholder="Container no., type, weight, etc."
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Checkbox
+                      checked={isShortDocument}
+                      onCheckedChange={(checked) => {
+                        setIsShortDocument(!!checked);
+                        if (checked) setGoodsType("Auto-filled goods type (short document)");
+                        else setGoodsType("");
+                      }}
+                    />
+                    <Label className="cursor-pointer">Short Document</Label>
+                  </div>
+                  <div>
+                    <Label>Goods Type</Label>
+                    <Input
+                      value={goodsType}
+                      onChange={(e) => setGoodsType(e.target.value)}
+                      placeholder={isShortDocument ? "Auto-filled" : "Enter goods type"}
+                      readOnly={isShortDocument}
+                      className={isShortDocument ? "bg-gray-100" : ""}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Original Dispatch Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div>
                   <Label>Branch Name <span className="text-red-500">*</span></Label>
@@ -615,7 +775,8 @@ export default function ItemDespatch() {
 
               <div className="flex flex-wrap gap-3 pt-6 border-t mt-6">
                 <Button onClick={handleSave} disabled={loading} className="bg-green-600 hover:bg-green-700">
-                  <Save className="mr-2 h-4 w-4" /> {loading ? "Saving..." : "Save"}
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {loading ? "Saving..." : "Save"}
                 </Button>
                 <Button variant="outline" onClick={handleClear}>
                   <RefreshCw className="mr-2 h-4 w-4" /> Clear
@@ -725,13 +886,17 @@ export default function ItemDespatch() {
                           {columnSettings.grDate && <TableHead>GR Date</TableHead>}
                           {columnSettings.noOfItems && <TableHead>No of Items</TableHead>}
                           {columnSettings.status && <TableHead>Status</TableHead>}
+                          {columnSettings.grBookNumber && <TableHead>GR Book #</TableHead>}
+                          {columnSettings.fromLocation && <TableHead>From</TableHead>}
+                          {columnSettings.toLocation && <TableHead>To</TableHead>}
+                          {columnSettings.party && <TableHead>Party</TableHead>}
                           <TableHead>Action</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {searchResults.length === 0 ? (
                           <TableRow key="empty-row">
-                            <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                            <TableCell colSpan={14} className="text-center py-8 text-gray-500">
                               No dispatch records found.
                             </TableCell>
                           </TableRow>
@@ -748,6 +913,10 @@ export default function ItemDespatch() {
                                 {columnSettings.grDate && <TableCell>{record.vendorGrDate || "-"}</TableCell>}
                                 {columnSettings.noOfItems && <TableCell>{record.noOfItems}</TableCell>}
                                 {columnSettings.status && <TableCell>{record.status}</TableCell>}
+                                {columnSettings.grBookNumber && <TableCell>{record.grBookNumber || "-"}</TableCell>}
+                                {columnSettings.fromLocation && <TableCell>{record.fromLocation || "-"}</TableCell>}
+                                {columnSettings.toLocation && <TableCell>{record.toLocation || "-"}</TableCell>}
+                                {columnSettings.party && <TableCell>{record.party || "-"}</TableCell>}
                                 <TableCell className="flex gap-2">
                                   <Button
                                     variant="ghost"
@@ -799,7 +968,6 @@ export default function ItemDespatch() {
               </Button>
             </div>
 
-            {/* Edit Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div>
                 <Label>Branch Name <span className="text-red-500">*</span></Label>
@@ -897,6 +1065,70 @@ export default function ItemDespatch() {
                 </Select>
               </div>
 
+              <div>
+                <Label>GR Book Number</Label>
+                <Input
+                  value={editFormData.grBookNumber || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, grBookNumber: e.target.value })}
+                  placeholder="GR Book Number"
+                />
+              </div>
+              <div>
+                <Label>From</Label>
+                <Input
+                  value={editFormData.fromLocation || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, fromLocation: e.target.value })}
+                  placeholder="Origin"
+                />
+              </div>
+              <div>
+                <Label>To</Label>
+                <Input
+                  value={editFormData.toLocation || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, toLocation: e.target.value })}
+                  placeholder="Destination"
+                />
+              </div>
+              <div>
+                <Label>Party</Label>
+                <Input
+                  value={editFormData.party || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, party: e.target.value })}
+                  placeholder="Party name"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Label>Destination Address</Label>
+                <Input
+                  value={editFormData.destination || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, destination: e.target.value })}
+                  placeholder="Destination address"
+                />
+              </div>
+              <div>
+                <Label>Container Details</Label>
+                <Input
+                  value={editFormData.containerDetails || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, containerDetails: e.target.value })}
+                  placeholder="Container details"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={editFormData.isShortDocument || false}
+                  onCheckedChange={(c) => setEditFormData({ ...editFormData, isShortDocument: !!c })}
+                />
+                <Label>Short Document</Label>
+              </div>
+              <div>
+                <Label>Goods Type</Label>
+                <Input
+                  value={editFormData.goodsType || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, goodsType: e.target.value })}
+                  placeholder="Goods type"
+                />
+              </div>
+
               <div className="md:col-span-2">
                 <Label>Remarks</Label>
                 <Input
@@ -907,7 +1139,6 @@ export default function ItemDespatch() {
               </div>
             </div>
 
-            {/* Edit Items Table */}
             <div className="mt-4">
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-semibold">Items</h3>
@@ -1079,6 +1310,39 @@ export default function ItemDespatch() {
             <div>
               <Label className="text-sm text-gray-500">Total Items</Label>
               <p className="font-medium">{viewRecord.noOfItems}</p>
+            </div>
+            {/* NEW GR fields */}
+            <div>
+              <Label className="text-sm text-gray-500">GR Book Number</Label>
+              <p className="font-medium">{viewRecord.grBookNumber || "N/A"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">From</Label>
+              <p className="font-medium">{viewRecord.fromLocation || "N/A"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">To</Label>
+              <p className="font-medium">{viewRecord.toLocation || "N/A"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">Party</Label>
+              <p className="font-medium">{viewRecord.party || "N/A"}</p>
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-sm text-gray-500">Destination</Label>
+              <p className="font-medium">{viewRecord.destination || "N/A"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">Container Details</Label>
+              <p className="font-medium">{viewRecord.containerDetails || "N/A"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">Short Document</Label>
+              <p className="font-medium">{viewRecord.isShortDocument ? "Yes" : "No"}</p>
+            </div>
+            <div>
+              <Label className="text-sm text-gray-500">Goods Type</Label>
+              <p className="font-medium">{viewRecord.goodsType || "N/A"}</p>
             </div>
           </div>
 
