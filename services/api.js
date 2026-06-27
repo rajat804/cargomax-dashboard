@@ -1549,6 +1549,10 @@ export const updateStockItem = async (id, stockData) => {
 
 
 // ==================== ITEM DESPATCH (ItemDespatch component) ====================
+export const getNextGrNumber = async (branch) => {
+  const response = await api.get('/dispatch/next-gr-number', { params: { branch } });
+  return response.data.grBookNumber;
+};
 export const getAllDispatches = async (params = {}) => {
   const response = await api.get('/dispatch', { params });
   return response.data;
@@ -1568,6 +1572,9 @@ export const deleteDispatch = async (id) => {
   const response = await api.delete(`/dispatch/${id}`);
   return response.data;
 };
+
+
+
 
 // ==================== ITEM DESPATCH RECEIVE (ItemDespatchReceive component) ====================
 
