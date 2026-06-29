@@ -71,7 +71,7 @@ export default function HOStationeryStockRegister() {
     setLoading(true);
     setError("");
     try {
-      const data = await getStockRegister(selectedItem);
+      const data = await getStockRegister(selectedItem, format(asOnDate, "yyyy-MM-dd"));
       
       let stockList = [];
       if (Array.isArray(data)) stockList = data;
