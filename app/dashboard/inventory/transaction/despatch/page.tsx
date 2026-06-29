@@ -808,13 +808,7 @@ export default function ItemDespatch() {
                   <Label>Branch Name <span className="text-red-500">*</span></Label>
                   <Select value={branchName} onValueChange={setBranchName}>
                     <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>
-                      {branchOptions.map((b) => (
-                        <SelectItem key={b.value} value={b.value}>
-                          {b.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
 
@@ -1026,17 +1020,10 @@ export default function ItemDespatch() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <Label>Branch</Label>
-                  <Select value={branchName} onValueChange={setBranchName}>
+                  <Select value={searchBranch} onValueChange={setSearchBranch}>
                     <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>
-                      {branchOptions.map((b) => (
-                        <SelectItem key={b.value} value={b.value}>
-                          {b.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.label}>{b.label}</SelectItem>)}</SelectContent>
                   </Select>
-
                 </div>
 
                 <div>
@@ -1199,15 +1186,12 @@ export default function ItemDespatch() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div>
                 <Label>Branch Name <span className="text-red-500">*</span></Label>
-                <Select value={branchName} onValueChange={setBranchName}>
+                <Select
+                  value={editFormData.branchName}
+                  onValueChange={(v) => setEditFormData({ ...editFormData, branchName: v })}
+                >
                   <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                  <SelectContent>
-                    {branchOptions.map((b) => (
-                      <SelectItem key={b.value} value={b.value}>
-                        {b.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
