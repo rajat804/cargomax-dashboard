@@ -1283,11 +1283,20 @@
     return response.data;
   };
 
+// ─── Transfer stock for a manifest ──────────────────────────
+export const transferManifestStock = async (manifestId) => {
+  const response = await api.post(`/local-manifest/${manifestId}/transfer-stock`);
+  return response.data;
+};
+
   // Get local manifest statistics
   export const getLocalManifestStats = async () => {
     const response = await api.get('/local-manifests/stats');
     return response.data;
   };
+
+
+
 
   // ==================== LONG ROUTE MANIFEST APIs ====================
 
@@ -1521,20 +1530,32 @@
  * @param {string} item - Item name or "ALL"
  * @returns {Promise} Stock data
  */
-export const getStockRegister = async (item = "ALL") => {
-  try {
-    console.log(`📤 Fetching Stock Register for item: ${item}`);
+// export const getStockRegister = async (item = "ALL") => {
+//   try {
+//     console.log(`📤 Fetching Stock Register for item: ${item}`);
     
-    const params = item && item !== "ALL" ? { item } : {};
-    const response = await api.get('/stock-register', { params });
+//     const params = item && item !== "ALL" ? { item } : {};
+//     const response = await api.get('/stock-register', { params });
     
-    console.log('📥 Stock Register Response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ Stock Register API Error:', error.response?.data || error.message);
-    throw error;
+//     console.log('📥 Stock Register Response:', response.data);
+//     return response.data;
+//   } catch (error) {
+//     console.error('❌ Stock Register API Error:', error.response?.data || error.message);
+//     throw error;
+//   }
+// };
+
+
+
+export const getStockRegister = (item, asOnDate) => {
+  const params = { item };
+  if (asOnDate) {
+    // Send as ISO string or yyyy-mm-dd
+    params.asOnDate = asOnDate; 
   }
+  return api.get('/stock-register', { params });
 };
+
 
 // Optional: Agar future mein stock update/create chahiye
 export const createStockItem = async (stockData) => {

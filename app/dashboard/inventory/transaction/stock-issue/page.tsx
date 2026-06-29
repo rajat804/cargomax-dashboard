@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSessionUser } from "@/hooks/useSessionUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,6 +72,9 @@ interface StockItem {
 
 // ==================== COMPONENT ====================
 export default function StockIssueToBranch() {
+
+  const user = useSessionUser();
+
   // ==================== STATE ====================
   const [allData, setAllData] = useState<StockIssue[]>([]);
   const [filteredData, setFilteredData] = useState<StockIssue[]>([]);
@@ -276,9 +280,9 @@ Remarks     : ${issue.remarks || "N/A"}`);
         <div>
           <h1 className="text-2xl font-bold text-primary">STOCK ISSUE TO BRANCH</h1>
           <div className="text-xs text-muted-foreground mt-1">
-            Company : GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD | Login By : ADMIN@GMAIL.COM
+            Company : {user.companyName} | Login By : {user.email}
             <br />
-            Login Branch : HEAD OFFICE | Financial Year : 2026-2027
+            Login Branch : {user.branch} | Financial Year : {user.financialYear}
           </div>
         </div>
         <Button onClick={openAddModal} className="bg-green-600 hover:bg-green-700">

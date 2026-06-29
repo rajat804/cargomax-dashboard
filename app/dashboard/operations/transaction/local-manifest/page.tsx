@@ -84,6 +84,7 @@ import {
   getVendors,
   getLoadingPersons,
   getBranches,
+  transferManifestStock, // ✅ NEW: stock transfer function
 } from "@/services/api";
 
 // Types
@@ -198,6 +199,7 @@ export default function LocalManifest() {
   const [editMode, setEditMode] = useState(false);
   const [currentEditId, setCurrentEditId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [transferring, setTransferring] = useState(false); // ✅ new state
   const [currentManifest, setCurrentManifest] = useState<ManifestRecord | null>(null);
 
   // Current user data
@@ -866,6 +868,7 @@ export default function LocalManifest() {
     }
 
     setLoading(true);
+    setTransferring(false);
 
     const manifestData: any = {
       branch,
@@ -898,17 +901,31 @@ export default function LocalManifest() {
       if (editMode && currentEditId) {
         response = await updateLocalManifest(currentEditId, manifestData);
         toast.success("Manifest updated successfully!");
+        // No stock transfer on update (or you can add a separate "transfer" button)
       } else {
         response = await createLocalManifest(manifestData);
-        toast.success(`Manifest created successfully! No: ${response.data.manifestNo}`);
-        if (assignedGRs.length > 0 && response?.data?._id) {
+        const newManifestId = response.data._id;
+        toast.success(`Manifest created! No: ${response.data.manifestNo}`);
+
+        // ✅ TRIGGER STOCK TRANSFER
+        if (newManifestId && assignedGRs.length > 0) {
+          setTransferring(true);
           try {
-            const totalPckgs = assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0);
-            const totalWeight = assignedGRs.reduce((sum, gr) => sum + gr.weight, 0);
-            await updateLocalManifestDispatch(response.data._id, totalPckgs, totalWeight, assignedGRs);
-          } catch (error) {
-            console.error("Error updating dispatch details:", error);
+            await transferManifestStock(newManifestId);
+            toast.success("Stock transferred to hub/warehouse successfully!");
+          } catch (transferError: any) {
+            console.error("Stock transfer error:", transferError);
+            toast.error(transferError.response?.data?.message || "Stock transfer failed, but manifest was created.");
+          } finally {
+            setTransferring(false);
           }
+        }
+
+        // Update dispatch details (packages, weight) if assigned GRs exist
+        if (assignedGRs.length > 0 && response?.data?._id) {
+          const totalPckgs = assignedGRs.reduce((sum, gr) => sum + gr.dispatchedPckgs, 0);
+          const totalWeight = assignedGRs.reduce((sum, gr) => sum + gr.weight, 0);
+          await updateLocalManifestDispatch(response.data._id, totalPckgs, totalWeight, assignedGRs);
         }
       }
 
@@ -922,6 +939,7 @@ export default function LocalManifest() {
       toast.error(error.response?.data?.message || "Failed to save manifest");
     } finally {
       setLoading(false);
+      setTransferring(false);
     }
   };
 
@@ -1460,11 +1478,9 @@ export default function LocalManifest() {
                               <Button variant="ghost" size="sm" onClick={() => handleEdit(record)} className="h-8 w-8 p-0 text-blue-500 hover:text-blue-700 hover:bg-blue-50" title="Edit">
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              {/* NEW: Print button – generates PDF and opens print dialog */}
                               <Button variant="ghost" size="sm" onClick={() => handlePrintManifest(record)} className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-50" title="Print">
                                 <Printer className="h-4 w-4" />
                               </Button>
-                              {/* NEW: Download button – downloads PDF directly */}
                               <Button variant="ghost" size="sm" onClick={() => handleDownloadManifest(record)} className="h-8 w-8 p-0 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50" title="Download PDF">
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -1841,7 +1857,18 @@ export default function LocalManifest() {
 
           <div className="flex-shrink-0 bg-white pt-3 pb-4 px-6 border-t flex justify-end gap-3">
             <Button variant="outline" onClick={() => setIsEntryModalOpen(false)} className="h-9"><X className="mr-1 h-4 w-4" /> Cancel</Button>
-            <Button onClick={handleSave} disabled={loading} className="h-9 bg-blue-600 hover:bg-blue-700">{loading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}{editMode ? "Update" : "Save"}</Button>
+            <Button
+              onClick={handleSave}
+              disabled={loading || transferring}
+              className="h-9 bg-blue-600 hover:bg-blue-700"
+            >
+              {loading || transferring ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-1 h-4 w-4" />
+              )}
+              {editMode ? "Update" : "Save"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

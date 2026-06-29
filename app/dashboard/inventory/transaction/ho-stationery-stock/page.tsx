@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSessionUser } from "@/hooks/useSessionUser";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -44,6 +45,9 @@ interface StockItem {
 }
 
 export default function HOStationeryStockRegister() {
+
+  const user = useSessionUser();
+
   const [selectedItem, setSelectedItem] = useState<string>("ALL");
   const [asOnDate, setAsOnDate] = useState<Date>(new Date(2026, 4, 18));
   const [showStock, setShowStock] = useState<boolean>(true); // Default true → auto show
@@ -130,9 +134,9 @@ export default function HOStationeryStockRegister() {
       <div className="border-b pb-4">
         <h1 className="text-2xl font-bold text-primary">2. HO STATIONERY STOCK REGISTER</h1>
         <div className="text-xs text-muted-foreground mt-1">
-          Company : GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD | Login By : ADMIN@GMAIL.COM
+          Company : {user.companyName} | Login By : {user.email}
           <br />
-          Login Branch : HEAD OFFICE | Financial Year : 2026-2027
+          Login Branch : {user.branch} | Financial Year : {user.financialYear}
         </div>
       </div>
 

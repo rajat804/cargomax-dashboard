@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSessionUser } from "@/hooks/useSessionUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,7 +98,218 @@ interface DispatchRecord {
 }
 
 // ==================== OPTIONS ====================
-const branchOptions = ["HEAD OFFICE", "DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHENNAI BRANCH", "KOLKATA BRANCH"];
+const branchOptions = [
+  { value: "AGARTALA", label: "AGARTALA" },
+  { value: "AKBERPUR/AMBEDKAR NAGAR", label: "AKBERPUR/AMBEDKAR NAGAR" },
+  { value: "ALIPURDUAR", label: "ALIPURDUAR" },
+  { value: "ALLAHABAD", label: "ALLAHABAD" },
+  { value: "ALZALGARH", label: "ALZALGARH" },
+  { value: "AMRITSAR", label: "AMRITSAR" },
+  { value: "ANANTAPUR", label: "ANANTAPUR" },
+  { value: "ANOOPSHER", label: "ANOOPSHER" },
+  { value: "ARARIA COURT", label: "ARARIA COURT" },
+  { value: "ARRAH", label: "ARRAH" },
+  { value: "ASANSOL", label: "ASANSOL" },
+  { value: "AURANGABAD B.R", label: "AURANGABAD B.R" },
+  { value: "AURANGABAD U.P", label: "AURANGABAD U.P" },
+  { value: "AZAMGARH", label: "AZAMGARH" },
+  { value: "BABRALA", label: "BABRALA" },
+  { value: "BAHERI", label: "BAHERI" },
+  { value: "BAHJOI", label: "BAHJOI" },
+  { value: "BALLIA", label: "BALLIA" },
+  { value: "BANKURA", label: "BANKURA" },
+  { value: "BAREILLY", label: "BAREILLY" },
+  { value: "BARHALGANJ", label: "BARHALGANJ" },
+  { value: "BARHI", label: "BARHI" },
+  { value: "BARPETA ROAD", label: "BARPETA ROAD" },
+  { value: "BASTI", label: "BASTI" },
+  { value: "BEGUSARAI", label: "BEGUSARAI" },
+  { value: "BELTHARA ROAD", label: "BELTHARA ROAD" },
+  { value: "BERHAMPORE W.B", label: "BERHAMPORE W.B" },
+  { value: "BETTIAH", label: "BETTIAH" },
+  { value: "BHABHUA", label: "BHABHUA" },
+  { value: "BHADOHI", label: "BHADOHI" },
+  { value: "BHAGALPUR", label: "BHAGALPUR" },
+  { value: "BHULANDSHAHAR", label: "BHULANDSHAHAR" },
+  { value: "BIHARIGANJ", label: "BIHARIGANJ" },
+  { value: "BIHARSHARIF", label: "BIHARSHARIF" },
+  { value: "BIHIYA", label: "BIHIYA" },
+  { value: "BIHTA", label: "BIHTA" },
+  { value: "BIJNOR", label: "BIJNOR" },
+  { value: "BILASIPARA", label: "BILASIPARA" },
+  { value: "BONGAIGOAN", label: "BONGAIGOAN" },
+  { value: "BRAHMAPUR", label: "BRAHMAPUR" },
+  { value: "BURDWAN", label: "BURDWAN" },
+  { value: "BUXAR", label: "BUXAR" },
+  { value: "CHANCHAL", label: "CHANCHAL" },
+  { value: "CHANDAUSI", label: "CHANDAUSI" },
+  { value: "CHANDPUR", label: "CHANDPUR" },
+  { value: "CHAS", label: "CHAS" },
+  { value: "CHHAPRA", label: "CHHAPRA" },
+  { value: "COOCHBEHAR", label: "COOCHBEHAR" },
+  { value: "DALKOLA", label: "DALKOLA" },
+  { value: "DALTONGANJ", label: "DALTONGANJ" },
+  { value: "DARBHANGA", label: "DARBHANGA" },
+  { value: "DAUDNAGAR", label: "DAUDNAGAR" },
+  { value: "DEHRI ON SON", label: "DEHRI ON SON" },
+  { value: "DEOGHAR", label: "DEOGHAR" },
+  { value: "DEORIA", label: "DEORIA" },
+  { value: "DHAMPUR", label: "DHAMPUR" },
+  { value: "DHANAURA", label: "DHANAURA" },
+  { value: "DHANBAD", label: "DHANBAD" },
+  { value: "DHUBRI", label: "DHUBRI" },
+  { value: "DHUPGURI", label: "DHUPGURI" },
+  { value: "DIBAI", label: "DIBAI" },
+  { value: "DINHATA", label: "DINHATA" },
+  { value: "DUMKA", label: "DUMKA" },
+  { value: "DUMROAN", label: "DUMROAN" },
+  { value: "DURGAPUR", label: "DURGAPUR" },
+  { value: "FAIZABAD", label: "FAIZABAD" },
+  { value: "FALAKATA", label: "FALAKATA" },
+  { value: "FORBISGANJ", label: "FORBISGANJ" },
+  { value: "GANGARAMPUR", label: "GANGARAMPUR" },
+  { value: "GARWA", label: "GARWA" },
+  { value: "GAYA", label: "GAYA" },
+  { value: "GHAZIPUR", label: "GHAZIPUR" },
+  { value: "GHOSI", label: "GHOSI" },
+  { value: "GIRIDIH", label: "GIRIDIH" },
+  { value: "GOALPARA", label: "GOALPARA" },
+  { value: "GODDA", label: "GODDA" },
+  { value: "GOPALGANJ", label: "GOPALGANJ" },
+  { value: "GORAKHPUR", label: "GORAKHPUR" },
+  { value: "GOSAINGANJ", label: "GOSAINGANJ" },
+  { value: "GULABBAGH", label: "GULABBAGH" },
+  { value: "GULAOTHI", label: "GULAOTHI" },
+  { value: "GUMLA", label: "GUMLA" },
+  { value: "HAJIPUR", label: "HAJIPUR" },
+  { value: "HARRAIYA", label: "HARRAIYA" },
+  { value: "HATA", label: "HATA" },
+  { value: "HAZARIBAGH", label: "HAZARIBAGH" },
+  { value: "HEAD OFFICE", label: "HEAD OFFICE" },
+  { value: "HINDUPUR", label: "HINDUPUR" },
+  { value: "HYDERABAD", label: "HYDERABAD" },
+  { value: "ISLAMPUR", label: "ISLAMPUR" },
+  { value: "JAGITAL", label: "JAGITAL" },
+  { value: "JAHANGIRABAD", label: "JAHANGIRABAD" },
+  { value: "JAINAGAR", label: "JAINAGAR" },
+  { value: "JALALPUR", label: "JALALPUR" },
+  { value: "JALPAIGURI", label: "JALPAIGURI" },
+  { value: "JAMSHEDPUR", label: "JAMSHEDPUR" },
+  { value: "JAMUI", label: "JAMUI" },
+  { value: "JAUNPUR", label: "JAUNPUR" },
+  { value: "JHANJHARPUR", label: "JHANJHARPUR" },
+  { value: "JHARIYA", label: "JHARIYA" },
+  { value: "JHUMRITALIYA", label: "JHUMRITALIYA" },
+  { value: "KADAPA", label: "KADAPA" },
+  { value: "KALIACHAK", label: "KALIACHAK" },
+  { value: "KALIYAGANJ", label: "KALIYAGANJ" },
+  { value: "KANPUR", label: "KANPUR" },
+  { value: "KAPTANGANJ", label: "KAPTANGANJ" },
+  { value: "KARIM NAGAR", label: "KARIM NAGAR" },
+  { value: "KASIA", label: "KASIA" },
+  { value: "KATIHAR", label: "KATIHAR" },
+  { value: "KHAGARIA", label: "KHAGARIA" },
+  { value: "KHALILABAD", label: "KHALILABAD" },
+  { value: "KIRATPUR", label: "KIRATPUR" },
+  { value: "KISHANGANJ", label: "KISHANGANJ" },
+  { value: "KOCHAS", label: "KOCHAS" },
+  { value: "KOKRAJHAR", label: "KOKRAJHAR" },
+  { value: "KRISHNAI", label: "KRISHNAI" },
+  { value: "KUNDA", label: "KUNDA" },
+  { value: "KURNOOL", label: "KURNOOL" },
+  { value: "KUSHINAGAR", label: "KUSHINAGAR" },
+  { value: "LAKHISARAI", label: "LAKHISARAI" },
+  { value: "LALGANJ", label: "LALGANJ" },
+  { value: "LOHARDGA", label: "LOHARDGA" },
+  { value: "LUCKNOW", label: "LUCKNOW" },
+  { value: "MACHHALISHAR", label: "MACHHALISHAR" },
+  { value: "MADHEPURA", label: "MADHEPURA" },
+  { value: "MADHUBANI", label: "MADHUBANI" },
+  { value: "MADHUPUR", label: "MADHUPUR" },
+  { value: "MAHARAJGANJ", label: "MAHARAJGANJ" },
+  { value: "MAIRWA", label: "MAIRWA" },
+  { value: "MALDA", label: "MALDA" },
+  { value: "MATHABHANGA", label: "MATHABHANGA" },
+  { value: "MAU", label: "MAU" },
+  { value: "MAYNAGURI", label: "MAYNAGURI" },
+  { value: "MIRZAPUR", label: "MIRZAPUR" },
+  { value: "MOHAMMDABAD GOHNA", label: "MOHAMMDABAD GOHNA" },
+  { value: "MOHANIYA", label: "MOHANIYA" },
+  { value: "MORADABAD", label: "MORADABAD" },
+  { value: "MOTIHARI", label: "MOTIHARI" },
+  { value: "MUBARAKPUR", label: "MUBARAKPUR" },
+  { value: "MUGHALSARAI", label: "MUGHALSARAI" },
+  { value: "MUNGRA BADSHAHPUR", label: "MUNGRA BADSHAHPUR" },
+  { value: "MURLIGANJ", label: "MURLIGANJ" },
+  { value: "MURSHIDABAD", label: "MURSHIDABAD" },
+  { value: "MUZAFFARPUR", label: "MUZAFFARPUR" },
+  { value: "NAGINA", label: "NAGINA" },
+  { value: "NALBARI", label: "NALBARI" },
+  { value: "NANDYAL", label: "NANDYAL" },
+  { value: "NARKATIYA GANJ", label: "NARKATIYA GANJ" },
+  { value: "NAWABGANJ", label: "NAWABGANJ" },
+  { value: "NAWADA", label: "NAWADA" },
+  { value: "NETHAUR", label: "NETHAUR" },
+  { value: "NOJIBABAD", label: "NOJIBABAD" },
+  { value: "NOORPUR", label: "NOORPUR" },
+  { value: "PADRAUNA", label: "PADRAUNA" },
+  { value: "PATNA", label: "PATNA" },
+  { value: "PHUSRO", label: "PHUSRO" },
+  { value: "PILIBHIT", label: "PILIBHIT" },
+  { value: "PODDATUR", label: "PODDATUR" },
+  { value: "PRATAPGARH", label: "PRATAPGARH" },
+  { value: "PURANPUR", label: "PURANPUR" },
+  { value: "PURNIA", label: "PURNIA" },
+  { value: "PURULIA", label: "PURULIA" },
+  { value: "RAFIGANJ", label: "RAFIGANJ" },
+  { value: "RAGHUNATHGANJ", label: "RAGHUNATHGANJ" },
+  { value: "RAIGANJ", label: "RAIGANJ" },
+  { value: "RAJAHMUNDRY", label: "RAJAHMUNDRY" },
+  { value: "RAMGARH", label: "RAMGARH" },
+  { value: "RANCHI", label: "RANCHI" },
+  { value: "RANGIA", label: "RANGIA" },
+  { value: "RANIGANJ", label: "RANIGANJ" },
+  { value: "RASARA", label: "RASARA" },
+  { value: "RAXAUL", label: "RAXAUL" },
+  { value: "SAHARSA", label: "SAHARSA" },
+  { value: "SAHASWAN", label: "SAHASWAN" },
+  { value: "SALEMPUR", label: "SALEMPUR" },
+  { value: "SAMASTIPUR", label: "SAMASTIPUR" },
+  { value: "SAMBAL", label: "SAMBAL" },
+  { value: "SAMSI", label: "SAMSI" },
+  { value: "SASARAM", label: "SASARAM" },
+  { value: "SECUNDERABAD", label: "SECUNDERABAD" },
+  { value: "SEOHARA", label: "SEOHARA" },
+  { value: "SHAHGANJ", label: "SHAHGANJ" },
+  { value: "SHERGHATI", label: "SHERGHATI" },
+  { value: "SHIKARPUR", label: "SHIKARPUR" },
+  { value: "SIDDHARTHNAGAR", label: "SIDDHARTHNAGAR" },
+  { value: "SIDDIPET", label: "SIDDIPET" },
+  { value: "SILLIGURI", label: "SILLIGURI" },
+  { value: "SIMDEGA", label: "SIMDEGA" },
+  { value: "SISWABAZAR", label: "SISWABAZAR" },
+  { value: "SITAMARHI", label: "SITAMARHI" },
+  { value: "SIWAN", label: "SIWAN" },
+  { value: "SIYANA", label: "SIYANA" },
+  { value: "SRIKAKULAM", label: "SRIKAKULAM" },
+  { value: "SULTANPUR", label: "SULTANPUR" },
+  { value: "SUPAUL", label: "SUPAUL" },
+  { value: "TAMKUHI", label: "TAMKUHI" },
+  { value: "TANDA", label: "TANDA" },
+  { value: "THAKURDWARA", label: "THAKURDWARA" },
+  { value: "TRONICA CITY", label: "TRONICA CITY" },
+  { value: "TUFANGANJ", label: "TUFANGANJ" },
+  { value: "U P BORDER A JH UP", label: "U P BORDER A JH UP" },
+  { value: "U P BORDER B BR", label: "U P BORDER B BR" },
+  { value: "U P BORDER C ASM WB", label: "U P BORDER C ASM WB" },
+  { value: "U P BORDER D BR GP", label: "U P BORDER D BR GP" },
+  { value: "VARANASI", label: "VARANASI" },
+  { value: "VIJAYWADA", label: "VIJAYWADA" },
+  { value: "VIKRAMGANJ", label: "VIKRAMGANJ" },
+  { value: "VISAKHAPATNAM", label: "VISAKHAPATNAM" },
+  { value: "VIZIANAGARAM", label: "VIZIANAGARAM" },
+  { value: "YUSUFPUR", label: "YUSUFPUR" }
+];
 const dispatchedToOptions = ["DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHENNAI BRANCH", "KOLKATA BRANCH", "PUNE BRANCH", "External Vendor"];
 const dispatchThroughOptions = ["ROAD TRANSPORT", "AIR CARGO", "RAILWAY", "COURIER", "HAND DELIVERY"];
 const itemOptions = ["A4 Printer Paper", "Ballpoint Pen", "Laptop", "Mouse", "Keyboard", "Furniture", "Stapler", "Notebook", "File Folders", "Whiteboard Marker"];
@@ -107,6 +319,9 @@ const locationOptions = ["HEAD OFFICE", "DELHI", "MUMBAI", "BANGALORE", "CHENNAI
 const partyOptions = ["ABC Traders", "XYZ Enterprises", "Golden Roadways", "Logistics India", "Pankhala Transport"];
 
 export default function ItemDespatch() {
+
+  const user = useSessionUser();
+
   // ==================== ENTRY TAB STATE ====================
   const [branchName, setBranchName] = useState("HEAD OFFICE");
   const [dispatchDate, setDispatchDate] = useState<Date>(new Date());
@@ -473,9 +688,9 @@ export default function ItemDespatch() {
       <div className="border-b pb-4">
         <h1 className="text-2xl font-bold text-primary">3. ITEM DESPATCH</h1>
         <div className="text-xs text-muted-foreground mt-1">
-          Company : GOLDEN ROADWAYS &amp; LOGISTICS PVT LTD | Login By : ADMIN@GMAIL.COM
+          Company : {user.companyName} | Login By : {user.email}
           <br />
-          Login Branch : HEAD OFFICE | Financial Year : 2026-2027
+          Login Branch : {user.branch} | Financial Year : {user.financialYear}
         </div>
       </div>
 
@@ -593,7 +808,13 @@ export default function ItemDespatch() {
                   <Label>Branch Name <span className="text-red-500">*</span></Label>
                   <Select value={branchName} onValueChange={setBranchName}>
                     <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {branchOptions.map((b) => (
+                        <SelectItem key={b.value} value={b.value}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
 
@@ -805,10 +1026,17 @@ export default function ItemDespatch() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                   <Label>Branch</Label>
-                  <Select value={searchBranch} onValueChange={setSearchBranch}>
+                  <Select value={branchName} onValueChange={setBranchName}>
                     <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {branchOptions.map((b) => (
+                        <SelectItem key={b.value} value={b.value}>
+                          {b.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
+
                 </div>
 
                 <div>
@@ -971,12 +1199,15 @@ export default function ItemDespatch() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div>
                 <Label>Branch Name <span className="text-red-500">*</span></Label>
-                <Select
-                  value={editFormData.branchName}
-                  onValueChange={(v) => setEditFormData({ ...editFormData, branchName: v })}
-                >
+                <Select value={branchName} onValueChange={setBranchName}>
                   <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                  <SelectContent>{branchOptions.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {branchOptions.map((b) => (
+                      <SelectItem key={b.value} value={b.value}>
+                        {b.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
 
