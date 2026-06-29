@@ -310,12 +310,10 @@ const branchOptions = [
   { value: "VIZIANAGARAM", label: "VIZIANAGARAM" },
   { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
-const dispatchedToOptions = ["DELHI BRANCH", "MUMBAI BRANCH", "BANGALORE BRANCH", "CHENNAI BRANCH", "KOLKATA BRANCH", "PUNE BRANCH", "External Vendor"];
 const dispatchThroughOptions = ["ROAD TRANSPORT", "AIR CARGO", "RAILWAY", "COURIER", "HAND DELIVERY"];
 const itemOptions = ["A4 Printer Paper", "Ballpoint Pen", "Laptop", "Mouse", "Keyboard", "Furniture", "Stapler", "Notebook", "File Folders", "Whiteboard Marker"];
 const unitTypeOptions = ["PCS", "BOX", "REAM", "SET", "DOZEN", "KG", "LTR", "ROLL"];
 const statusOptions = ["Dispatched", "In Transit", "Delivered", "Cancelled"];
-const locationOptions = ["HEAD OFFICE", "DELHI", "MUMBAI", "BANGALORE", "CHENNAI", "KOLKATA", "PUNE", "External"];
 const partyOptions = ["ABC Traders", "XYZ Enterprises", "Golden Roadways", "Logistics India", "Pankhala Transport"];
 
 export default function ItemDespatch() {
@@ -745,14 +743,14 @@ export default function ItemDespatch() {
                     <Label>From <span className="text-red-500">*</span></Label>
                     <Select value={fromLocation} onValueChange={setFromLocation}>
                       <SelectTrigger><SelectValue placeholder="Select Origin" /></SelectTrigger>
-                      <SelectContent>{locationOptions.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}</SelectContent>
+                      <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>To <span className="text-red-500">*</span></Label>
                     <Select value={toLocation} onValueChange={setToLocation}>
                       <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
-                      <SelectContent>{locationOptions.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}</SelectContent>
+                      <SelectContent>{branchOptions.map((loc) => <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div>
@@ -834,7 +832,7 @@ export default function ItemDespatch() {
                   <Label>Dispatched To <span className="text-red-500">*</span></Label>
                   <Select value={dispatchedTo} onValueChange={setDispatchedTo}>
                     <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
-                    <SelectContent>{dispatchedToOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
 
@@ -1032,7 +1030,7 @@ export default function ItemDespatch() {
                     <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">ALL</SelectItem>
-                      {dispatchedToOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                      {branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.value}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1226,7 +1224,7 @@ export default function ItemDespatch() {
                   onValueChange={(v) => setEditFormData({ ...editFormData, dispatchedTo: v })}
                 >
                   <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
-                  <SelectContent>{dispatchedToOptions.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                  <SelectContent>{branchOptions.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
