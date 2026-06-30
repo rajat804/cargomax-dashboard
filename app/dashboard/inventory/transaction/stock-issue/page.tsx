@@ -46,8 +46,13 @@ import {
   Package,
   Truck,
   Plus,
+  Pencil,
+  Trash2,
+  X,
+  Loader2,
 } from "lucide-react";
 import api from "@/services/api";
+import toast from "react-hot-toast";
 
 // ==================== TYPES ====================
 interface StockIssue {
@@ -55,7 +60,7 @@ interface StockIssue {
   issueId: string;
   issueTo: string;
   issueDate: string;
-  itemName: string;   // ✅ itemCode removed
+  itemName: string;
   unitType: string;
   startNo: string;
   endNo: string;
@@ -91,7 +96,7 @@ export default function StockIssueToBranch() {
   const [toDate, setToDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Column settings – removed itemCode
+  // Column settings
   const [columnSettings, setColumnSettings] = useState({
     sNo: true,
     issueId: true,
@@ -101,9 +106,11 @@ export default function StockIssueToBranch() {
     unitType: true,
     startNo: true,
     endNo: true,
+    quantity: true,
+    status: true,
   });
 
-  // Add Modal
+  // ==================== ADD MODAL STATE ====================
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<StockIssue>>({
     issueTo: "",
@@ -116,6 +123,15 @@ export default function StockIssueToBranch() {
     remarks: "",
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // ==================== EDIT MODAL STATE ====================
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingIssue, setEditingIssue] = useState<StockIssue | null>(null);
+  const [editFormData, setEditFormData] = useState<Partial<StockIssue>>({});
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  // ==================== DELETE STATE ====================
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // ==================== FETCH DATA ====================
   const fetchStockItems = async () => {
@@ -137,7 +153,7 @@ export default function StockIssueToBranch() {
       setShowResults(true);
     } catch (error) {
       console.error("Error fetching stock issues:", error);
-      alert("Failed to load stock issues.");
+      toast.error("Failed to load stock issues.");
     } finally {
       setLoading(false);
     }
@@ -195,21 +211,10 @@ export default function StockIssueToBranch() {
   };
 
   const viewDetails = (issue: StockIssue) => {
-    alert(`📋 Issue Details
-━━━━━━━━━━━━━━━━━━
-Issue ID    : ${issue.issueId}
-Issue To    : ${issue.issueTo}
-Issue Date  : ${issue.issueDate}
-Item Name   : ${issue.itemName}
-Unit Type   : ${issue.unitType}
-Quantity    : ${issue.quantity}
-Start No    : ${issue.startNo || "N/A"}
-End No      : ${issue.endNo || "N/A"}
-Status      : ${issue.status}
-Remarks     : ${issue.remarks || "N/A"}`);
+    toast.success(`📋 ${issue.issueId} - ${issue.itemName} (${issue.quantity} ${issue.unitType})`);
   };
 
-  // ==================== ADD MODAL ====================
+  // ==================== ADD ISSUE ====================
   const openAddModal = () => {
     setFormData({
       issueTo: "",
@@ -237,7 +242,7 @@ Remarks     : ${issue.remarks || "N/A"}`);
 
   const handleSaveIssue = async () => {
     if (!formData.issueTo || !formData.itemName || !formData.quantity) {
-      alert("Please fill all required fields (Branch, Item, Quantity)");
+      toast.error("Please fill all required fields (Branch, Item, Quantity)");
       return;
     }
 
@@ -256,15 +261,95 @@ Remarks     : ${issue.remarks || "N/A"}`);
       };
 
       await api.post("/stock-issue", payload);
-      alert("✅ Stock issue created successfully!");
+      toast.success("✅ Stock issue created successfully!");
       setIsAddModalOpen(false);
       fetchData();
       fetchStockItems();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating stock issue:", error);
-      alert("Failed to create stock issue.");
+      toast.error(error.response?.data?.message || "Failed to create stock issue.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ==================== EDIT ISSUE ====================
+  const openEditModal = (issue: StockIssue) => {
+    setEditingIssue(issue);
+    setEditFormData({
+      issueTo: issue.issueTo,
+      issueDate: issue.issueDate,
+      itemName: issue.itemName,
+      unitType: issue.unitType,
+      quantity: issue.quantity,
+      startNo: issue.startNo || "",
+      endNo: issue.endNo || "",
+      remarks: issue.remarks || "",
+      status: issue.status,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditItemSelect = (itemName: string) => {
+    const selected = stockItems.find((i) => i.itemName === itemName);
+    if (selected) {
+      setEditFormData({
+        ...editFormData,
+        itemName: selected.itemName,
+        unitType: selected.unitType || "PCS",
+      });
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!editingIssue || !editFormData.issueTo || !editFormData.itemName || !editFormData.quantity) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    setEditSubmitting(true);
+    try {
+      const payload = {
+        issueTo: editFormData.issueTo,
+        issueDate: editFormData.issueDate || format(new Date(), "dd-MM-yyyy"),
+        itemName: editFormData.itemName,
+        unitType: editFormData.unitType || "PCS",
+        quantity: editFormData.quantity,
+        startNo: editFormData.startNo || "",
+        endNo: editFormData.endNo || "",
+        remarks: editFormData.remarks || "",
+        status: editFormData.status || "Issued",
+      };
+
+      await api.put(`/stock-issue/${editingIssue._id}`, payload);
+      toast.success("✅ Stock issue updated successfully!");
+      setIsEditModalOpen(false);
+      fetchData();
+      fetchStockItems();
+    } catch (error: any) {
+      console.error("Error updating stock issue:", error);
+      toast.error(error.response?.data?.message || "Failed to update stock issue.");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  // ==================== DELETE ISSUE ====================
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this stock issue? This action cannot be undone.")) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await api.delete(`/stock-issue/${id}`);
+      toast.success("✅ Stock issue deleted successfully!");
+      fetchData();
+      fetchStockItems();
+    } catch (error: any) {
+      console.error("Error deleting stock issue:", error);
+      toast.error(error.response?.data?.message || "Failed to delete stock issue.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -413,7 +498,7 @@ Remarks     : ${issue.remarks || "N/A"}`);
                 </Button>
               </div>
 
-              {/* Column Settings – itemCode removed */}
+              {/* Column Settings */}
               <div className="mt-4 mb-4 p-3 bg-gray-100 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Settings className="h-4 w-4 text-gray-600" />
@@ -436,7 +521,9 @@ Remarks     : ${issue.remarks || "N/A"}`);
                          key === "unitType" ? "Unit Type" :
                          key === "startNo" ? "Start No" :
                          key === "endNo" ? "End No" :
-                         key === "sNo" ? "S#" : key}
+                         key === "sNo" ? "S#" :
+                         key === "quantity" ? "Qty" :
+                         key === "status" ? "Status" : key}
                       </Label>
                     </div>
                   ))}
@@ -454,9 +541,11 @@ Remarks     : ${issue.remarks || "N/A"}`);
                       {columnSettings.issueDate && <TableHead>Issue Date</TableHead>}
                       {columnSettings.itemName && <TableHead>Item Name</TableHead>}
                       {columnSettings.unitType && <TableHead>Unit Type</TableHead>}
+                      {columnSettings.quantity && <TableHead className="text-right">Qty</TableHead>}
                       {columnSettings.startNo && <TableHead>Start No</TableHead>}
                       {columnSettings.endNo && <TableHead>End No</TableHead>}
-                      <TableHead className="text-center">Action</TableHead>
+                      {columnSettings.status && <TableHead>Status</TableHead>}
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -485,17 +574,55 @@ Remarks     : ${issue.remarks || "N/A"}`);
                               <span className="bg-gray-100 px-2 py-1 rounded text-xs">{issue.unitType}</span>
                             </TableCell>
                           )}
+                          {columnSettings.quantity && <TableCell className="text-right font-medium">{issue.quantity}</TableCell>}
                           {columnSettings.startNo && <TableCell>{issue.startNo || "-"}</TableCell>}
                           {columnSettings.endNo && <TableCell>{issue.endNo || "-"}</TableCell>}
+                          {columnSettings.status && (
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                issue.status === "Issued" ? "bg-green-100 text-green-700" :
+                                issue.status === "Returned" ? "bg-yellow-100 text-yellow-700" :
+                                "bg-gray-100 text-gray-700"
+                              }`}>
+                                {issue.status || "Issued"}
+                              </span>
+                            </TableCell>
+                          )}
                           <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => viewDetails(issue)}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => viewDetails(issue)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditModal(issue)}
+                                className="text-green-600 hover:text-green-800"
+                                title="Edit Issue"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(issue._id!)}
+                                className="text-red-600 hover:text-red-800"
+                                disabled={deletingId === issue._id}
+                                title="Delete Issue"
+                              >
+                                {deletingId === issue._id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
@@ -534,7 +661,7 @@ Remarks     : ${issue.remarks || "N/A"}`);
         </CardContent>
       </Card>
 
-      {/* Add Issue Modal */}
+      {/* ==================== ADD ISSUE MODAL ==================== */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -654,7 +781,152 @@ Remarks     : ${issue.remarks || "N/A"}`);
               Cancel
             </Button>
             <Button onClick={handleSaveIssue} disabled={submitting} className="bg-green-600 hover:bg-green-700">
+              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {submitting ? "Saving..." : "Create Issue"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ==================== EDIT ISSUE MODAL ==================== */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Stock Issue - {editingIssue?.issueId}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div>
+              <Label>Branch *</Label>
+              <Select
+                value={editFormData.issueTo || ""}
+                onValueChange={(v) => setEditFormData({ ...editFormData, issueTo: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueBranches.length > 0 ? (
+                    uniqueBranches.map((b) => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="HEAD OFFICE">HEAD OFFICE</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Item Name *</Label>
+              <Select
+                value={editFormData.itemName || ""}
+                onValueChange={(v) => {
+                  setEditFormData({ ...editFormData, itemName: v });
+                  handleEditItemSelect(v);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stockItems.map((item) => (
+                    <SelectItem key={item.itemName} value={item.itemName}>
+                      {item.itemName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Unit Type</Label>
+              <Input value={editFormData.unitType || ""} readOnly className="bg-gray-100" />
+            </div>
+
+            <div>
+              <Label>Quantity *</Label>
+              <Input
+                type="number"
+                value={editFormData.quantity || 1}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, quantity: parseInt(e.target.value) || 0 })
+                }
+                min="1"
+              />
+            </div>
+
+            <div>
+              <Label>Issue Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editFormData.issueDate ? format(new Date(editFormData.issueDate.split("-").reverse().join("-")), "dd-MM-yyyy") : "Select Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <Calendar
+                    mode="single"
+                    selected={editFormData.issueDate ? new Date(editFormData.issueDate.split("-").reverse().join("-")) : undefined}
+                    onSelect={(d) =>
+                      d && setEditFormData({ ...editFormData, issueDate: format(d, "dd-MM-yyyy") })
+                    }
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <Label>Start No</Label>
+              <Input
+                value={editFormData.startNo || ""}
+                onChange={(e) => setEditFormData({ ...editFormData, startNo: e.target.value })}
+                placeholder="e.g., S001"
+              />
+            </div>
+
+            <div>
+              <Label>End No</Label>
+              <Input
+                value={editFormData.endNo || ""}
+                onChange={(e) => setEditFormData({ ...editFormData, endNo: e.target.value })}
+                placeholder="e.g., S050"
+              />
+            </div>
+
+            <div>
+              <Label>Status</Label>
+              <Select
+                value={editFormData.status || "Issued"}
+                onValueChange={(v) => setEditFormData({ ...editFormData, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Issued">Issued</SelectItem>
+                  <SelectItem value="Returned">Returned</SelectItem>
+                  <SelectItem value="Transferred">Transferred</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label>Remarks</Label>
+              <Input
+                value={editFormData.remarks || ""}
+                onChange={(e) => setEditFormData({ ...editFormData, remarks: e.target.value })}
+                placeholder="Optional remarks"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSave} disabled={editSubmitting} className="bg-blue-600 hover:bg-blue-700">
+              {editSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {editSubmitting ? "Saving..." : "Update Issue"}
             </Button>
           </DialogFooter>
         </DialogContent>
