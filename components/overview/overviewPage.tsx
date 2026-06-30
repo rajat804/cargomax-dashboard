@@ -25,6 +25,9 @@ import {
   Youtube,
   Newspaper,
   ChevronRight,
+  MapPin,
+  Route,
+  FileSpreadsheet,
 } from "lucide-react";
 import { MetricCard } from "@/components/overview/metric-card";
 import { ActivityFeed } from "@/components/overview/activity-feed";
@@ -51,10 +54,18 @@ import {
   getBookingStats,
   getAllDispatches,
   getStockRegister,
+  getLocalManifests,
+  getLocalManifestByNo,
+  getLongRouteManifests,
+  getLongRouteManifestByNo,
+  getLHCs,
+  getLHCByNo,
+  getBookingByGrNo,
 } from "@/services/api";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
 
 // Types
 interface BookingStats {
@@ -98,6 +109,7 @@ const quickLinks = [
 ];
 
 export default function OverviewPage() {
+  const router = useRouter();
   const user = useSessionUser();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,12 +125,22 @@ export default function OverviewPage() {
   const [pendingDeliveries, setPendingDeliveries] = useState(0);
   const [totalStock, setTotalStock] = useState(0);
   const [lowStockItems, setLowStockItems] = useState<StockItem[]>([]);
+
+  // Tracking States
   const [searchGr, setSearchGr] = useState("");
+  const [searchGrLoading, setSearchGrLoading] = useState(false);
   const [searchVehicle, setSearchVehicle] = useState("");
   const [searchLocalManifest, setSearchLocalManifest] = useState("");
+  const [searchLocalManifestLoading, setSearchLocalManifestLoading] = useState(false);
   const [searchLongRouteManifest, setSearchLongRouteManifest] = useState("");
+  const [searchLongRouteManifestLoading, setSearchLongRouteManifestLoading] = useState(false);
   const [searchDrs, setSearchDrs] = useState("");
   const [searchMr, setSearchMr] = useState("");
+
+  // Search Results State
+  const [trackingResult, setTrackingResult] = useState<any>(null);
+  const [trackingResultType, setTrackingResultType] = useState<string>("");
+  const [showTrackingResult, setShowTrackingResult] = useState(false);
 
   // Set current date
   useEffect(() => {
@@ -172,12 +194,127 @@ export default function OverviewPage() {
     setRefreshing(false);
   };
 
-  const handleSearch = (type: string, value: string) => {
-    if (value.trim()) {
-      toast.success(`Searching for ${type}: ${value}`);
-    } else {
-      toast.error(`Please enter ${type}`);
+  // ==================== TRACKING HANDLERS ====================
+
+  // GR Tracking
+  const handleSearchGR = async () => {
+    if (!searchGr.trim()) {
+      toast.error("Please enter GR Number");
+      return;
     }
+    setSearchGrLoading(true);
+    try {
+      const response = await getBookingByGrNo(searchGr.trim());
+      if (response.success && response.data) {
+        setTrackingResult(response.data);
+        setTrackingResultType("GR");
+        setShowTrackingResult(true);
+        toast.success(`✅ GR ${searchGr} found!`);
+      } else {
+        toast.error(`❌ GR ${searchGr} not found`);
+        setShowTrackingResult(false);
+      }
+    } catch (error: any) {
+      console.error("GR Search error:", error);
+      toast.error(error.response?.data?.message || "Failed to search GR");
+      setShowTrackingResult(false);
+    } finally {
+      setSearchGrLoading(false);
+    }
+  };
+
+  // Local Manifest Tracking
+  const handleSearchLocalManifest = async () => {
+    if (!searchLocalManifest.trim()) {
+      toast.error("Please enter Manifest Number");
+      return;
+    }
+    setSearchLocalManifestLoading(true);
+    try {
+      const response = await getLocalManifestByNo(searchLocalManifest.trim());
+      if (response.success && response.data) {
+        setTrackingResult(response.data);
+        setTrackingResultType("LOCAL_MANIFEST");
+        setShowTrackingResult(true);
+        toast.success(`✅ Local Manifest ${searchLocalManifest} found!`);
+      } else {
+        toast.error(`❌ Local Manifest ${searchLocalManifest} not found`);
+        setShowTrackingResult(false);
+      }
+    } catch (error: any) {
+      console.error("Local Manifest Search error:", error);
+      toast.error(error.response?.data?.message || "Failed to search Local Manifest");
+      setShowTrackingResult(false);
+    } finally {
+      setSearchLocalManifestLoading(false);
+    }
+  };
+
+  // Long Route Manifest Tracking
+  const handleSearchLongRouteManifest = async () => {
+    if (!searchLongRouteManifest.trim()) {
+      toast.error("Please enter Manifest Number");
+      return;
+    }
+    setSearchLongRouteManifestLoading(true);
+    try {
+      const response = await getLongRouteManifestByNo(searchLongRouteManifest.trim());
+      if (response.success && response.data) {
+        setTrackingResult(response.data);
+        setTrackingResultType("LONG_ROUTE_MANIFEST");
+        setShowTrackingResult(true);
+        toast.success(`✅ Long Route Manifest ${searchLongRouteManifest} found!`);
+      } else {
+        toast.error(`❌ Long Route Manifest ${searchLongRouteManifest} not found`);
+        setShowTrackingResult(false);
+      }
+    } catch (error: any) {
+      console.error("Long Route Manifest Search error:", error);
+      toast.error(error.response?.data?.message || "Failed to search Long Route Manifest");
+      setShowTrackingResult(false);
+    } finally {
+      setSearchLongRouteManifestLoading(false);
+    }
+  };
+
+  // Vehicle Tracking (Static - Dummy for now)
+  const handleSearchVehicle = () => {
+    if (!searchVehicle.trim()) {
+      toast.error("Please enter Vehicle Number");
+      return;
+    }
+    // Placeholder - Future implementation
+    toast.success(`🔍 Vehicle Tracking for ${searchVehicle} (Coming soon)`);
+  };
+
+  // DRS Tracking (Static - Dummy for now)
+  const handleSearchDrs = () => {
+    if (!searchDrs.trim()) {
+      toast.error("Please enter DRS Number");
+      return;
+    }
+    toast.success(`🔍 DRS Tracking for ${searchDrs} (Coming soon)`);
+  };
+
+  // MR Enquiry (Static - Dummy for now)
+  const handleSearchMR = () => {
+    if (!searchMr.trim()) {
+      toast.error("Please enter MR Number");
+      return;
+    }
+    toast.success(`🔍 MR Enquiry for ${searchMr} (Coming soon)`);
+  };
+
+  const handleClearTracking = () => {
+    setTrackingResult(null);
+    setTrackingResultType("");
+    setShowTrackingResult(false);
+    setSearchGr("");
+    setSearchLocalManifest("");
+    setSearchLongRouteManifest("");
+    setSearchVehicle("");
+    setSearchDrs("");
+    setSearchMr("");
   };
 
   useEffect(() => {
@@ -227,6 +364,182 @@ export default function OverviewPage() {
           Designation: Technical Support
         </div>
       </div>
+
+      {/* ===== TRACKING SECTION (Placed First - TOP) ===== */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            <Search className="h-4 w-4 text-blue-600" />
+            TRACKING
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* GR Tracking */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">GR Tracking</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER GR #"
+                  value={searchGr}
+                  onChange={(e) => setSearchGr(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchGR()}
+                />
+                <Button onClick={handleSearchGR} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3" disabled={searchGrLoading}>
+                  {searchGrLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Vehicle Tracking */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">Vehicle Tracking</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER Vehicle #"
+                  value={searchVehicle}
+                  onChange={(e) => setSearchVehicle(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchVehicle()}
+                />
+                <Button onClick={handleSearchVehicle} size="sm" className="bg-green-600 hover:bg-green-700 h-9 px-3">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Track Local Manifest */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">Track Local Manifest</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER MANIFEST #"
+                  value={searchLocalManifest}
+                  onChange={(e) => setSearchLocalManifest(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchLocalManifest()}
+                />
+                <Button onClick={handleSearchLocalManifest} size="sm" className="bg-purple-600 hover:bg-purple-700 h-9 px-3" disabled={searchLocalManifestLoading}>
+                  {searchLocalManifestLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Track Long Route Manifest */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">Track Long Route Manifest</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER MANIFEST #"
+                  value={searchLongRouteManifest}
+                  onChange={(e) => setSearchLongRouteManifest(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchLongRouteManifest()}
+                />
+                <Button onClick={handleSearchLongRouteManifest} size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9 px-3" disabled={searchLongRouteManifestLoading}>
+                  {searchLongRouteManifestLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+
+            {/* Track DRS */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">Track DRS</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER DRS #"
+                  value={searchDrs}
+                  onChange={(e) => setSearchDrs(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchDrs()}
+                />
+                <Button onClick={handleSearchDrs} size="sm" className="bg-pink-600 hover:bg-pink-700 h-9 px-3">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* MR Enquiry */}
+            <div>
+              <Label className="text-xs font-medium text-gray-600">MR Enquiry</Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  placeholder="ENTER MR #"
+                  value={searchMr}
+                  onChange={(e) => setSearchMr(e.target.value)}
+                  className="h-9 text-sm"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchMR()}
+                />
+                <Button onClick={handleSearchMR} size="sm" className="bg-teal-600 hover:bg-teal-700 h-9 px-3">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Clear Tracking Button */}
+          {showTrackingResult && (
+            <div className="mt-3 flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleClearTracking} className="h-8 text-xs">
+                <XCircle className="h-3.5 w-3.5 mr-1" /> Clear Results
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ===== TRACKING RESULT DISPLAY ===== */}
+      {showTrackingResult && trackingResult && (
+        <Card className="border-l-4 border-l-blue-500 bg-blue-50/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-gray-700">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              Tracking Result – {trackingResultType}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+              {trackingResultType === "GR" && (
+                <>
+                  <div><span className="font-medium text-gray-500">GR No:</span> <span className="font-bold text-blue-600">{trackingResult.grNo}</span></div>
+                  <div><span className="font-medium text-gray-500">From:</span> {trackingResult.bookingFrom}</div>
+                  <div><span className="font-medium text-gray-500">To:</span> {trackingResult.destination}</div>
+                  <div><span className="font-medium text-gray-500">Consignor:</span> {trackingResult.consignorName}</div>
+                  <div><span className="font-medium text-gray-500">Consignee:</span> {trackingResult.consigneeName}</div>
+                  <div><span className="font-medium text-gray-500">Date:</span> {format(new Date(trackingResult.bookingDate), "dd-MM-yyyy")}</div>
+                  <div><span className="font-medium text-gray-500">Freight:</span> ₹{trackingResult.totalFreight?.toLocaleString()}</div>
+                  <div><span className="font-medium text-gray-500">Status:</span> {getStatusBadge(trackingResult.status)}</div>
+                </>
+              )}
+
+              {trackingResultType === "LOCAL_MANIFEST" && (
+                <>
+                  <div><span className="font-medium text-gray-500">Manifest No:</span> <span className="font-bold text-purple-600">{trackingResult.manifestNo}</span></div>
+                  <div><span className="font-medium text-gray-500">Branch:</span> {trackingResult.branch}</div>
+                  <div><span className="font-medium text-gray-500">To Station:</span> {trackingResult.toStation}</div>
+                  <div><span className="font-medium text-gray-500">Driver:</span> {trackingResult.driverName}</div>
+                  <div><span className="font-medium text-gray-500">Mode:</span> {trackingResult.modeName}</div>
+                  <div><span className="font-medium text-gray-500">Packages:</span> {trackingResult.noOfPckgs}</div>
+                  <div><span className="font-medium text-gray-500">Status:</span> {getStatusBadge(trackingResult.status)}</div>
+                </>
+              )}
+
+              {trackingResultType === "LONG_ROUTE_MANIFEST" && (
+                <>
+                  <div><span className="font-medium text-gray-500">Manifest No:</span> <span className="font-bold text-indigo-600">{trackingResult.manifestNo}</span></div>
+                  <div><span className="font-medium text-gray-500">Branch:</span> {trackingResult.branch}</div>
+                  <div><span className="font-medium text-gray-500">To Station:</span> {trackingResult.toStation}</div>
+                  <div><span className="font-medium text-gray-500">Driver:</span> {trackingResult.driverName}</div>
+                  <div><span className="font-medium text-gray-500">Mode:</span> {trackingResult.modeName}</div>
+                  <div><span className="font-medium text-gray-500">Packages:</span> {trackingResult.noOfPckgs}</div>
+                  <div><span className="font-medium text-gray-500">Status:</span> {getStatusBadge(trackingResult.status)}</div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ===== KPI CARDS ===== */}
       <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
@@ -308,113 +621,59 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* ===== TRACKING SECTION ===== */}
+      {/* ===== QUICK LINKS ===== */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-bold text-gray-700">TRACKING</CardTitle>
+          <CardTitle className="text-sm font-bold text-gray-700">QUICK LINKS</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs font-medium text-gray-600">GR Tracking</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER GR #"
-                  value={searchGr}
-                  onChange={(e) => setSearchGr(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("GR", searchGr)}
-                />
-                <Button onClick={() => handleSearch("GR", searchGr)} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {quickLinks.map((link) => (
+              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8 px-3">
+                <Link href={link.href}>
+                  <link.icon className="h-3.5 w-3.5 mr-1.5" /> {link.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-            <div>
-              <Label className="text-xs font-medium text-gray-600">Vehicle Tracking</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER Vehicle #"
-                  value={searchVehicle}
-                  onChange={(e) => setSearchVehicle(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("Vehicle", searchVehicle)}
-                />
-                <Button onClick={() => handleSearch("Vehicle", searchVehicle)} size="sm" className="bg-green-600 hover:bg-green-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
+      {/* ===== WHAT'S NEW ===== */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-4.5 w-4.5 text-white" />
             </div>
-
             <div>
-              <Label className="text-xs font-medium text-gray-600">Track Local Manifest</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER MANIFEST #"
-                  value={searchLocalManifest}
-                  onChange={(e) => setSearchLocalManifest(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("Local Manifest", searchLocalManifest)}
-                />
-                <Button onClick={() => handleSearch("Local Manifest", searchLocalManifest)} size="sm" className="bg-purple-600 hover:bg-purple-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-medium text-gray-600">Track Long Route Manifest</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER MANIFEST #"
-                  value={searchLongRouteManifest}
-                  onChange={(e) => setSearchLongRouteManifest(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("Long Route Manifest", searchLongRouteManifest)}
-                />
-                <Button onClick={() => handleSearch("Long Route Manifest", searchLongRouteManifest)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-medium text-gray-600">Track DRS</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER DRS #"
-                  value={searchDrs}
-                  onChange={(e) => setSearchDrs(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("DRS", searchDrs)}
-                />
-                <Button onClick={() => handleSearch("DRS", searchDrs)} size="sm" className="bg-pink-600 hover:bg-pink-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs font-medium text-gray-600">MR Enquiry</Label>
-              <div className="flex gap-2 mt-1">
-                <Input
-                  placeholder="ENTER MR #"
-                  value={searchMr}
-                  onChange={(e) => setSearchMr(e.target.value)}
-                  className="h-9 text-sm"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch("MR", searchMr)}
-                />
-                <Button onClick={() => handleSearch("MR", searchMr)} size="sm" className="bg-teal-600 hover:bg-teal-700 h-9 px-3">
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
+              <p className="text-sm font-bold text-blue-800">WHAT'S NEW IN VERSION</p>
+              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-    {/* ===== RECENT BOOKINGS & DISPATCHES ===== */}
+      {/* ===== CHARTS AND ANALYTICS ===== */}
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+        <ShipmentChart />
+        <FleetStatus />
+      </div>
+
+      {/* ===== ACTIVITY AND MAP ===== */}
+      <div className="grid gap-4 md:gap-6 grid-cols-12">
+        <div className="col-span-12 md:col-span-6 2xl:col-span-8">
+          <ActivityFeed />
+        </div>
+        <div className="col-span-12 md:col-span-6 2xl:col-span-4">
+          <DeliveryMap />
+        </div>
+      </div>
+
+      {/* ===== QUICK ACTIONS ===== */}
+      <QuickActions />
+
+      {/* ===== RECENT BOOKINGS & DISPATCHES ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -498,60 +757,6 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* ===== QUICK LINKS ===== */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-bold text-gray-700">QUICK LINKS</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {quickLinks.map((link) => (
-              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8 px-3" >
-                <Link href={link.href}>
-                  <link.icon className="h-3.5 w-3.5 mr-1.5" /> {link.label}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ===== WHAT'S NEW ===== */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <Smartphone className="h-4.5 w-4.5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-blue-800">WHAT'S NEW IN VERSION</p>
-              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ===== CHARTS AND ANALYTICS ===== */}
-      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-        <ShipmentChart />
-        <FleetStatus />
-      </div>
-
-      {/* ===== ACTIVITY AND MAP ===== */}
-      <div className="grid gap-4 md:gap-6 grid-cols-12">
-        <div className="col-span-12 md:col-span-6 2xl:col-span-8">
-          <ActivityFeed />
-        </div>
-        <div className="col-span-12 md:col-span-6 2xl:col-span-4">
-          <DeliveryMap />
-        </div>
-      </div>
-
-      {/* ===== QUICK ACTIONS ===== */}
-      <QuickActions />
-
-      
 
       {/* ===== LOW STOCK ALERTS ===== */}
       {lowStockItems.length > 0 && (
