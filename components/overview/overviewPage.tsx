@@ -25,14 +25,6 @@ import {
   Youtube,
   Newspaper,
   ChevronRight,
-  LogOut,
-  Home,
-  ClipboardList,
-  MapPin,
-  Settings,
-  BarChart,
-  Menu,
-  X,
 } from "lucide-react";
 import { MetricCard } from "@/components/overview/metric-card";
 import { ActivityFeed } from "@/components/overview/activity-feed";
@@ -40,7 +32,6 @@ import { ShipmentChart } from "@/components/overview/shipment-chart";
 import { FleetStatus } from "@/components/overview/fleet-status";
 import { QuickActions } from "@/components/overview/quick-actions";
 import { DeliveryMap } from "@/components/overview/delivery-map";
-import PageHeader from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -212,74 +203,29 @@ export default function OverviewPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh] bg-gray-50">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 mx-auto animate-spin text-blue-600" />
-          <p className="text-gray-500 mt-4">Loading dashboard...</p>
+          <Loader2 className="h-10 w-10 mx-auto animate-spin text-blue-600" />
+          <p className="text-sm text-gray-500 mt-3">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-6 p-3 md:p-6 bg-gray-50 min-h-screen">
-      {/* ===== COMPANY INFO (GreenTrans Style) ===== */}
-      <div className="bg-white rounded-lg border p-4">
+    <div className="space-y-4 md:space-y-5 p-4 md:p-6 bg-gray-50 min-h-screen">
+      {/* ===== COMPANY INFO ===== */}
+      <div className="bg-white rounded-lg border p-4 shadow-sm">
         <div className="flex flex-wrap justify-between items-center">
           <div>
-            <h3 className="text-sm font-semibold text-gray-800">{user.companyName || "GOLDEN ROADWAYS & LOGISTICS PVT LTD"}</h3>
+            <h3 className="text-sm font-bold text-gray-800">{user.companyName || "GOLDEN ROADWAYS & LOGISTICS PVT LTD"}</h3>
             <p className="text-xs text-gray-400">Version: 2.0.0.1 (Build Date: 29-09-2020)</p>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-            <span className="font-medium text-gray-700">Mobile: <span className="font-normal text-gray-500">9599571439</span></span>
-            <span>|</span>
             <span className="font-medium text-gray-700">Email: <span className="font-normal text-blue-600">{user.email || "MAYANK.GRLOGISTICS@GMAIL.COM"}</span></span>
           </div>
         </div>
-        <div className="mt-2 text-xs text-gray-400">
+        <div className="mt-1 text-xs text-gray-400">
           Designation: Technical Support
         </div>
-      </div>
-
-      {/* ===== PAGE HEADER ===== */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-xs text-gray-400">{currentDate}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={handleRefresh} variant="outline" size="sm" disabled={refreshing} className="h-9">
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* ===== TECHNICAL SUPPORT (GreenTrans Style) ===== */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-blue-50 border-blue-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-blue-600">
-              <HelpCircle className="h-5 w-5" />
-              <span className="text-sm font-medium">MY HELP DESK</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-red-50 border-red-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              <span className="text-sm font-medium">REPORT A PROBLEM</span>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-green-50 border-green-200 hover:shadow-md transition-shadow">
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center gap-2 text-green-600">
-              <Newspaper className="h-5 w-5" />
-              <span className="text-sm font-medium">NEWS AND EVENTS</span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* ===== KPI CARDS ===== */}
@@ -362,14 +308,13 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* ===== TRACKING SECTION (GreenTrans Style - 6 Fields) ===== */}
+      {/* ===== TRACKING SECTION ===== */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-700">TRACKING</CardTitle>
+          <CardTitle className="text-sm font-bold text-gray-700">TRACKING</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* GR Tracking */}
             <div>
               <Label className="text-xs font-medium text-gray-600">GR Tracking</Label>
               <div className="flex gap-2 mt-1">
@@ -380,13 +325,12 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("GR", searchGr)}
                 />
-                <Button onClick={() => handleSearch("GR", searchGr)} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9">
+                <Button onClick={() => handleSearch("GR", searchGr)} size="sm" className="bg-blue-600 hover:bg-blue-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Vehicle Tracking */}
             <div>
               <Label className="text-xs font-medium text-gray-600">Vehicle Tracking</Label>
               <div className="flex gap-2 mt-1">
@@ -397,13 +341,12 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("Vehicle", searchVehicle)}
                 />
-                <Button onClick={() => handleSearch("Vehicle", searchVehicle)} size="sm" className="bg-green-600 hover:bg-green-700 h-9">
+                <Button onClick={() => handleSearch("Vehicle", searchVehicle)} size="sm" className="bg-green-600 hover:bg-green-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Track Local Manifest */}
             <div>
               <Label className="text-xs font-medium text-gray-600">Track Local Manifest</Label>
               <div className="flex gap-2 mt-1">
@@ -414,13 +357,12 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("Local Manifest", searchLocalManifest)}
                 />
-                <Button onClick={() => handleSearch("Local Manifest", searchLocalManifest)} size="sm" className="bg-purple-600 hover:bg-purple-700 h-9">
+                <Button onClick={() => handleSearch("Local Manifest", searchLocalManifest)} size="sm" className="bg-purple-600 hover:bg-purple-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Track Long Route Manifest */}
             <div>
               <Label className="text-xs font-medium text-gray-600">Track Long Route Manifest</Label>
               <div className="flex gap-2 mt-1">
@@ -431,13 +373,12 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("Long Route Manifest", searchLongRouteManifest)}
                 />
-                <Button onClick={() => handleSearch("Long Route Manifest", searchLongRouteManifest)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9">
+                <Button onClick={() => handleSearch("Long Route Manifest", searchLongRouteManifest)} size="sm" className="bg-indigo-600 hover:bg-indigo-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Track DRS */}
             <div>
               <Label className="text-xs font-medium text-gray-600">Track DRS</Label>
               <div className="flex gap-2 mt-1">
@@ -448,13 +389,12 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("DRS", searchDrs)}
                 />
-                <Button onClick={() => handleSearch("DRS", searchDrs)} size="sm" className="bg-pink-600 hover:bg-pink-700 h-9">
+                <Button onClick={() => handleSearch("DRS", searchDrs)} size="sm" className="bg-pink-600 hover:bg-pink-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* MR Enquiry */}
             <div>
               <Label className="text-xs font-medium text-gray-600">MR Enquiry</Label>
               <div className="flex gap-2 mt-1">
@@ -465,10 +405,43 @@ export default function OverviewPage() {
                   className="h-9 text-sm"
                   onKeyPress={(e) => e.key === "Enter" && handleSearch("MR", searchMr)}
                 />
-                <Button onClick={() => handleSearch("MR", searchMr)} size="sm" className="bg-teal-600 hover:bg-teal-700 h-9">
+                <Button onClick={() => handleSearch("MR", searchMr)} size="sm" className="bg-teal-600 hover:bg-teal-700 h-9 px-3">
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== QUICK LINKS ===== */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-bold text-gray-700">QUICK LINKS</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {quickLinks.map((link) => (
+              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8 px-3" >
+                <Link href={link.href}>
+                  <link.icon className="h-3.5 w-3.5 mr-1.5" /> {link.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== WHAT'S NEW ===== */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-4.5 w-4.5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-800">WHAT'S NEW IN VERSION</p>
+              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
             </div>
           </div>
         </CardContent>
@@ -502,7 +475,7 @@ export default function OverviewPage() {
               Recent Bookings
             </CardTitle>
             <Link href="/dashboard/booking/computerized-grl" className="text-xs text-blue-600 hover:underline flex items-center">
-              View All <ChevronRight className="h-3 w-3" />
+              View All <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </CardHeader>
           <CardContent className="p-0">
@@ -524,7 +497,7 @@ export default function OverviewPage() {
                     {recentBookings.map((booking) => (
                       <TableRow key={booking._id} className="hover:bg-gray-50">
                         <TableCell className="font-mono font-medium text-blue-600 text-xs py-2 px-3">{booking.grNo}</TableCell>
-                        <TableCell className="text-xs py-2 px-3 truncate max-w-[80px]">{booking.bookingFrom}</TableCell>
+                        <TableCell className="text-xs py-2 px-3 truncate max-w-[100px]">{booking.bookingFrom}</TableCell>
                         <TableCell className="text-xs py-2 px-3">{booking.destination}</TableCell>
                         <TableCell className="text-xs py-2 px-3 text-right">₹{booking.totalFreight.toLocaleString()}</TableCell>
                         <TableCell className="text-xs py-2 px-3 text-center">{getStatusBadge(booking.status)}</TableCell>
@@ -544,7 +517,7 @@ export default function OverviewPage() {
               Recent Despatches
             </CardTitle>
             <Link href="/dashboard/inventory/dispatch" className="text-xs text-blue-600 hover:underline flex items-center">
-              View All <ChevronRight className="h-3 w-3" />
+              View All <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </CardHeader>
           <CardContent className="p-0">
@@ -565,7 +538,7 @@ export default function OverviewPage() {
                     {recentDispatches.map((dispatch) => (
                       <TableRow key={dispatch._id} className="hover:bg-gray-50">
                         <TableCell className="font-mono font-medium text-blue-600 text-xs py-2 px-3">{dispatch.dispatchId}</TableCell>
-                        <TableCell className="text-xs py-2 px-3 truncate max-w-[80px]">{dispatch.branchName}</TableCell>
+                        <TableCell className="text-xs py-2 px-3 truncate max-w-[100px]">{dispatch.branchName}</TableCell>
                         <TableCell className="text-xs py-2 px-3 truncate max-w-[100px]">{dispatch.dispatchedTo}</TableCell>
                         <TableCell className="text-xs py-2 px-3 text-center">{getStatusBadge(dispatch.status)}</TableCell>
                       </TableRow>
@@ -599,39 +572,93 @@ export default function OverviewPage() {
         </Card>
       )}
 
-      {/* // Inside the dashboard content, before the "Whats New" section: */}
-      {/* ===== QUICK LINKS (GreenTrans Style) ===== */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-gray-700">QUICK LINKS</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            {quickLinks.map((link) => (
-              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8">
-                <Link href={link.href}>
-                  <link.icon className="h-3 w-3 mr-1" /> {link.label}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* ===== PERFORMANCE HIGHLIGHTS ===== */}
+      <div className="grid gap-4 md:gap-6 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Performance Highlights</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Active Bookings</span>
+                <span className="text-xs font-medium text-green-600">{stats.active.count}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Pending Deliveries</span>
+                <span className="text-xs font-medium text-blue-600">{pendingDeliveries}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Stock In Hand</span>
+                <span className="text-xs font-medium">{totalStock.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Total Freight</span>
+                <span className="text-xs font-medium text-purple-600">₹{(stats.active.totalFreight + stats.cancelled.totalFreight).toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* ===== WHAT'S NEW (GreenTrans Style) ===== */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <Smartphone className="h-5 w-5 text-white" />
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Top Routes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Head Office → Delhi</span>
+                <span className="text-xs font-medium">24 shipments</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Agra → Mumbai</span>
+                <span className="text-xs font-medium">18 shipments</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Delhi → Bangalore</span>
+                <span className="text-xs font-medium">15 shipments</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Mumbai → Chennai</span>
+                <span className="text-xs font-medium">12 shipments</span>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-blue-800">WHAT'S NEW IN VERSION</p>
-              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Alerts & Notifications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {lowStockItems.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium">Low Stock Items</p>
+                    <p className="text-[10px] text-gray-500">{lowStockItems.length} items need restocking</p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-blue-500 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium">Pending Deliveries</p>
+                  <p className="text-[10px] text-gray-500">{pendingDeliveries} shipments pending</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <Package className="h-4 w-4 text-green-500 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium">Active Shipments</p>
+                  <p className="text-[10px] text-gray-500">{recentDispatches.length} in transit</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ===== FOOTER ===== */}
       <div className="text-[10px] md:text-xs text-gray-400 border-t pt-4 text-center">
