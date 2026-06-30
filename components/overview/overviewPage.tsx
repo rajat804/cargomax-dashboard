@@ -414,59 +414,7 @@ export default function OverviewPage() {
         </CardContent>
       </Card>
 
-      {/* ===== QUICK LINKS ===== */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-bold text-gray-700">QUICK LINKS</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {quickLinks.map((link) => (
-              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8 px-3" >
-                <Link href={link.href}>
-                  <link.icon className="h-3.5 w-3.5 mr-1.5" /> {link.label}
-                </Link>
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ===== WHAT'S NEW ===== */}
-      <Card className="bg-blue-50 border-blue-200">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <Smartphone className="h-4.5 w-4.5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-blue-800">WHAT'S NEW IN VERSION</p>
-              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ===== CHARTS AND ANALYTICS ===== */}
-      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
-        <ShipmentChart />
-        <FleetStatus />
-      </div>
-
-      {/* ===== ACTIVITY AND MAP ===== */}
-      <div className="grid gap-4 md:gap-6 grid-cols-12">
-        <div className="col-span-12 md:col-span-6 2xl:col-span-8">
-          <ActivityFeed />
-        </div>
-        <div className="col-span-12 md:col-span-6 2xl:col-span-4">
-          <DeliveryMap />
-        </div>
-      </div>
-
-      {/* ===== QUICK ACTIONS ===== */}
-      <QuickActions />
-
-      {/* ===== RECENT BOOKINGS & DISPATCHES ===== */}
+    {/* ===== RECENT BOOKINGS & DISPATCHES ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -550,6 +498,60 @@ export default function OverviewPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ===== QUICK LINKS ===== */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-bold text-gray-700">QUICK LINKS</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {quickLinks.map((link) => (
+              <Button key={link.label} variant="outline" size="sm" className="text-xs h-8 px-3" >
+                <Link href={link.href}>
+                  <link.icon className="h-3.5 w-3.5 mr-1.5" /> {link.label}
+                </Link>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== WHAT'S NEW ===== */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-4.5 w-4.5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-blue-800">WHAT'S NEW IN VERSION</p>
+              <p className="text-xs text-blue-600">Go to Settings to activate Windows</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ===== CHARTS AND ANALYTICS ===== */}
+      <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+        <ShipmentChart />
+        <FleetStatus />
+      </div>
+
+      {/* ===== ACTIVITY AND MAP ===== */}
+      <div className="grid gap-4 md:gap-6 grid-cols-12">
+        <div className="col-span-12 md:col-span-6 2xl:col-span-8">
+          <ActivityFeed />
+        </div>
+        <div className="col-span-12 md:col-span-6 2xl:col-span-4">
+          <DeliveryMap />
+        </div>
+      </div>
+
+      {/* ===== QUICK ACTIONS ===== */}
+      <QuickActions />
+
+      
 
       {/* ===== LOW STOCK ALERTS ===== */}
       {lowStockItems.length > 0 && (
