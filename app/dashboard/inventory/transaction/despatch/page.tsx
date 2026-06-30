@@ -53,8 +53,9 @@ import {
   createDispatch,
   updateDispatch,
   deleteDispatch,
-  getNextGrNumber,   // ✅ import the new API function
+  getNextGrNumber,
 } from "@/services/api";
+import api from "@/services/api";
 
 // ==================== TYPES ====================
 interface DispatchItem {
@@ -86,7 +87,6 @@ interface DispatchRecord {
   status: string;
   items: DispatchItem[];
   remarks: string;
-  // NEW GR fields
   grBookNumber?: string;
   fromLocation?: string;
   toLocation?: string;
@@ -95,6 +95,21 @@ interface DispatchRecord {
   containerDetails?: string;
   isShortDocument?: boolean;
   goodsType?: string;
+}
+
+interface IssuedStationeryItem {
+  _id?: string;
+  issueId: string;
+  itemName: string;
+  unitType: string;
+  quantity: number;
+  issueTo: string;
+  issueDate: string;
+  startNo?: string;
+  endNo?: string;
+  itemSerialNo?: string;
+  remarks?: string;
+  status?: string;
 }
 
 // ==================== OPTIONS ====================
@@ -330,7 +345,6 @@ export default function ItemDespatch() {
   const [vendorGrDate, setVendorGrDate] = useState<Date>(new Date());
   const [remarks, setRemarks] = useState("");
 
-  // NEW GR fields
   const [grBookNumber, setGrBookNumber] = useState("");
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
@@ -338,7 +352,7 @@ export default function ItemDespatch() {
   const [destination, setDestination] = useState("");
   const [containerDetails, setContainerDetails] = useState("");
   const [isShortDocument, setIsShortDocument] = useState(false);
-  const [goodsType, setGoodsType] = useState("");
+  const [goodsType, setGoodsType] = useState(""); // ✅ Always string, never undefined
 
   const [dispatchItems, setDispatchItems] = useState<DispatchItem[]>([
     {
@@ -356,7 +370,12 @@ export default function ItemDespatch() {
     },
   ]);
 
-  // Search Tab State
+  // ==================== ISSUED STATIONERY STATE ====================
+  const [issuedStationery, setIssuedStationery] = useState<IssuedStationeryItem[]>([]);
+  const [showIssuedDropdown, setShowIssuedDropdown] = useState(false);
+  const [loadingIssued, setLoadingIssued] = useState(false);
+
+  // ==================== SEARCH TAB STATE ====================
   const [searchBranch, setSearchBranch] = useState("");
   const [searchDispatchedTo, setSearchDispatchedTo] = useState("");
   const [asOnDate, setAsOnDate] = useState<Date>(new Date());
@@ -388,29 +407,88 @@ export default function ItemDespatch() {
   const [editFormData, setEditFormData] = useState<DispatchRecord | null>(null);
   const [editItems, setEditItems] = useState<DispatchItem[]>([]);
 
-  // View Modal State (Full Screen)
+  // View Modal State
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewRecord, setViewRecord] = useState<DispatchRecord | null>(null);
 
   const generateDispatchId = () => `DISP/2026-27/${Date.now().toString().slice(-6)}`;
 
-  // ==================== REAL GR GENERATION (BACKEND API) ====================
-  const handleGenerateGr = async () => {
+  // ==================== FETCH ISSUED STATIONERY ====================
+  const fetchIssuedStationery = async () => {
     if (!branchName) {
       alert("Please select Branch Name first!");
       return;
     }
-    setLoading(true);
+    setLoadingIssued(true);
     try {
-      const grNumber = await getNextGrNumber(branchName);
-      setGrBookNumber(grNumber);
-    } catch (error: any) {
-      console.error(error);
-      alert(error.response?.data?.error || "Failed to generate GR number. Limit may be reached.");
+      // ✅ Correct API path: /api/stock-issue (as per backend)
+      const response = await api.get('/stock-issue', {
+        params: { 
+          status: 'Issued',
+          branch: branchName 
+        }
+      });
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      setIssuedStationery(data);
+      setShowIssuedDropdown(true);
+      if (data.length === 0) {
+        alert('No issued stationery found for this branch.');
+      } else {
+        alert(`Found ${data.length} issued items. Click on any to add.`);
+      }
+    } catch (error) {
+      console.error('Error fetching issued stationery:', error);
+      alert('Failed to fetch issued stationery. Please check backend API.');
     } finally {
-      setLoading(false);
+      setLoadingIssued(false);
     }
   };
+
+  // ==================== SELECT ISSUED ITEM ====================
+  const handleSelectIssuedItem = (item: IssuedStationeryItem) => {
+    const newItem: DispatchItem = {
+      id: Date.now(),
+      sNo: dispatchItems.length + 1,
+      itemName: item.itemName,
+      unitType: item.unitType || 'PCS',
+      qty: item.quantity || 1,
+      issueId: item.issueId,
+      issueDate: item.issueDate || format(new Date(), 'dd-MM-yyyy'),
+      startNo: item.startNo || '',
+      endNo: item.endNo || '',
+      itemSerialNo: item.itemSerialNo || '',
+      remarks: item.remarks || `From Issue ${item.issueId}`,
+    };
+    setDispatchItems([...dispatchItems, newItem]);
+    setShowIssuedDropdown(false);
+    alert(`✅ Added "${item.itemName}" (${item.quantity} qty) from Issue ${item.issueId}`);
+  };
+
+  // ==================== GR GENERATION ====================
+  const handleGenerateGr = async () => {
+  if (!branchName) {
+    alert("Please select Branch Name first!");
+    return;
+  }
+  setLoading(true);
+  try {
+    const grNumber = await getNextGrNumber(branchName);
+    console.log('✅ GR Number received:', grNumber);
+    
+    if (!grNumber) {
+      throw new Error('GR Number is undefined or empty');
+    }
+    
+    setGrBookNumber(grNumber);
+    alert(`✅ GR Number generated: ${grNumber}`);
+  } catch (error: any) {
+    console.error("❌ GR Generation Error:", error);
+    const errorMsg = error.response?.data?.error || error.message || "Failed to generate GR number. Limit may be reached.";
+    alert(`❌ ${errorMsg}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ==================== ENTRY FUNCTIONS ====================
   const addDispatchItem = () => {
@@ -514,7 +592,6 @@ export default function ItemDespatch() {
         status: "Dispatched",
         items: dispatchItems,
         remarks,
-        // NEW GR fields
         grBookNumber,
         fromLocation,
         toLocation,
@@ -522,7 +599,7 @@ export default function ItemDespatch() {
         destination,
         containerDetails,
         isShortDocument,
-        goodsType: isShortDocument ? "Auto-filled goods type (short document)" : goodsType,
+        goodsType: isShortDocument ? "Auto-filled goods type (short document)" : goodsType || "",
       };
 
       await createDispatch(newDispatch);
@@ -553,7 +630,7 @@ export default function ItemDespatch() {
     setDestination("");
     setContainerDetails("");
     setIsShortDocument(false);
-    setGoodsType("");
+    setGoodsType(""); // ✅ Reset to empty string, not undefined
     setDispatchItems([
       {
         id: 1,
@@ -569,6 +646,8 @@ export default function ItemDespatch() {
         remarks: "",
       },
     ]);
+    setIssuedStationery([]);
+    setShowIssuedDropdown(false);
   };
 
   const handleCancel = () => setActiveTab("search");
@@ -658,13 +737,11 @@ export default function ItemDespatch() {
     }
   };
 
-  // ==================== VIEW MODAL (FULL SCREEN) ====================
   const handleView = (record: DispatchRecord) => {
     setViewRecord(record);
     setIsViewModalOpen(true);
   };
 
-  // ==================== DELETE ====================
   const handleDelete = async (id: any) => {
     if (!confirm("Are you sure you want to delete this record?")) return;
     setLoading(true);
@@ -725,7 +802,7 @@ export default function ItemDespatch() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleGenerateGr}   // ✅ Real API call
+                        onClick={handleGenerateGr}
                         disabled={loading}
                         className="shrink-0"
                       >
@@ -737,7 +814,7 @@ export default function ItemDespatch() {
                         Generate
                       </Button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Sequence: 1 to 50 (e.g., KH000001 → CC000001 → 050)</p>
+                    <p className="text-xs text-gray-500 mt-1">Sequence: 1 to 50 (e.g., KH000001 → CC000001)</p>
                   </div>
                   <div>
                     <Label>From <span className="text-red-500">*</span></Label>
@@ -781,8 +858,11 @@ export default function ItemDespatch() {
                       checked={isShortDocument}
                       onCheckedChange={(checked) => {
                         setIsShortDocument(!!checked);
-                        if (checked) setGoodsType("Auto-filled goods type (short document)");
-                        else setGoodsType("");
+                        if (checked) {
+                          setGoodsType("Auto-filled goods type (short document)");
+                        } else {
+                          setGoodsType(""); // ✅ Empty string, never undefined
+                        }
                       }}
                     />
                     <Label className="cursor-pointer">Short Document</Label>
@@ -790,7 +870,7 @@ export default function ItemDespatch() {
                   <div>
                     <Label>Goods Type</Label>
                     <Input
-                      value={goodsType}
+                      value={goodsType || ""} // ✅ Always string
                       onChange={(e) => setGoodsType(e.target.value)}
                       placeholder={isShortDocument ? "Auto-filled" : "Enter goods type"}
                       readOnly={isShortDocument}
@@ -863,16 +943,48 @@ export default function ItemDespatch() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 mb-4">
+              {/* BUTTONS WITH ISSUED STATIONERY INTEGRATION */}
+              <div className="flex flex-wrap gap-3 mb-4 relative">
                 <Button variant="outline" onClick={addDispatchItem} className="bg-blue-50">
                   <Plus className="mr-2 h-4 w-4" /> Add Item
                 </Button>
-                <Button variant="outline" className="bg-green-50">
-                  <Package className="mr-2 h-4 w-4" /> Select Issue Stationary
+                <Button 
+                  variant="outline" 
+                  onClick={fetchIssuedStationery} 
+                  className="bg-green-50"
+                  disabled={loadingIssued}
+                >
+                  <Package className="mr-2 h-4 w-4" /> 
+                  {loadingIssued ? 'Loading...' : 'Select Issue Stationary'}
                 </Button>
                 <Button variant="outline" className="bg-purple-50">
                   <FileText className="mr-2 h-4 w-4" /> Select Issued/Transferred Fixed Asset
                 </Button>
+
+                {/* ISSUED STATIONERY DROPDOWN */}
+                {showIssuedDropdown && issuedStationery.length > 0 && (
+                  <div className="absolute z-50 mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto p-2 w-full max-w-md top-full left-0">
+                    <div className="flex justify-between items-center border-b pb-2 mb-2">
+                      <span className="font-semibold text-sm">Select Issued Stationery</span>
+                      <button onClick={() => setShowIssuedDropdown(false)} className="text-gray-500 hover:text-gray-700">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {issuedStationery.map((item) => (
+                      <div
+                        key={item._id || item.issueId}
+                        className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                        onClick={() => handleSelectIssuedItem(item)}
+                      >
+                        <div className="font-medium text-sm">{item.itemName}</div>
+                        <div className="text-xs text-gray-500">
+                          Issue ID: {item.issueId} | Qty: {item.quantity} {item.unitType} | Branch: {item.issueTo}
+                        </div>
+                        {item.remarks && <div className="text-xs text-gray-400 truncate">📝 {item.remarks}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="overflow-x-auto border rounded-lg">
@@ -1020,7 +1132,7 @@ export default function ItemDespatch() {
                   <Label>Branch</Label>
                   <Select value={searchBranch} onValueChange={setSearchBranch}>
                     <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
-                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.label}>{b.label}</SelectItem>)}</SelectContent>
+                    <SelectContent>{branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
 
@@ -1030,7 +1142,7 @@ export default function ItemDespatch() {
                     <SelectTrigger><SelectValue placeholder="Select Destination" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">ALL</SelectItem>
-                      {branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.value}</SelectItem>)}
+                      {branchOptions.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1524,7 +1636,6 @@ export default function ItemDespatch() {
               <Label className="text-sm text-gray-500">Total Items</Label>
               <p className="font-medium">{viewRecord.noOfItems}</p>
             </div>
-            {/* NEW GR fields */}
             <div>
               <Label className="text-sm text-gray-500">GR Book Number</Label>
               <p className="font-medium">{viewRecord.grBookNumber || "N/A"}</p>
