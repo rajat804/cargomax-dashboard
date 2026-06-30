@@ -75,7 +75,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 
 // Import API services
-import {
+import api, {
   getBookings,
   createBooking,
   updateBooking,
@@ -1670,6 +1670,28 @@ export default function BookingComputerizedGRL() {
     setValidationErrors({});
   };
 
+  // ==================== CREATE STOCK ISSUE FROM BOOKING ====================
+  const handleCreateIssue = async (booking: BookingRecord) => {
+    try {
+      // Create a stock issue for each goods item
+      for (const item of booking.goodsItems) {
+        await api.post('/stock-issue', {
+          issueTo: booking.bookingFrom,
+          issueDate: format(booking.bookingDate, 'dd-MM-yyyy'),
+          itemName: item.content || 'Goods',
+          unitType: item.packing || 'PCS',
+          quantity: item.noOfPckgs || 1,
+          remarks: `Created from Booking ${booking.grNo}`,
+        });
+      }
+      toast.success(`Stock issue created for Booking ${booking.grNo}`);
+    } catch (error) {
+      console.error('Failed to create stock issue:', error);
+      toast.error('Failed to auto-create stock issue');
+    }
+  };
+
+  // ==================== SAVE BOOKING ====================
   const handleSave = async () => {
     console.log("=== COMPUTERIZED BOOKING SAVE BUTTON CLICKED ===");
 
@@ -1773,6 +1795,11 @@ export default function BookingComputerizedGRL() {
       } else {
         response = await createBooking(bookingData);
         toast.success(`Booking created successfully! GR No: ${response.data.grNo}`);
+        
+        // ✅ CREATE STOCK ISSUE FROM BOOKING (ONLY FOR NEW BOOKINGS)
+        if (response.data) {
+          await handleCreateIssue(response.data);
+        }
       }
 
       await loadBookings();
