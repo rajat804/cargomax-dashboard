@@ -1285,7 +1285,7 @@ export const deleteLocalManifest = async (id) => {
 
 // ─── Transfer stock for a manifest ──────────────────────────
 export const transferManifestStock = async (manifestId) => {
-  const response = await api.post(`/local-manifest/${manifestId}/transfer-stock`);
+  const response = await api.post(`/local-manifests/${manifestId}/transfer-stock`);
   return response.data;
 };
 
