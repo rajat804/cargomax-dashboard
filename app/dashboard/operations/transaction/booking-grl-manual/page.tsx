@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import html2pdf from 'html2pdf.js';
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
 import {
   Table,
   TableBody,
@@ -76,7 +73,7 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 
 // Import API services
-import {
+import api, {
   getManualBookings,
   createManualBooking,
   updateManualBooking,
@@ -1466,6 +1463,28 @@ export default function BookingGRLManual() {
   };
 
   // ========== FORM HANDLERS ==========
+
+  // ==================== CREATE STOCK ISSUE FROM BOOKING (NEW) ====================
+  const handleCreateIssue = async (booking: BookingRecord) => {
+    try {
+      // Create a stock issue for each goods item
+      for (const item of booking.goodsItems) {
+        await api.post('/stock-issue', {
+          issueTo: booking.bookingFrom,
+          issueDate: format(booking.bookingDate, 'dd-MM-yyyy'),
+          itemName: item.content || 'Goods',
+          unitType: item.packing || 'PCS',
+          quantity: item.noOfPckgs || 1,
+          remarks: `Created from Booking ${booking.grNo}`,
+        });
+      }
+      toast.success(`Stock issue created for Booking ${booking.grNo}`);
+    } catch (error) {
+      console.error('Failed to create stock issue:', error);
+      toast.error('Failed to auto-create stock issue');
+    }
+  };
+
   const handlePrint = () => {
     window.print();
     toast.success("Print dialog opened");
@@ -1632,6 +1651,7 @@ export default function BookingGRLManual() {
     return Object.keys(errors).length === 0;
   };
 
+  // ==================== UPDATED SAVE FUNCTION (WITH STOCK ISSUE) ====================
   const handleSave = async () => {
     console.log("=== MANUAL BOOKING SAVE BUTTON CLICKED ===");
 
@@ -1683,6 +1703,11 @@ export default function BookingGRLManual() {
       } else {
         response = await createManualBooking(bookingData);
         toast.success(`Booking created successfully! GR No: ${response.data.grNo}`);
+
+        // ✅ CREATE STOCK ISSUE FROM BOOKING (ONLY FOR NEW BOOKINGS)
+        if (response.data) {
+          await handleCreateIssue(response.data);
+        }
       }
 
       await loadBookings();
@@ -1934,19 +1959,19 @@ export default function BookingGRLManual() {
   // ============================================
   // PDF GENERATION USING HTML TO PDF (PROFESSIONAL DESIGN)
   // ============================================
-const generatePDFFromData = async (data: any) => {
-  // ✅ FIX 1: Guard against server-side execution
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    console.warn('PDF generation skipped - running on server');
-    return;
-  }
+  const generatePDFFromData = async (data: any) => {
+    // ✅ Guard against server-side execution
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      console.warn('PDF generation skipped - running on server');
+      return;
+    }
 
-  try {
-    // ✅ FIX 2: Dynamic import - only loads on client
-    const html2pdf = (await import('html2pdf.js')).default;
+    try {
+      // Dynamic import - only loads on client
+      const html2pdf = (await import('html2pdf.js')).default;
 
-    // Build HTML content with all booking details
-    const content = `
+      // Build HTML content with all booking details
+      const content = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -2310,52 +2335,52 @@ const generatePDFFromData = async (data: any) => {
     </html>
   `;
 
-    // Create a hidden container to render the HTML
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.left = '-9999px';
-    container.style.top = '0';
-    container.style.width = '210mm';
-    container.style.background = '#fff';
-    container.style.zIndex = '-1';
-    container.innerHTML = content;
-    document.body.appendChild(container);
+      // Create a hidden container to render the HTML
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '210mm';
+      container.style.background = '#fff';
+      container.style.zIndex = '-1';
+      container.innerHTML = content;
+      document.body.appendChild(container);
 
-    const element = container.querySelector('#pdf-content') as HTMLElement;
-    if (!element) {
-      document.body.removeChild(container);
-      toast.error('PDF content not found');
-      return;
+      const element = container.querySelector('#pdf-content') as HTMLElement;
+      if (!element) {
+        document.body.removeChild(container);
+        toast.error('PDF content not found');
+        return;
+      }
+
+      // PDF options
+      const opt: any = {
+        margin: [8, 8, 8, 8],
+        filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: 'avoid-all' }
+      };
+
+      await html2pdf()
+        .from(element)
+        .set(opt)
+        .save()
+        .then(() => {
+          document.body.removeChild(container);
+          toast.success('PDF downloaded successfully!');
+        })
+        .catch((err: any) => {
+          console.error('PDF generation error:', err);
+          document.body.removeChild(container);
+          toast.error('Failed to generate PDF');
+        });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF');
     }
-
-    // PDF options
-    const opt: any = {
-      margin: [8, 8, 8, 8],
-      filename: `Booking_${data.grNo || 'new'}_${format(new Date(), 'dd-MM-yyyy')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: 'avoid-all' }
-    };
-
-    await html2pdf()
-      .from(element)
-      .set(opt)
-      .save()
-      .then(() => {
-        document.body.removeChild(container);
-        toast.success('PDF downloaded successfully!');
-      })
-      .catch((err: any) => {
-        console.error('PDF generation error:', err);
-        document.body.removeChild(container);
-        toast.error('Failed to generate PDF');
-      });
-  } catch (error) {
-    console.error('PDF generation error:', error);
-    toast.error('Failed to generate PDF');
-  }
-};
+  };
   // ============================================
   // DOWNLOAD PDF FOR A SPECIFIC BOOKING
   // ============================================
