@@ -599,7 +599,7 @@ export default function OverviewPage() {
         </Card>
       )}
 
-      // Inside the dashboard content, before the "Whats New" section:
+      {/* // Inside the dashboard content, before the "Whats New" section: */}
       {/* ===== QUICK LINKS (GreenTrans Style) ===== */}
       <Card>
         <CardHeader className="pb-2">
