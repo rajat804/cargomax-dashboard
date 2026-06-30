@@ -338,11 +338,56 @@ const branchOptions = [
   { value: "VIZIANAGARAM", label: "VIZIANAGARAM" },
   { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
-const vendorOptions = ["Sharma Suppliers", "Tech Solutions", "Goyal Transport", "Patel Agencies", "Singh Enterprises"];
-const invoiceCategoryOptions = ["STATIONERY PURCHASE", "ELECTRONICS", "VEHICLE PARTS", "OFFICE SUPPLIES", "FURNITURE"];
-const unitTypeOptions = ["PCS", "BOX", "REAM", "KG", "LTR", "METER", "ROLL", "SET", "DOZEN"];
-const itemOptions = ["Printer Paper", "Pens", "Staplers", "Laptop", "Mouse", "Keyboard", "Vehicle Parts", "Oil", "Filters", "Desk", "Chair"];
-const filterOnOptions = ["ALL", "Today", "This Week", "This Month", "Custom"];
+
+const vendorOptions = [
+  { value: "Sharma Suppliers", label: "Sharma Suppliers" },
+  { value: "Tech Solutions", label: "Tech Solutions" },
+  { value: "Goyal Transport", label: "Goyal Transport" },
+  { value: "Patel Agencies", label: "Patel Agencies" },
+  { value: "Singh Enterprises", label: "Singh Enterprises" }
+];
+
+const invoiceCategoryOptions = [
+  { value: "STATIONERY PURCHASE", label: "STATIONERY PURCHASE" },
+  { value: "ELECTRONICS", label: "ELECTRONICS" },
+  { value: "VEHICLE PARTS", label: "VEHICLE PARTS" },
+  { value: "OFFICE SUPPLIES", label: "OFFICE SUPPLIES" },
+  { value: "FURNITURE", label: "FURNITURE" }
+];
+
+const unitTypeOptions = [
+  { value: "PCS", label: "PCS" },
+  { value: "BOX", label: "BOX" },
+  { value: "REAM", label: "REAM" },
+  { value: "KG", label: "KG" },
+  { value: "LTR", label: "LTR" },
+  { value: "METER", label: "METER" },
+  { value: "ROLL", label: "ROLL" },
+  { value: "SET", label: "SET" },
+  { value: "DOZEN", label: "DOZEN" }
+];
+
+const itemOptions = [
+  { value: "Printer Paper", label: "Printer Paper" },
+  { value: "Pens", label: "Pens" },
+  { value: "Staplers", label: "Staplers" },
+  { value: "Laptop", label: "Laptop" },
+  { value: "Mouse", label: "Mouse" },
+  { value: "Keyboard", label: "Keyboard" },
+  { value: "Vehicle Parts", label: "Vehicle Parts" },
+  { value: "Oil", label: "Oil" },
+  { value: "Filters", label: "Filters" },
+  { value: "Desk", label: "Desk" },
+  { value: "Chair", label: "Chair" }
+];
+
+const filterOnOptions = [
+  { value: "ALL", label: "ALL" },
+  { value: "Today", label: "Today" },
+  { value: "This Week", label: "This Week" },
+  { value: "This Month", label: "This Month" },
+  { value: "Custom", label: "Custom" }
+];
 
 export default function ItemPurchase() {
 
@@ -502,7 +547,7 @@ export default function ItemPurchase() {
       invoiceCategory,
       invoiceNo,
       invoiceDate: invoiceDate.toISOString(),
-      items: itemsWithRecalc.map(({ id, sNo, ...rest }) => rest), // remove frontend-only fields
+      items: itemsWithRecalc.map(({ id, sNo, ...rest }) => rest),
       particulars: particulars.map(({ id, ...rest }) => rest),
       roundOff,
       finalRemarks,
@@ -735,7 +780,9 @@ export default function ItemPurchase() {
                 <div>
                   <Label>Branch <span className="text-red-500">*</span></Label>
                   <Select value={branch} onValueChange={setBranch}>
-                    <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Branch" />
+                    </SelectTrigger>
                     <SelectContent>
                       {branchOptions.map((b) => (
                         <SelectItem key={b.value} value={b.value}>
@@ -778,8 +825,16 @@ export default function ItemPurchase() {
                 <div>
                   <Label>Vendor <span className="text-red-500">*</span></Label>
                   <Select value={vendor} onValueChange={setVendor}>
-                    <SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger>
-                    <SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Vendor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vendorOptions.map((v) => (
+                        <SelectItem key={v.value} value={v.value}>
+                          {v.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -797,8 +852,16 @@ export default function ItemPurchase() {
                 <div>
                   <Label>Invoice Category <span className="text-red-500">*</span></Label>
                   <Select value={invoiceCategory} onValueChange={setInvoiceCategory}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {invoiceCategoryOptions.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-1 md:col-span-2">
@@ -859,14 +922,30 @@ export default function ItemPurchase() {
                           <TableCell>{item.sNo}</TableCell>
                           <TableCell>
                             <Select value={item.item} onValueChange={(v) => updatePurchaseItem(item.id, 'item', v)}>
-                              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                              <SelectContent>{itemOptions.map(i => <SelectItem key={i} value={i}>{i}</SelectItem>)}</SelectContent>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Item" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {itemOptions.map((i) => (
+                                  <SelectItem key={i.value} value={i.value}>
+                                    {i.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
                           </TableCell>
                           <TableCell>
                             <Select value={item.unitType} onValueChange={(v) => updatePurchaseItem(item.id, 'unitType', v)}>
-                              <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                              <SelectContent>{unitTypeOptions.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select Unit" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {unitTypeOptions.map((u) => (
+                                  <SelectItem key={u.value} value={u.value}>
+                                    {u.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
                             </Select>
                           </TableCell>
                           <TableCell>
@@ -955,7 +1034,9 @@ export default function ItemPurchase() {
                           </TableCell>
                           <TableCell>
                             <Select value={p.sign} onValueChange={(v) => updateParticular(p.id, 'sign', v)}>
-                              <SelectTrigger className="w-16"><SelectValue /></SelectTrigger>
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="+">+</SelectItem>
                                 <SelectItem value="-">-</SelectItem>
@@ -1045,8 +1126,10 @@ export default function ItemPurchase() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <Label>Branch <span className="text-red-500">*</span></Label>
-                  <Select value={branch} onValueChange={setBranch}>
-                    <SelectTrigger><SelectValue placeholder="Select Branch" /></SelectTrigger>
+                  <Select value={pendingPoBranch} onValueChange={setPendingPoBranch}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Branch" />
+                    </SelectTrigger>
                     <SelectContent>
                       {branchOptions.map((b) => (
                         <SelectItem key={b.value} value={b.value}>
@@ -1063,8 +1146,16 @@ export default function ItemPurchase() {
                     <Label className="cursor-pointer">ALL</Label>
                   </div>
                   <Select disabled={!vendorAll} value={pendingPoVendor} onValueChange={setPendingPoVendor}>
-                    <SelectTrigger><SelectValue placeholder="Select Vendor" /></SelectTrigger>
-                    <SelectContent>{vendorOptions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Vendor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vendorOptions.map((v) => (
+                        <SelectItem key={v.value} value={v.value}>
+                          {v.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
@@ -1168,17 +1259,31 @@ export default function ItemPurchase() {
                 <div>
                   <Label>Filter On</Label>
                   <Select value={filterOn} onValueChange={setFilterOn}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{filterOnOptions.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOnOptions.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>
+                          {f.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Invoice Category</Label>
                   <Select value={searchInvoiceCategory} onValueChange={setSearchInvoiceCategory}>
-                    <SelectTrigger><SelectValue placeholder="ALL" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder="ALL" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">ALL</SelectItem>
-                      {invoiceCategoryOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {invoiceCategoryOptions.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1277,7 +1382,11 @@ export default function ItemPurchase() {
                           {columnSettings.netPayable && <TableCell className="text-right">₹{r.netPayable.toLocaleString()}</TableCell>}
                           {columnSettings.billStatus && (
                             <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${r.billStatus === "Pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"}`}>
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                r.billStatus === "Pending" ? "bg-yellow-100 text-yellow-800" : 
+                                r.billStatus === "Paid" ? "bg-green-100 text-green-800" :
+                                "bg-gray-100 text-gray-800"
+                              }`}>
                                 {r.billStatus}
                               </span>
                             </TableCell>
