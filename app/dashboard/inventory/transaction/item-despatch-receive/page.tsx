@@ -57,8 +57,9 @@ import {
   receiveDespatch,
   cancelDespatch,
 } from "@/services/api";
+import toast from "react-hot-toast";
 
-// ==================== TYPES (updated with GR fields) ====================
+// ==================== TYPES ====================
 interface DispatchRecord {
   _id?: string;
   dispatchId: string;
@@ -73,7 +74,6 @@ interface DispatchRecord {
   receivedBy?: string;
   remarks?: string;
   items?: any[];
-  // ─── NEW GR FIELDS ───
   grBookNumber?: string;
   fromLocation?: string;
   toLocation?: string;
@@ -298,11 +298,18 @@ const branchOptions = [
   { value: "YUSUFPUR", label: "YUSUFPUR" }
 ];
 
-const statusOptions = ["Dispatched", "In Transit", "Delivered", "Cancelled", "Received"];
+const statusOptions = [
+  { value: "Dispatched", label: "Dispatched" },
+  { value: "In Transit", label: "In Transit" },
+  { value: "Delivered", label: "Delivered" },
+  { value: "Cancelled", label: "Cancelled" },
+  { value: "Received", label: "Received" }
+];
 
 export default function ItemDespatchReceive() {
 
   const user = useSessionUser();
+
   // ==================== PENDING TAB ====================
   const [pendingBranchName, setPendingBranchName] = useState("");
   const [asOnDate, setAsOnDate] = useState<Date>(new Date());
@@ -338,7 +345,7 @@ export default function ItemDespatchReceive() {
     noOfItems: true,
     status: true,
     receivedOn: true,
-    grBookNumber: true,    // ✅ new
+    grBookNumber: true,
   });
 
   const [searchCols, setSearchCols] = useState({
@@ -353,7 +360,6 @@ export default function ItemDespatchReceive() {
     status: true,
     receivedOn: true,
     receivedBy: true,
-    // ─── NEW GR COLUMNS ───
     grBookNumber: true,
     fromLocation: true,
     toLocation: true,
@@ -370,7 +376,7 @@ export default function ItemDespatchReceive() {
       setFilteredRecords(records);
     } catch (error) {
       console.error(error);
-      alert("Failed to load records.");
+      toast.error("Failed to load records.");
     } finally {
       setSearchLoading(false);
     }
@@ -380,7 +386,8 @@ export default function ItemDespatchReceive() {
   const loadPendingRecords = async (branch?: string) => {
     setPendingLoading(true);
     try {
-      const data = await getAllDispatches({ branchName: branch || "" });
+      const params = branch && branch !== "All" ? { branchName: branch } : {};
+      const data = await getAllDispatches(params);
       const records = Array.isArray(data) ? data : data?.data || [];
       const pending = records.filter(
         (r: any) => r.status !== "Received" && r.status !== "Cancelled"
@@ -389,7 +396,7 @@ export default function ItemDespatchReceive() {
       setShowPendingGrid(true);
     } catch (error) {
       console.error(error);
-      alert("Failed to load pending records.");
+      toast.error("Failed to load pending records.");
     } finally {
       setPendingLoading(false);
     }
@@ -405,11 +412,11 @@ export default function ItemDespatchReceive() {
     if (activeTab === "pending") {
       loadPendingRecords(pendingBranchName || undefined);
     }
-  }, [activeTab]);
+  }, [activeTab, pendingBranchName]);
 
   // ==================== HANDLE PROCEED (filter by branch) ====================
   const handleProceed = async () => {
-    if (!pendingBranchName) {
+    if (!pendingBranchName || pendingBranchName === "All") {
       await loadPendingRecords();
     } else {
       await loadPendingRecords(pendingBranchName);
@@ -423,10 +430,10 @@ export default function ItemDespatchReceive() {
       await receiveDespatch(record._id!, "CURRENT_USER");
       await loadAllRecords();
       await loadPendingRecords(pendingBranchName || undefined);
-      alert(`✅ ${record.dispatchId} received.`);
+      toast.success(`✅ ${record.dispatchId} received.`);
     } catch (error) {
       console.error(error);
-      alert("Failed to receive.");
+      toast.error("Failed to receive.");
     }
   };
 
@@ -437,10 +444,10 @@ export default function ItemDespatchReceive() {
       await cancelDespatch(record._id!);
       await loadAllRecords();
       await loadPendingRecords(pendingBranchName || undefined);
-      alert(`✅ ${record.dispatchId} cancelled.`);
+      toast.success(`✅ ${record.dispatchId} cancelled.`);
     } catch (error) {
       console.error(error);
-      alert("Failed to cancel.");
+      toast.error("Failed to cancel.");
     }
   };
 
@@ -491,7 +498,7 @@ export default function ItemDespatchReceive() {
     loadPendingRecords(pendingBranchName || undefined);
   };
 
-  // ==================== EDIT MODAL (updated with GR fields) ====================
+  // ==================== EDIT MODAL ====================
   const openEditModal = (record: DispatchRecord) => {
     setEditRecord(record);
     setEditForm({
@@ -505,7 +512,6 @@ export default function ItemDespatchReceive() {
       receivedOn: record.receivedOn || "",
       receivedBy: record.receivedBy || "",
       remarks: record.remarks || "",
-      // GR fields
       grBookNumber: record.grBookNumber || "",
       fromLocation: record.fromLocation || "",
       toLocation: record.toLocation || "",
@@ -533,7 +539,6 @@ export default function ItemDespatchReceive() {
         receivedOn: editForm.receivedOn,
         receivedBy: editForm.receivedBy,
         remarks: editForm.remarks,
-        // GR fields
         grBookNumber: editForm.grBookNumber,
         fromLocation: editForm.fromLocation,
         toLocation: editForm.toLocation,
@@ -546,11 +551,11 @@ export default function ItemDespatchReceive() {
       await updateDispatch(editRecord._id, payload);
       await loadAllRecords();
       await loadPendingRecords(pendingBranchName || undefined);
-      alert("✅ Record updated successfully.");
+      toast.success("✅ Record updated successfully.");
       setEditModalOpen(false);
     } catch (error) {
       console.error(error);
-      alert("Failed to update record.");
+      toast.error("Failed to update record.");
     } finally {
       setEditLoading(false);
     }
@@ -769,7 +774,6 @@ export default function ItemDespatchReceive() {
                           {pendingCols.status && <TableHead>Status</TableHead>}
                           {pendingCols.receivedOn && <TableHead>Received On</TableHead>}
                           {pendingCols.grBookNumber && <TableHead>GR Book #</TableHead>}
-                          {/* ✅ NO ACTION COLUMN IN PENDING TAB */}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1001,7 +1005,7 @@ export default function ItemDespatchReceive() {
         </TabsContent>
       </Tabs>
 
-      {/* ==================== EDIT MODAL (with GR fields) ==================== */}
+      {/* ==================== EDIT MODAL ==================== */}
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1009,7 +1013,6 @@ export default function ItemDespatchReceive() {
           </DialogHeader>
           {editRecord && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              {/* Basic fields */}
               <div>
                 <Label>Branch Name</Label>
                 <Select
@@ -1092,8 +1095,8 @@ export default function ItemDespatchReceive() {
                   </SelectTrigger>
                   <SelectContent>
                     {statusOptions.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1127,7 +1130,6 @@ export default function ItemDespatchReceive() {
                   placeholder="e.g., ADMIN"
                 />
               </div>
-              {/* ─── GR FIELDS ─── */}
               <div>
                 <Label>GR Book Number</Label>
                 <Input
